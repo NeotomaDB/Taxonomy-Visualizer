@@ -21,7 +21,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
     // 1. It has children in the current tree, OR
     // 2. We can check if there's data available to build a subtree
     const hasSubtree = (d.children && d.children.length > 0) ||
-                      (d.descendants && d.descendants().length > 1); // Has descendants beyond itself
+      (d.descendants && d.descendants().length > 1); // Has descendants beyond itself
 
     // Add "Go to Tree" button only if node has a subtree and navigateToNode is available
     const goToTreeButton = (hasSubtree && window.navigateToNode) ? `
@@ -68,37 +68,17 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
 
     // Add taxon name labels to all nodes in the path
     if (nodeSelection) {
-      // Remove any existing focus labels
-      nodeSelection.selectAll('.focus-label').remove();
+      // Remove any existing focus styling
+      nodeSelection.select('text').classed('focused-text', false);
 
       // Get all ancestors (the complete path from root to selected node)
-      const pathNodes = d.ancestors();
+      const pathNodes = new Set(d.ancestors());
 
-      // Add labels to all nodes in the path
-      // Calculate label orientation based on current rotation
-      const currentRotate = getCurrentRotate();
-      const rotRad = (currentRotate * Math.PI) / 180;
-      const tau = Math.PI * 2;
-      function outward(node) {
-        return ((node.x + rotRad) % tau + tau) % tau < Math.PI;
-      }
-
-      pathNodes.forEach(ancestorNode => {
-        const nodeGroup = nodeSelection.filter(n => n === ancestorNode);
-
-        nodeGroup.append('text')
-          .attr('class', 'focus-label')
-          .attr('dy', '0.32em')
-          .attr('x', node => (outward(node) === !node.children ? 16 : -16))
-          .attr('text-anchor', node => (outward(node) === !node.children ? 'start' : 'end'))
-          .attr('transform', node => outward(node) ? null : 'rotate(180)')
-          .style('fill', '#2e7d32')
-          .style('font-size', '14px')
-          .style('font-weight', '700')
-          .style('pointer-events', 'none')
-          .style('text-shadow', '0 0 3px white, 0 0 3px white, 0 0 3px white')
-          .text(ancestorNode.data.name);
-      });
+      // Apply focused-text class to all nodes in the path
+      nodeSelection.filter(n => pathNodes.has(n))
+        .raise() // Bring to front
+        .select('text')
+        .classed('focused-text', true);
     }
   }
 
@@ -107,9 +87,9 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
     panel.innerHTML = '';
     panel.style.display = 'none';
 
-    // Remove focus labels from dendrogram
+    // Remove focus styling from dendrogram
     if (nodeSelection) {
-      nodeSelection.selectAll('.focus-label').remove();
+      nodeSelection.select('text').classed('focused-text', false);
     }
   }
 

@@ -1,25 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Neotoma Mammal Visualization</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="index.css">
-    </head>
-    <body>
-        <div id="layout" style="display:flex; align-items:flex-start; gap:16px;">
-            <div id="stage" style="position:relative;">
-                <div id="chart"></div>
-                <div id="popup" style="position:absolute; left:-9999px; top:-9999px; background:#fff; border:1px solid #ddd; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:6px; padding:10px 12px; max-width:320px; z-index:1000;"></div>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Neotoma Mammal Visualization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="layout" style="display:flex; align-items:flex-start; gap:16px;">
+        <div id="stage" style="position:relative;">
+            <div id="chart"></div>
+            <div id="popup"
+                style="position:absolute; left:-9999px; top:-9999px; background:#fff; border:1px solid #ddd; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:6px; padding:10px 12px; max-width:320px; z-index:1000;">
             </div>
-            <div id="right-panel" style="min-width:360px; display:flex; flex-direction:column; gap:16px;">
-                <div id="title-section">
-                    <h1>Neotoma Taxonomy Hierarchical Visualizer</h1>
-                </div>
-                <div id="sidebar">
+        </div>
+        <div id="right-panel" style="min-width:360px; display:flex; flex-direction:column; gap:16px;">
+            <div id="title-section">
+                <h1>Neotoma Taxonomy Hierarchical Visualizer</h1>
+            </div>
+            <div id="sidebar">
                 <div id="controls">
                     <!-- First row: Rotate and Zoom -->
                     <div class="control-row rotate-zoom-row">
@@ -61,35 +67,6 @@
                     </div>
                 </div>
                 <div id="info"></div>
-                <div id="treeViewToggle" style="margin-top: 12px; display: block; visibility: visible;">
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <label style="font-size: 14px; font-weight: 500;">Tree View:</label>
-                        <button id="mainTreeBtn" class="tree-view-btn active" style="
-                            padding: 6px 12px;
-                            background: linear-gradient(135deg, #43a047, #43a047);
-                            color: white;
-                            border: none;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            font-size: 13px;
-                            font-weight: 600;
-                            font-family: 'DM Sans', sans-serif;
-                            transition: all 0.2s ease;
-                        ">Main Tree</button>
-                        <button id="orphanTreeBtn" class="tree-view-btn" style="
-                            padding: 6px 12px;
-                            background: #e5e7eb;
-                            color: #374151;
-                            border: none;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            font-size: 13px;
-                            font-weight: 600;
-                            font-family: 'DM Sans', sans-serif;
-                            transition: all 0.2s ease;
-                        ">Orphan Nodes</button>
-                    </div>
-                </div>
                 <div id="navigation" style="margin-top: 12px; display: none;">
                     <button id="backButton" style="
                         padding: 8px 16px;
@@ -106,13 +83,13 @@
                         ← Go Back
                     </button>
                 </div>
-                </div>
             </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-        <script src="src/taxon-group-select.js"></script>
-        <script type="module" src="mammal_path_combined.js"></script>
-        <script type="module">
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="src/taxon-group-select.js"></script>
+    <script type="module" src="mammal_path_combined.js"></script>
+    <script type="module">
         import { initViewSwitch, resetViewState } from './src/viewSwitch.js';
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree
         function convertTaxonPaths(data) {
@@ -609,25 +586,6 @@
             // Select which tree to show
             const rootNodes = treeType === 'main' ? mainTreeNodes : orphanTreeNodes;
 
-            // Show/hide tree toggle - always show in initial view
-            const toggleDiv = document.getElementById('treeViewToggle');
-            if (toggleDiv) {
-                // Always show the toggle in initial view (user can switch even if one tree is empty)
-                toggleDiv.style.display = 'block';
-                toggleDiv.style.visibility = 'visible';
-                console.log('Toggle visibility set:', {
-                    mainTreeNodes: mainTreeNodes.length,
-                    orphanTreeNodes: orphanTreeNodes.length,
-                    toggleDivDisplay: toggleDiv.style.display,
-                    toggleDivVisibility: toggleDiv.style.visibility,
-                    toggleDivExists: !!toggleDiv,
-                    toggleDivOffsetHeight: toggleDiv.offsetHeight
-                });
-            } else {
-                console.error('treeViewToggle element not found in DOM!');
-            }
-            updateTreeToggleButtons();
-
             // Convert to rows format for rendering
             const rows = [];
             rootNodes.forEach(root => {
@@ -705,59 +663,6 @@
                 null, // taxagroupid is null for initial view
                 allRows
             );
-        }
-
-        // Update tree toggle button states
-        function updateTreeToggleButtons() {
-            const mainBtn = document.getElementById('mainTreeBtn');
-            const orphanBtn = document.getElementById('orphanTreeBtn');
-
-            if (mainBtn && orphanBtn) {
-                if (currentTreeType === 'main') {
-                    mainBtn.classList.add('active');
-                    mainBtn.style.background = 'linear-gradient(135deg, #43a047, #43a047)';
-                    mainBtn.style.color = 'white';
-                    orphanBtn.classList.remove('active');
-                    orphanBtn.style.background = '#e5e7eb';
-                    orphanBtn.style.color = '#374151';
-                } else {
-                    orphanBtn.classList.add('active');
-                    orphanBtn.style.background = 'linear-gradient(135deg, #43a047, #43a047)';
-                    orphanBtn.style.color = 'white';
-                    mainBtn.classList.remove('active');
-                    mainBtn.style.background = '#e5e7eb';
-                    mainBtn.style.color = '#374151';
-                }
-            }
-        }
-
-        // Set up tree toggle buttons
-        function setupTreeToggle() {
-            const mainBtn = document.getElementById('mainTreeBtn');
-            const orphanBtn = document.getElementById('orphanTreeBtn');
-
-            if (mainBtn) {
-                mainBtn.addEventListener('click', () => {
-                    if (currentTreeType !== 'main') {
-                        loadInitialView('main');
-                    }
-                });
-            }
-
-            if (orphanBtn) {
-                orphanBtn.addEventListener('click', () => {
-                    if (currentTreeType !== 'orphan') {
-                        loadInitialView('orphan');
-                    }
-                });
-            }
-        }
-
-        // Set up when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupTreeToggle);
-        } else {
-            setupTreeToggle();
         }
 
         // Navigate to a specific node (drill down)
@@ -1049,18 +954,41 @@
                 allRowsForGroup
             );
 
-            // Render tree with appropriate root (now async to load synonyms)
-            // Pass filteredRows for tree building, allRowsForGroup for synonym lookup
-            await window.renderMammalTree({
-                rows: filteredRows,
-                allRowsForSynonyms: allRowsForGroup,
-                rootId: rootInfo.rootId,
-                rootName: rootInfo.rootName
+            // Count unique nodes in the filtered data
+            const uniqueNodes = new Set();
+            filteredRows.forEach(row => {
+                const ids = row.ids_root_to_leaf || [];
+                ids.forEach(id => uniqueNodes.add(id));
             });
+            const nodeCount = uniqueNodes.size;
+
+            console.log(`Taxon group ${taxagroupid} has ${nodeCount} nodes`);
+
+            // Use collapsible tree for small datasets (< 50 nodes)
+            if (nodeCount < 50) {
+                console.log('Using collapsible tree view');
+                const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
+                await renderCollapsibleTree({
+                    rows: filteredRows,
+                    allRowsForSynonyms: allRowsForGroup,
+                    rootId: rootInfo.rootId,
+                    rootName: rootInfo.rootName
+                });
+            } else {
+                console.log('Using radial dendrogram view');
+                // Render tree using the radial dendrogram
+                await window.renderMammalTree({
+                    rows: filteredRows,
+                    allRowsForSynonyms: allRowsForGroup,
+                    rootId: rootInfo.rootId,
+                    rootName: rootInfo.rootName
+                });
+            }
         }
 
         // Export navigateToNode for use in renderMammalTree
         window.navigateToNode = navigateToNode;
-        </script>
-    </body>
+    </script>
+</body>
+
 </html>

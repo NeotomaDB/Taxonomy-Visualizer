@@ -18,7 +18,7 @@
   "CNI": "Cnidaria",
   "PHY": "Physical variables",
   "MAG": "Paleomagnetics",
-  "CHM": "Chemical substanc",
+  "CHM": "Chemical substance",
   "VPL": "Vascular plants",
   "PLA": "Plants undiff.",
   "MAM": "Mammals",
@@ -51,4 +51,3 @@
   "SPO": "Sponges",
   "ANM": "Animals undiff."
 }
-

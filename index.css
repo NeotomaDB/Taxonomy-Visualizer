@@ -1,6 +1,6 @@
 .highlight {
-    stroke: #3376e2 !important;
-  }
+  stroke: #3376e2 !important;
+}
 
 #chart svg text {
   font-size: 9px;
@@ -9,11 +9,13 @@
 }
 
 
-body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+body {
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-optical-sizing: auto;
   background-color: #e8f5e9;
   padding: 20px;
-  margin: 0; }
+  margin: 0;
+}
 
 #title-section {
   text-align: center;
@@ -30,11 +32,29 @@ body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#layout { gap: 16px; align-items: flex-start; }
+#layout {
+  gap: 16px;
+  align-items: flex-start;
+}
 
-#stage { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06); padding: 8px; }
+#stage {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  padding: 8px;
+}
 
-#sidebar { min-width: 0; max-width: 100%; background: rgba(255,255,255,0.96); border: 1px solid #eef2f7; border-radius: 14px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); padding: 12px; box-sizing: border-box; }
+#sidebar {
+  min-width: 0;
+  max-width: 100%;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  padding: 12px;
+  box-sizing: border-box;
+}
 
 #controls {
   display: flex;
@@ -229,11 +249,42 @@ body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 }
 
 /* Rotate and Zoom Specific Styles */
-#rotate { height: 6px; accent-color: #43a047; min-width: 0; flex: 1 1 auto; }
+#rotate {
+  height: 6px;
+  accent-color: #43a047;
+  min-width: 0;
+  flex: 1 1 auto;
+}
 
-#zoomOut, #zoomIn, #zoomReset, #searchBtn { background: linear-gradient(135deg, #43a047, #43a047); color: #fff; border: none; border-radius: 999px; padding: 6px 10px; box-shadow: 0 3px 8px rgba(47,94,215,0.25); cursor: pointer; font-size: 12px; font-weight: 600; font-family: "DM Sans", sans-serif; }
-#zoomOut, #zoomIn { width: 32px; padding: 6px 0; }
-#zoomReset { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; box-shadow: none; }
+#zoomOut,
+#zoomIn,
+#zoomReset,
+#searchBtn {
+  background: linear-gradient(135deg, #43a047, #43a047);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 3px 8px rgba(47, 94, 215, 0.25);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: "DM Sans", sans-serif;
+}
+
+#zoomOut,
+#zoomIn {
+  width: 32px;
+  padding: 6px 0;
+}
+
+#zoomReset {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+}
+
 /* View Switch Group - Segmented Control */
 .view-switch-group {
   display: inline-flex;
@@ -278,10 +329,25 @@ body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
 .view-switch-btn.active:hover {
   background: #2e7d32;
 }
-#searchBtn { font-size: 16px; padding: 10px 20px; flex-shrink: 0; }
-#zoomOut:hover, #zoomIn:hover, #searchBtn:hover { filter: brightness(1.05); }
 
-#zoomValue, #rotateValue { color: #6b7280; font-size: 12px; font-weight: 600; }
+#searchBtn {
+  font-size: 16px;
+  padding: 10px 20px;
+  flex-shrink: 0;
+}
+
+#zoomOut:hover,
+#zoomIn:hover,
+#searchBtn:hover {
+  filter: brightness(1.05);
+}
+
+#zoomValue,
+#rotateValue {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+}
 
 #searchInput {
   border: 2px solid #e5e7eb;
@@ -289,7 +355,7 @@ body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   padding: 10px 16px;
   font-size: 15px;
   outline: none;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   font-family: "DM Sans", sans-serif;
   background: #f9fafb;
   transition: all 0.2s ease;
@@ -297,6 +363,7 @@ body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   min-width: 0;
   max-width: 100%;
 }
+
 #searchInput:focus {
   border-color: #43a047;
   box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.1);
@@ -310,18 +377,40 @@ body { font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Ro
   margin-top: 12px;
   box-sizing: border-box;
 }
-#info div { line-height: 1.5; }
+
+#info div {
+  line-height: 1.5;
+}
 
 /* SVG aesthetics */
-svg path { transition: stroke-width 150ms ease, opacity 150ms ease; }
+svg path {
+  transition: stroke-width 150ms ease, opacity 150ms ease;
+}
+
 /* Highlighted links should be lines only (no area fill) */
-svg path.highlight { fill: none !important; stroke: #43a047 !important; stroke-width: 2px; }
+svg path.highlight {
+  fill: none !important;
+  stroke: #43a047 !important;
+  stroke-width: 2px;
+}
+
 /* Synonym highlighted links with different color */
-svg path.highlight-synonym { fill: none !important; stroke: #f59e0b !important; stroke-width: 2px; }
+svg path.highlight-synonym {
+  fill: none !important;
+  stroke: #f59e0b !important;
+  stroke-width: 2px;
+}
 
 /* Text highlight styles */
-svg text.highlight { fill: #43a047 !important; font-weight: 600 !important; }
-svg text.highlight-synonym { fill: #f59e0b !important; font-weight: 600 !important; }
+svg text.highlight {
+  fill: #43a047 !important;
+  font-weight: 600 !important;
+}
+
+svg text.highlight-synonym {
+  fill: #f59e0b !important;
+  font-weight: 600 !important;
+}
 
 /* Focus label styling */
 .focus-label {
@@ -333,4 +422,37 @@ svg text.highlight-synonym { fill: #f59e0b !important; font-weight: 600 !importa
   stroke: white;
   stroke-width: 3px;
   stroke-linejoin: round;
+}
+
+/* Focused text styling (applied to existing text elements) */
+.focused-text {
+  fill: #2e7d32 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  paint-order: stroke fill;
+  stroke: white;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  display: block !important;
+  /* Ensure it overrides culling */
+}
+
+/* Collapsible tree styling */
+#chart svg g text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  fill: #202124;
+}
+
+#chart svg g circle {
+  cursor: pointer;
+  transition: fill 0.2s ease;
+}
+
+#chart svg g circle:hover {
+  fill: #43a047 !important;
+}
+
+#chart svg path {
+  transition: stroke 0.3s ease, stroke-opacity 0.3s ease;
 }

@@ -72,24 +72,33 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
       nodeSelection.select('text').classed('focused-text', false);
 
       // Get all ancestors (the complete path from root to selected node)
-      const pathNodes = new Set(d.ancestors());
+      const pathNodes = d.ancestors();
+      pathNodes.forEach(ancestorNode => {
+        const nodeGroup = nodeSelection.filter(n => n === ancestorNode);
 
-      // Apply focused-text class to all nodes in the path
-      nodeSelection.filter(n => pathNodes.has(n))
-        .raise() // Bring to front
-        .select('text')
-        .classed('focused-text', true);
+        // Check if this is a collapsed group node
+        const nodeName = (ancestorNode.data && ancestorNode.data.name) ? String(ancestorNode.data.name).trim().toLowerCase() : '';
+        const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
+          nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
+          nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
+          nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
+          nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
+          nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
+
+        nodeGroup.select('text:not(.toggle)')
+          .classed('focused-text', true)
+          .style('fill', isCollapsedGroup ? '#ff6b35' : '#2e7d32');
+      });
     }
   }
 
   function clear() {
-    if (!panel) return;
-    panel.innerHTML = '';
-    panel.style.display = 'none';
+    // Hide panel
+    if (panel) panel.style.display = 'none';
 
     // Remove focus styling from dendrogram
     if (nodeSelection) {
-      nodeSelection.select('text').classed('focused-text', false);
+      nodeSelection.select('text').classed('focused-text', false).style('fill', null);
     }
   }
 

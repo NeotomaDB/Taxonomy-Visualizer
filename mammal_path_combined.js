@@ -139,7 +139,7 @@ async function renderMammalTree({
   });
 
   // 2) Layout with custom separation
-  const radius = (size / 2) - margin;
+  const radius = (size / 2) - 2.5 * margin;
 
   // Custom separation function: smaller angle within groups, larger between groups
   // Note: d3.cluster.separation receives two adjacent sibling nodes
@@ -222,11 +222,11 @@ async function renderMammalTree({
   // 5) Nodes
   let node = gNodes.selectAll('g.node');
 
-  // Helper: determine if node is under "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Plantae", "Bryozoa", or "Arthropoda" subtree
+  // Helper: determine if node is under "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Plantae", "Bryozoa", "Arthropoda", "Rhizophagidae", "Cybocephalidae", "Invertebrata", or "Ostomidae" subtree
   function isUnderChemical(d) {
     return d.ancestors().some(a => {
       const n = (a.data && a.data.name) ? String(a.data.name).trim().toLowerCase() : '';
-      return n === 'chemical substance' || n === 'chemical compound' || n === 'fungi' || n === 'algae' || n === 'plantae undiff.' || n === 'prokaryota' || n === 'chromista' || n === 'cnidaria' || n === 'annelida' || n === 'plantae' || n === 'bryozoa' || n === 'arthropoda';
+      return n === 'chemical substance' || n === 'chemical compound' || n === 'fungi' || n === 'algae' || n === 'plantae undiff.' || n === 'prokaryota' || n === 'chromista' || n === 'cnidaria' || n === 'annelida' || n === 'plantae' || n === 'bryozoa' || n === 'arthropoda' || n === 'mammalia' || n === 'vertebrata' || n === 'unknown' || n === 'rhizophagidae' || n === 'cybocephalidae' || n === 'invertebrata' || n === 'ostomidae';
     });
   }
 
@@ -261,10 +261,33 @@ async function renderMammalTree({
 
     nodeEnter.append('circle')
       .attr('r', 2.2)
-      .attr('fill', '#202124');
+      .attr('fill', d => {
+        // Check if this node is one of the collapsed groups
+        const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
+        const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
+          nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
+          nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
+          nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
+          nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
+          nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
+        return isCollapsedGroup ? '#ff6b35' : '#202124';
+      });
 
     nodeEnter.append('text')
       .attr('dy', '0.32em')
+      .attr('x', 10) // Will be updated by updateLabelOrientation()
+      .attr('text-anchor', 'start') // Will be updated by updateLabelOrientation()
+      .style('fill', d => {
+        // Check if this node is one of the collapsed groups
+        const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
+        const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
+          nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
+          nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
+          nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
+          nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
+          nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
+        return isCollapsedGroup ? '#ff6b35' : null;
+      })
       .text(d => d.data.name);
 
     // Toggle control (+ / –) for nodes under Chemical Substance that have collapsible children state
@@ -274,6 +297,7 @@ async function renderMammalTree({
       .style('font-weight', '700')
       .style('font-size', '11px')
       .style('cursor', 'pointer')
+      .style('fill', '#ff6b35')  // Orange color for toggle buttons
       .text(d => {
         if (!isUnderChemical(d)) return '';
         if (d._children && d._children.length) return '+';
@@ -322,8 +346,8 @@ async function renderMammalTree({
     const tau = Math.PI * 2;
     function outward(d) { return ((d.x + rotRad) % tau + tau) % tau < Math.PI; }
     node.select('text:not(.toggle)')
-      .attr('x', d => (outward(d) === !d.children ? 6 : -6))
-      .attr('text-anchor', d => (outward(d) === !d.children ? 'start' : 'end'))
+      .attr('x', d => outward(d) ? 10 : -10)
+      .attr('text-anchor', d => outward(d) ? 'start' : 'end')
       .attr('transform', d => outward(d) ? null : 'rotate(180)');
   }
 
@@ -337,6 +361,12 @@ async function renderMammalTree({
       .on('click', (event, d) => {
         clearTimeout(linkClickTimer);
         linkClickTimer = setTimeout(() => {
+          // Clear all previous highlights using direct DOM manipulation
+          document.querySelectorAll('.highlight').forEach(el => {
+            el.classList.remove('highlight');
+          });
+
+          // Then apply new highlights
           const tNode = d.target;
           highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), tNode);
           setHighlightedPath(tNode);
@@ -351,6 +381,12 @@ async function renderMammalTree({
       .on('click', (event, d) => {
         clearTimeout(clickTimer);
         clickTimer = setTimeout(() => {
+          // Clear all previous highlights using direct DOM manipulation
+          document.querySelectorAll('.highlight').forEach(el => {
+            el.classList.remove('highlight');
+          });
+
+          // Then apply new highlights
           highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), d);
           setHighlightedPath(d);
           if (info) info.show(d);
@@ -367,6 +403,18 @@ async function renderMammalTree({
         const names = d.ancestors().reverse().map(a => a.data.name).join(' / ');
         showPopupAt(event.pageX, event.pageY, d.data.name, '');
       });
+
+    // Click on empty space (SVG background) to clear all highlights
+    svg.on('click', (event) => {
+      // Only clear if clicking directly on the SVG (not on nodes or links)
+      if (event.target === event.currentTarget || event.target.tagName === 'svg') {
+        document.querySelectorAll('.highlight').forEach(el => {
+          el.classList.remove('highlight');
+        });
+        // Also clear the info panel if it exists
+        if (info) info.clear();
+      }
+    });
 
     setupHover(gNodes.selectAll('g.node'));
   }
@@ -435,16 +483,16 @@ async function renderMammalTree({
 }
 
 /**
- * collapseChemicalSubstanceLeavesByDefault
- * Default-view decluttering rule: In initial view, find the node named "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", or "Annelida"
+   collapseChemicalSubstanceLeavesByDefault
+ * Default-view decluttering rule: In initial view, find the node named "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Rhizophagidae", "Cybocephalidae", "Invertebrata", or "Ostomidae"
  * and collapse all of its leaf-level descendants so only higher-level structure shows.
- * Collapsed children are stored on _children to allow restoring via + / – toggles.
+   Collapsed children are stored on _children to allow restoring via + / – toggles.
  */
 function collapseChemicalSubstanceLeavesByDefault(root) {
-  // Find "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", or "Annelida" node in the current hierarchy
+  // Find "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Rhizophagidae", "Cybocephalidae", "Invertebrata", or "Ostomidae" node in the current hierarchy
   const chems = root.descendants().filter(d => {
     const n = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
-    return n === 'chemical substance' || n === 'chemical compound' || n === 'fungi' || n === 'algae' || n === 'plantae undiff.' || n === 'prokaryota' || n === 'chromista' || n === 'cnidaria' || n === 'annelida' || n === 'plantae' || n === 'bryozoa' || n === 'arthropoda';
+    return n === 'chemical substance' || n === 'chemical compound' || n === 'fungi' || n === 'algae' || n === 'plantae undiff.' || n === 'prokaryota' || n === 'chromista' || n === 'cnidaria' || n === 'annelida' || n === 'plantae' || n === 'bryozoa' || n === 'arthropoda' || n === 'rhizophagidae' || n === 'cybocephalidae' || n === 'invertebrata' || n === 'ostomidae' || n === 'unknown';
   });
 
   if (!chems.length) return;

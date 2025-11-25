@@ -1,5 +1,14 @@
 .highlight {
-  stroke: #3376e2 !important;
+  stroke: #43a047 !important;
+}
+
+text.highlight {
+  fill: #1b5e20 !important;
+  font-weight: 700 !important;
+  paint-order: stroke fill;
+  stroke: white !important;
+  stroke-width: 4px !important;
+  stroke-linejoin: round !important;
 }
 
 #chart svg text {

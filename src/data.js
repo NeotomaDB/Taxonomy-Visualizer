@@ -58,7 +58,7 @@ export function normalizeRows(rows) {
   }));
 }
 
-export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia') {
+export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia', anchorIds = new Set()) {
   const root = { id: rootId, name: rootName, children: [] };
   const byId = new Map([[root.id, root]]);
   const nameDict = new Map();
@@ -78,7 +78,12 @@ export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia') {
       const name = names[i] ?? nameDict.get(id) ?? String(id);
       let child = byId.get(id);
       if (!child) {
-        child = { id, name, children: [] };
+        child = { 
+          id, 
+          name, 
+          children: [],
+          isAnchor: anchorIds.has(id) || anchorIds.has(parseInt(id))
+        };
         byId.set(id, child);
         (parent.children || (parent.children = [])).push(child);
       }
@@ -90,92 +95,53 @@ export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia') {
 }
 
 /**
- * Add missing synonym nodes to the tree
- * @param {Object} treeRoot - The root of the tree
- * @param {Map} byId - Map of node ID to node object
- * @param {Object} synonymManager - The synonym manager with getSynonymInfo method
- * @param {Array} allRows - All available rows including those not in tree
+ * Attach synonym metadata onto canonical nodes in the tree.
+ * Invalid synonym names are NOT added as tree nodes — they are stored as
+ * `node.synonymMetadata` so the search and info panel can resolve them
+ * without polluting the phylogenetic structure.
+ *
+ * Also builds a reverse lookup map:  invalidId → canonicalId
+ * so search can find the canonical node when a user types an invalid name.
+ *
+ * @param {Object} treeRoot     - The root of the tree (unused but kept for API compat)
+ * @param {Map}    byId         - Map of node ID → node object (canonical nodes only)
+ * @param {Object} synonymManager - The synonym manager with getSynonymInfo / isReady
+ * @param {Array}  allRows      - All available rows (unused but kept for API compat)
+ * @returns {Map}  invalidIdToCanonicalId  — reverse lookup for search
  */
-export function addMissingSynonyms(treeRoot, byId, synonymManager, allRows) {
-  if (!synonymManager || !synonymManager.isReady()) {
-    console.log('Synonym manager not ready, skipping synonym additions');
-    return;
-  }
-  
-  // Create a map of all available nodes from allRows
-  const allNodesMap = new Map();
-  allRows.forEach(row => {
-    if (row.taxonid && row.taxonname) {
-      allNodesMap.set(row.taxonid, {
-        id: row.taxonid,
-        name: row.taxonname,
-        taxagroupid: row.taxagroupid
-      });
-    }
-  });
-  
-  let addedCount = 0;
-  
-  // Iterate through all nodes currently in the tree
-  const nodesToCheck = Array.from(byId.keys());
-  nodesToCheck.forEach(nodeId => {
+export function attachSynonymMetadata(treeRoot, byId, synonymManager, allRows) {
+  // Always return a Map (even when synonyms aren't ready) so callers don't need guards
+  const invalidIdToCanonicalId = new Map();
+
+  if (!synonymManager || !synonymManager.isReady()) return invalidIdToCanonicalId;
+
+  byId.forEach((node, nodeId) => {
     const synonymInfo = synonymManager.getSynonymInfo(nodeId);
-    if (!synonymInfo || !synonymInfo.synonyms) return;
-    
-    const currentNode = byId.get(nodeId);
-    if (!currentNode) return;
-    
-    // Check each synonym
+    if (!synonymInfo || !synonymInfo.synonyms || synonymInfo.synonyms.length === 0) return;
+
+    // Only attach on the canonical (valid) node
+    if (synonymInfo.validId !== nodeId) return;
+
+    // Store the full synonym info on the canonical node
+    node.synonymMetadata = {
+      validId: synonymInfo.validId,
+      validName: synonymInfo.validName,
+      synonyms: synonymInfo.synonyms   // [{invalid_id, invalid_name, synonymtype, recdatemodified}]
+    };
+
+    // Build reverse lookup for every invalid ID in this group
     synonymInfo.synonyms.forEach(syn => {
-      const synId = syn.invalid_id;
-      
-      // If synonym is not in tree but exists in allRows, add it
-      if (!byId.has(synId) && allNodesMap.has(synId)) {
-        const synNodeData = allNodesMap.get(synId);
-        
-        // Find the parent of the current node to add synonym as sibling
-        let parent = null;
-        
-        // Search for parent by traversing the tree
-        function findParent(node, targetId, par = null) {
-          if (node.id === targetId) return par;
-          if (node.children) {
-            for (const child of node.children) {
-              const result = findParent(child, targetId, node);
-              if (result) return result;
-            }
-          }
-          return null;
-        }
-        
-        parent = findParent(treeRoot, nodeId);
-        
-        if (parent) {
-          // Create synonym node as sibling
-          const synNode = {
-            id: synId,
-            name: synNodeData.name,
-            isSynonym: true, // Mark this as a synonym node added artificially
-            validId: synonymInfo.validId
-          };
-          
-          // Add to parent's children
-          if (!parent.children) parent.children = [];
-          parent.children.push(synNode);
-          
-          // Add to byId map
-          byId.set(synId, synNode);
-          
-          addedCount++;
-          console.log(`Added synonym: ${synNodeData.name} (ID: ${synId}) as sibling of ${currentNode.name} (ID: ${nodeId})`);
-        }
-      }
+      invalidIdToCanonicalId.set(syn.invalid_id, nodeId);
+      // Also map by name (lower-cased) for name-based search resolution
+      invalidIdToCanonicalId.set(syn.invalid_name.toLowerCase(), nodeId);
     });
   });
-  
-  if (addedCount > 0) {
-    console.log(`✓ Added ${addedCount} missing synonym nodes to the tree`);
-  }
+
+  return invalidIdToCanonicalId;
 }
+
+// Keep the old name exported as a no-op alias so any callers that haven't been
+// updated yet don't throw a ReferenceError. Will be removed in a later cleanup.
+export function addMissingSynonyms() {}
 
 

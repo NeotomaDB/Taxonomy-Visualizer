@@ -4,8 +4,9 @@ import { highlightPath } from './highlight.js';
 import { setHighlightedPath } from './viewSwitch.js';
 
 /**
- * Render a collapsible tree layout for small datasets (< 50 nodes)
- * Based on D3's collapsible tree example
+ * Render a collapsible tree layout.
+ * Supports mouse/trackpad pan & zoom.
+ * Root label is not clipped on the left.
  */
 export async function renderCollapsibleTree({
     rows,
@@ -15,6 +16,7 @@ export async function renderCollapsibleTree({
     rootName,
     width = 900,
     height = 600,
+    anchorIds = new Set(), // Set of anchor IDs to highlight in green
 } = {}) {
     if (!rows || !rows.length) {
         console.warn('renderCollapsibleTree: rows is empty.');
@@ -53,60 +55,85 @@ export async function renderCollapsibleTree({
     // Convert to d3 hierarchy
     const hierarchyRoot = d3.hierarchy(root);
 
-    // Set up tree layout
+    // Tree layout
     const dx = 25;
     const dy = width / (hierarchyRoot.height + 1);
     const tree = d3.tree().nodeSize([dx, dy]);
 
-    // Initialize with all nodes collapsed except first level
-    hierarchyRoot.descendants().forEach((d, i) => {
+    // Collapse all except first level
+    hierarchyRoot.descendants().forEach((d) => {
         d._children = d.children;
         if (d.depth > 1) {
             d.children = null;
         }
     });
 
-    // Create SVG
+    // Left margin: enough space for the root label so it is never clipped.
+    // ~7px per character is a rough estimate for 12px DM Sans.
+    const leftMargin = Math.max(rootName.length * 7 + 24, dy * 0.6);
+
+    // Create SVG — overflow:visible so labels outside the SVG box are shown
     const svg = d3.select(selector).append('svg')
         .attr('width', width)
         .attr('height', height)
-        .attr('viewBox', [-dy / 3, -dx, width, dx * (hierarchyRoot.descendants().length + 1)])
         .style('font', '12px "DM Sans", sans-serif')
-        .style('user-select', 'none');
+        .style('user-select', 'none')
+        .style('overflow', 'visible');    // <-- prevents label clipping
 
-    const gLink = svg.append('g')
+    // Also allow the #chart container to show overflow
+    d3.select(selector).style('overflow', 'visible');
+
+    // Inner <g> that zoom/pan transforms are applied to
+    const gMain = svg.append('g');
+
+    const gLink = gMain.append('g')
         .attr('fill', 'none')
         .attr('stroke', '#9aa0a6')
         .attr('stroke-opacity', 0.6)
         .attr('stroke-width', 1.5);
 
-    const gNode = svg.append('g')
+    const gNode = gMain.append('g')
         .attr('cursor', 'pointer')
         .attr('pointer-events', 'all');
+
+    // Zoom behaviour — transforms gMain
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 8])
+        .on('zoom', (event) => {
+            gMain.attr('transform', event.transform);
+        });
+
+    svg.call(zoom).on('dblclick.zoom', null);
+
+    // Track whether the initial centering has been applied
+    let initialised = false;
 
     function update(source) {
         const duration = 250;
         const nodes = hierarchyRoot.descendants().reverse();
         const links = hierarchyRoot.links();
 
-        // Compute the new tree layout
+        // Compute new tree layout
         tree(hierarchyRoot);
 
-        let left = hierarchyRoot;
-        let right = hierarchyRoot;
+        // Find vertical extent
+        let topNode = hierarchyRoot;
+        let bottomNode = hierarchyRoot;
         hierarchyRoot.eachBefore(node => {
-            if (node.x < left.x) left = node;
-            if (node.x > right.x) right = node;
+            if (node.x < topNode.x) topNode = node;
+            if (node.x > bottomNode.x) bottomNode = node;
         });
 
-        const height = right.x - left.x + dx * 2;
+        // Only centre the view on the very first render
+        if (!initialised) {
+            const centerY = height / 2 - (topNode.x + bottomNode.x) / 2;
+            svg.call(zoom.transform, d3.zoomIdentity.translate(leftMargin, centerY));
+            initialised = true;
+        }
 
-        const transition = svg.transition()
-            .duration(duration)
-            .attr('viewBox', [-dy / 3, left.x - dx, width, height])
-            .tween('resize', window.ResizeObserver ? null : () => () => svg.dispatch('toggle'));
+        const transition = svg.transition().duration(duration);
 
-        // Update nodes
+        // --- nodes ---
         const node = gNode.selectAll('g')
             .data(nodes, d => d.id || (d.id = ++i));
 
@@ -123,7 +150,10 @@ export async function renderCollapsibleTree({
 
         nodeEnter.append('circle')
             .attr('r', 4.5)
-            .attr('fill', d => d._children ? '#555' : '#999')
+            .attr('fill', d => {
+                if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
+                return d._children ? '#555' : '#999';
+            })
             .attr('stroke-width', 10);
 
         nodeEnter.append('text')
@@ -136,17 +166,17 @@ export async function renderCollapsibleTree({
             .attr('stroke-width', 3)
             .attr('stroke', 'white');
 
-        const nodeUpdate = node.merge(nodeEnter).transition(transition)
+        node.merge(nodeEnter).transition(transition)
             .attr('transform', d => `translate(${d.y},${d.x})`)
             .attr('fill-opacity', 1)
             .attr('stroke-opacity', 1);
 
-        const nodeExit = node.exit().transition(transition).remove()
+        node.exit().transition(transition).remove()
             .attr('transform', d => `translate(${source.y},${source.x})`)
             .attr('fill-opacity', 0)
             .attr('stroke-opacity', 0);
 
-        // Update links
+        // --- links ---
         const link = gLink.selectAll('path')
             .data(links, d => d.target.id);
 
@@ -165,7 +195,7 @@ export async function renderCollapsibleTree({
                 return diagonal({ source: o, target: o });
             });
 
-        // Stash the old positions for transition
+        // Stash positions
         hierarchyRoot.eachBefore(d => {
             d.x0 = d.x;
             d.y0 = d.y;

@@ -1,6 +1,6 @@
 import { applyAngleCulling } from './src/labelCulling.js';
 import { setupFocusInfo } from './src/searchFocus.js';
-import { normalizeRows, pathsToTree, addMissingSynonyms } from './src/data.js';
+import { normalizeRows, pathsToTree, attachSynonymMetadata } from './src/data.js';
 import { createPopup } from './src/popup.js';
 import { highlightPath } from './src/highlight.js';
 import { enrichTreeWithPaths, reorderTreeForGrouping, computeLeafOrder } from './src/grouping.js';
@@ -35,6 +35,7 @@ async function renderMammalTree({
   siblingSeparation = 0.3,  // Minimum angle between siblings (in radians)
   isInitialView = false,  // Whether this is the initial 4-level view
   rootNodes = null,  // For initial view, the root nodes structure
+  anchorIds = new Set(), // Set of anchor IDs to highlight in green
 } = {}) {
   if (!rows || !rows.length) {
     console.warn('renderMammalTree: rows is empty.');
@@ -61,6 +62,7 @@ async function renderMammalTree({
           id: nodeData.id,
           name: nodeData.name,
           taxagroupid: nodeData.taxagroupid,
+          isAnchor: nodeData.isAnchor || (anchorIds && (anchorIds.has(nodeData.id) || anchorIds.has(parseInt(nodeData.id)))),
           children: []
         };
         byId.set(nodeData.id, child);
@@ -90,19 +92,20 @@ async function renderMammalTree({
 
     treeData = root;
   } else {
-    const result = pathsToTree(normalizedRows, rootId, rootName);
+    const result = pathsToTree(normalizedRows, rootId, rootName, anchorIds);
     treeData = result.root;
     byId = result.byId;
   }
 
-  // 1.5) Add missing synonyms to the tree
+  // 1.5) Attach synonym metadata onto canonical nodes (no invalid nodes added to tree)
   const synonymManager = {
     isReady: () => isSynonymsReady(),
     getSynonymInfo: (id) => getSynonymInfo(id)
   };
-  // Use allRowsForSynonyms if provided, otherwise use rows
   const rowsForSynonymLookup = allRowsForSynonyms || rows;
-  addMissingSynonyms(treeData, byId, synonymManager, rowsForSynonymLookup);
+  const invalidIdToCanonicalId = attachSynonymMetadata(treeData, byId, synonymManager, rowsForSynonymLookup);
+  // Expose the reverse lookup globally so search.js can resolve synonym queries
+  window.__invalidIdToCanonicalId = invalidIdToCanonicalId;
 
   // Enrich tree with path information for grouping
   enrichTreeWithPaths(treeData, normalizedRows);
@@ -185,6 +188,22 @@ async function renderMammalTree({
   const gLinks = gRoot.append('g').attr('class', 'links').attr('fill', 'none').attr('stroke', '#9aa0a6').attr('stroke-opacity', 0.8);
   const gNodes = gRoot.append('g').attr('class', 'nodes');
 
+  // Root center label — fixed at origin, does not rotate
+  const gRootLabel = gViewport.append('g').attr('class', 'root-center-label');
+  gRootLabel.append('circle')
+    .attr('r', 20)
+    .attr('fill', '#e8f5e9')
+    .attr('stroke', '#43a047')
+    .attr('stroke-width', 1.5);
+  gRootLabel.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .style('font-size', '11px')
+    .style('font-weight', '700')
+    .style('fill', '#2e7d32')
+    .style('pointer-events', 'none')
+    .text(rootName);
+
   // Track transform state for rotate + zoom
   let currentRotate = 0;
   let currentScale = 1;
@@ -231,9 +250,26 @@ async function renderMammalTree({
   }
 
   // Update-draw function to support expand/collapse with smooth layout
-  function update(duration = 250) {
+  // triggerNode: if provided, keeps this node at its current angular position after re-layout
+  function update(duration = 250, triggerNode = null) {
+    // Store the trigger node's angular position before re-layout
+    const oldTriggerX = triggerNode ? triggerNode.x : null;
+
     // Recompute layout (cluster ignores hidden _children)
     d3.cluster().size([2 * Math.PI, radius]).separation(customSeparation)(root);
+
+    // Apply corrective rotation so the trigger node stays visually stable
+    if (triggerNode && oldTriggerX !== null) {
+      const newTriggerX = triggerNode.x;
+      const angleDriftDeg = (newTriggerX - oldTriggerX) * 180 / Math.PI;
+      currentRotate -= angleDriftDeg;
+      updateRotate();
+      // Sync rotation slider and display value
+      const ri = document.getElementById('rotate');
+      const rv = document.getElementById('rotateValue');
+      if (ri) ri.value = Math.round(currentRotate);
+      if (rv) rv.textContent = `${Math.round(currentRotate)}\u00B0`;
+    }
 
     const t = svg.transition().duration(duration);
 
@@ -259,10 +295,20 @@ async function renderMammalTree({
       .attr('transform', d => `rotate(${(d.x * 180 / Math.PI - 90)}) translate(${d.y},0)`)
       .style('opacity', 0);
 
+    // Invisible hit area for easier clicking (Fitts's Law)
     nodeEnter.append('circle')
-      .attr('r', 2.2)
+      .attr('class', 'hit-area')
+      .attr('r', 10)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+      .style('pointer-events', 'all');
+
+    nodeEnter.append('circle')
+      .attr('r', 3.5)
+      .style('pointer-events', 'none')
       .attr('fill', d => {
-        // Check if this node is one of the collapsed groups
+        if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
+
         const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
         const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
           nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
@@ -278,6 +324,8 @@ async function renderMammalTree({
       .attr('x', 10) // Will be updated by updateLabelOrientation()
       .attr('text-anchor', 'start') // Will be updated by updateLabelOrientation()
       .style('fill', d => {
+        if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
+
         // Check if this node is one of the collapsed groups
         const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
         const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
@@ -290,19 +338,15 @@ async function renderMammalTree({
       })
       .text(d => d.data.name);
 
-    // Toggle control (+ / –) for nodes under Chemical Substance that have collapsible children state
-    nodeEnter.append('text')
-      .attr('class', 'toggle')
-      .attr('dy', '-0.9em')
-      .style('font-weight', '700')
-      .style('font-size', '11px')
+    // Toggle control (+ / –) button with background circle for visibility
+    const toggleGroup = nodeEnter.append('g')
+      .attr('class', 'toggle-group')
+      .attr('transform', 'translate(0, -14)')
       .style('cursor', 'pointer')
-      .style('fill', '#ff6b35')  // Orange color for toggle buttons
-      .text(d => {
-        if (!isUnderChemical(d)) return '';
-        if (d._children && d._children.length) return '+';
-        if (d.children && d.children.length) return '–';
-        return '';
+      .style('display', d => {
+        if (d._children && d._children.length) return 'block';
+        if (d.children && d.children.length) return 'block';
+        return 'none';
       })
       .on('click', (event, d) => {
         event.stopPropagation();
@@ -315,10 +359,30 @@ async function renderMammalTree({
           d._children = d.children;
           d.children = null;
         }
-        update(300);
+        update(300, d);
         // After update, refresh interactions bound to node/link
         bindNodeInteractions();
         updateLabelOrientation();
+      });
+
+    toggleGroup.append('circle')
+      .attr('r', 9)
+      .attr('fill', '#fff8f0')
+      .attr('stroke', '#ff6b35')
+      .attr('stroke-width', 1.5);
+
+    toggleGroup.append('text')
+      .attr('class', 'toggle')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .style('font-weight', '700')
+      .style('font-size', '14px')
+      .style('fill', '#ff6b35')
+      .style('pointer-events', 'none')
+      .text(d => {
+        if (d._children && d._children.length) return '+';
+        if (d.children && d.children.length) return '\u2013';
+        return '';
       });
 
     const nodeMerge = nodeEnter.merge(node);
@@ -327,12 +391,17 @@ async function renderMammalTree({
       .attr('transform', d => `rotate(${(d.x * 180 / Math.PI - 90)}) translate(${d.y},0)`)
       .style('opacity', 1);
 
-    // Update toggle symbols per current expand/collapse state
+    // Update toggle symbols and visibility per current expand/collapse state
+    nodeMerge.select('.toggle-group')
+      .style('display', d => {
+        if (d._children && d._children.length) return 'block';
+        if (d.children && d.children.length) return 'block';
+        return 'none';
+      });
     nodeMerge.select('text.toggle')
       .text(d => {
-        if (!isUnderChemical(d)) return '';
         if (d._children && d._children.length) return '+';
-        if (d.children && d.children.length) return '–';
+        if (d.children && d.children.length) return '\u2013';
         return '';
       });
 
@@ -425,7 +494,7 @@ async function renderMammalTree({
   bindNodeInteractions();
 
   // Angle-based label culling (avoid overlap at initial scale)
-  const cull = applyAngleCulling(root, gNodes.selectAll('g.node'), 0.9);
+  const cull = applyAngleCulling(root, gNodes.selectAll('g.node'), 1.1);
   const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate);
   const { showAt: showPopupAt } = createPopup('popup');
 

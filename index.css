@@ -1,9 +1,9 @@
 .highlight {
-  stroke: #43a047 !important;
+  stroke: #1976d2 !important;
 }
 
 text.highlight {
-  fill: #1b5e20 !important;
+  fill: #0d47a1 !important;
   font-weight: 700 !important;
   paint-order: stroke fill;
   stroke: white !important;
@@ -12,9 +12,14 @@ text.highlight {
 }
 
 #chart svg text {
-  font-size: 9px;
+  font-size: 11px;
   font-family: "DM Sans", sans-serif;
   font-optical-sizing: auto;
+}
+
+/* Root center label at tree origin */
+.root-center-label text {
+  font-family: "DM Sans", sans-serif;
 }
 
 
@@ -147,6 +152,64 @@ body {
   gap: 8px;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Taxon Type segmented control */
+.taxon-type-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.taxon-type-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.taxon-type-group {
+  display: inline-flex;
+  background: #ffffff;
+  border: 1.5px solid #43a047;
+  border-radius: 8px;
+  padding: 2px;
+  gap: 0;
+}
+
+.taxon-type-btn {
+  background: transparent;
+  color: #43a047;
+  border: none;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "DM Sans", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.taxon-type-btn:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.taxon-type-btn:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+.taxon-type-btn.active {
+  background: #43a047;
+  color: #ffffff;
+}
+
+.taxon-type-btn:not(.active):hover {
+  background: #e8f5e9;
+}
+
+.taxon-type-btn.active:hover {
+  background: #2e7d32;
 }
 
 /* Custom Select Styling */
@@ -399,7 +462,7 @@ svg path {
 /* Highlighted links should be lines only (no area fill) */
 svg path.highlight {
   fill: none !important;
-  stroke: #43a047 !important;
+  stroke: #1976d2 !important;
   stroke-width: 2px;
 }
 
@@ -412,7 +475,7 @@ svg path.highlight-synonym {
 
 /* Text highlight styles */
 svg text.highlight {
-  fill: #43a047 !important;
+  fill: #1976d2 !important;
   font-weight: 600 !important;
 }
 
@@ -423,7 +486,7 @@ svg text.highlight-synonym {
 
 /* Focus label styling */
 .focus-label {
-  fill: #2e7d32 !important;
+  fill: #0d47a1 !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   pointer-events: none !important;
@@ -435,7 +498,7 @@ svg text.highlight-synonym {
 
 /* Focused text styling (applied to existing text elements) */
 .focused-text {
-  fill: #2e7d32 !important;
+  fill: #0d47a1 !important;
   font-size: 14px !important;
   font-weight: 700 !important;
   paint-order: stroke fill;

@@ -87,7 +87,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
 
         nodeGroup.select('text:not(.toggle)')
           .classed('focused-text', true)
-          .style('fill', isCollapsedGroup ? '#ff6b35' : '#2e7d32');
+          .style('fill', isCollapsedGroup ? '#ff6b35' : '#0d47a1');
       });
     }
   }

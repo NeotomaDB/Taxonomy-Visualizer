@@ -46,7 +46,16 @@
                         </div>
                     </div>
 
-                    <!-- Second row: Taxon Group and Search -->
+                    <!-- Second row: Taxon Type selector -->
+                    <div class="control-row taxon-type-row">
+                        <label class="taxon-type-label">Taxon Type:</label>
+                        <div class="taxon-type-group">
+                            <button id="bioTaxonBtn" class="taxon-type-btn active">Biological Taxon</button>
+                            <button id="nonBioTaxonBtn" class="taxon-type-btn">Non-biological Taxon</button>
+                        </div>
+                    </div>
+
+                    <!-- Third row: Taxon Group and Search -->
                     <div class="control-row taxon-group-search-row">
                         <div class="taxon-group-section">
                             <label for="taxagroupSelect">Taxon Group:</label>
@@ -67,6 +76,27 @@
                     </div>
                 </div>
                 <div id="info"></div>
+                <div id="color-legend" style="margin-top:8px; padding:10px 12px; background:#f9fafb; border-radius:8px; font-size:13px;">
+                    <div style="font-weight:600; margin-bottom:6px;">Legend</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px 16px;">
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#202124;"></span>
+                            <span>Node</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ff6b35;"></span>
+                            <span>Collapsible group</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="display:inline-block;width:14px;height:3px;background:#1976d2;border-radius:1px;"></span>
+                            <span>Search match</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span style="display:inline-block;width:14px;height:3px;background:#f59e0b;border-radius:1px;"></span>
+                            <span>Synonym match</span>
+                        </div>
+                    </div>
+                </div>
                 <div id="navigation" style="margin-top: 12px; display: none;">
                     <button id="backButton" style="
                         padding: 8px 16px;
@@ -166,9 +196,25 @@
             if (!taxagroupid) return [];
             const filtered = rows.filter(row => row.taxagroupid === taxagroupid);
 
+            // 1. Check if we have a known anchor for this group
+            if (anchorDataMap.has(taxagroupid)) {
+                const anchor = anchorDataMap.get(taxagroupid);
+                const anchorName = anchor.anchorName;
+
+                return filtered
+                    .filter(row => row.names_root_to_leaf.includes(anchorName))
+                    .map(row => {
+                        const anchorIndex = row.names_root_to_leaf.indexOf(anchorName);
+                        return {
+                            ...row,
+                            ids_root_to_leaf: row.ids_root_to_leaf.slice(anchorIndex),
+                            names_root_to_leaf: row.names_root_to_leaf.slice(anchorIndex)
+                        };
+                    });
+            }
+
+            // 2. Fallback to existing MAM hardcoded logic if no anchor data found
             if (taxagroupid === 'MAM') {
-                // For Mammalia, filter to only include paths that contain Mammalia (6171)
-                // and extract paths starting from Mammalia
                 return filtered
                     .filter(row => row.ids_root_to_leaf.includes(6171))
                     .map(row => {
@@ -180,8 +226,7 @@
                         };
                     });
             } else {
-                // For other groups, find the most common root node
-                // Count occurrences of first node in each path
+                // 3. For other groups, find the most common root node
                 const rootCounts = new Map();
                 filtered.forEach(row => {
                     if (row.ids_root_to_leaf.length > 0) {
@@ -210,6 +255,15 @@
 
         // Get root info for a taxagroupid
         function getRootInfo(rows, taxagroupid) {
+            // Check if we have a known anchor for this group
+            if (anchorDataMap.has(taxagroupid)) {
+                const anchor = anchorDataMap.get(taxagroupid);
+                return {
+                    rootId: parseInt(anchor.anchorId),
+                    rootName: anchor.anchorName
+                };
+            }
+
             if (taxagroupid === 'MAM') {
                 return { rootId: 6171, rootName: 'Mammalia' };
             }
@@ -251,45 +305,96 @@
         let isInitialView = true; // Track if we're in the initial 4-level view
         let isSyncingDropdown = false; // Flag to prevent recursive calls when syncing dropdown
         let taxagroupNames = {}; // Store taxagroupid to full name mapping
+        let anchorDataMap = new Map(); // Store taxagroupid to anchor info mapping
+        let anchorIds = new Set(); // Store all anchor node IDs for styling
+
+        // Non-biological taxon group IDs
+        const NON_BIO_GROUPS = new Set(['WCH', 'BIM', 'AQU', 'PHY', 'MAG', 'CHM', 'SED', 'LOI', 'LAB', 'CAR', 'ISO', 'CHR']);
+
+        // Current taxon type selection: 'bio' or 'nonbio'
+        let currentTaxonType = 'bio';
+
+        // Populate the taxon group dropdown filtered by taxon type
+        function populateTaxonGroupDropdown(allTaxaGroupsList) {
+            const select = document.getElementById('taxagroupSelect');
+            select.innerHTML = '';
+
+            // Add "Major Groups" as the first option
+            const majorGroupsOption = document.createElement('option');
+            majorGroupsOption.value = '';
+            majorGroupsOption.textContent = 'Major Groups';
+            select.appendChild(majorGroupsOption);
+
+            // Filter groups based on selected taxon type
+            const filtered = allTaxaGroupsList.filter(group => {
+                if (currentTaxonType === 'nonbio') return NON_BIO_GROUPS.has(group);
+                return !NON_BIO_GROUPS.has(group);
+            });
+
+            filtered.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group;
+                option.textContent = taxagroupNames[group] || group;
+                select.appendChild(option);
+            });
+
+            // Reset to Major Groups
+            select.value = '';
+        }
 
         // Load both taxonpaths and taxagroup names mapping in parallel
+        let allTaxaGroupsList = [];
         Promise.all([
             fetch("data/taxonpaths.json").then(r => r.json()),
-            fetch("data/taxagroup_names.json").then(r => r.json()).catch(() => ({})) // Fallback to empty object if file not found
+            fetch("data/taxagroup_names.json").then(r => r.json()).catch(() => ({})),
+            fetch("data/anchor_analysis.json").then(r => r.json()).catch(() => ([]))
         ])
-            .then(([taxonData, namesMap]) => {
-                taxagroupNames = namesMap; // Store the mapping
+            .then(([taxonData, namesMap, anchors]) => {
+                taxagroupNames = namesMap;
+                // Convert list of anchors to a map for easy lookup
+                anchorDataMap = new Map(anchors.map(a => [a.taxagroupid, a]));
+                // Extract all anchor IDs into a set for styling
+                anchorIds = new Set(anchors.map(a => parseInt(a.anchorId)));
                 allRows = convertTaxonPaths(taxonData);
 
-                // Extract unique taxagroupid values
-                const taxaGroups = extractTaxaGroups(allRows);
+                allTaxaGroupsList = extractTaxaGroups(allRows);
 
-                // Populate dropdown
-                const select = document.getElementById('taxagroupSelect');
-                select.innerHTML = '';
-
-                // Add "Major Groups" as the first option
-                const majorGroupsOption = document.createElement('option');
-                majorGroupsOption.value = '';
-                majorGroupsOption.textContent = 'Major Groups';
-                select.appendChild(majorGroupsOption);
-
-                // Add all other taxon groups with full names
-                taxaGroups.forEach(group => {
-                    const option = document.createElement('option');
-                    option.value = group; // Keep taxagroupid as value
-                    // Use full name from mapping, fallback to taxagroupid if not found
-                    option.textContent = taxagroupNames[group] || group;
-                    select.appendChild(option);
-                });
-
-                // Set "Major Groups" as selected (initial view)
-                select.value = '';
+                populateTaxonGroupDropdown(allTaxaGroupsList);
 
                 // Load initial 4-level view
                 loadInitialView();
 
+                // Wire up the taxon type segmented buttons
+                const bioBtn = document.getElementById('bioTaxonBtn');
+                const nonBioBtn = document.getElementById('nonBioTaxonBtn');
+
+                function switchTaxonType(type) {
+                    if (type === currentTaxonType) return;
+                    currentTaxonType = type;
+
+                    // Update button active states
+                    bioBtn.classList.toggle('active', type === 'bio');
+                    nonBioBtn.classList.toggle('active', type === 'nonbio');
+
+                    // Re-populate dropdown and reset view state
+                    currentTaxagroupid = null;
+                    isInitialView = true;
+                    navigationStack = [];
+                    currentTreeType = 'main';
+                    mainTreeNodes = [];
+                    orphanTreeNodes = [];
+
+                    populateTaxonGroupDropdown(allTaxaGroupsList);
+
+                    updateBackButton();
+                    loadInitialView();
+                }
+
+                bioBtn.addEventListener('click', () => switchTaxonType('bio'));
+                nonBioBtn.addEventListener('click', () => switchTaxonType('nonbio'));
+
                 // Handle dropdown change
+                const select = document.getElementById('taxagroupSelect');
                 select.addEventListener('change', (e) => {
                     // Skip if we're programmatically syncing the dropdown
                     if (isSyncingDropdown) {
@@ -337,14 +442,21 @@
         // Build initial 4-level view (Eukaryota, Animalia, Vertebrata, Mammalia)
         // Returns both main tree and orphan tree
         function buildInitialView() {
-            // Build first 4 levels for ALL data (not grouped by taxagroupid)
+            // Filter rows to match the currently selected taxon type
+            const rowsForType = allRows.filter(row => {
+                const group = row.taxagroupid || '';
+                if (currentTaxonType === 'nonbio') return NON_BIO_GROUPS.has(group);
+                return !NON_BIO_GROUPS.has(group);
+            });
+
+            // Build first 4 levels for filtered data
             const levelMap = new Map(); // Map of level -> Map of id -> nodeData
             const idToTaxagroupid = new Map(); // Track taxagroupid for each node ID
             const standaloneOrphans = []; // Nodes with only one ID (no hierarchical path)
 
-            allRows.forEach(row => {
-                const ids = row.ids_root_to_leaf || [];
-                const names = row.names_root_to_leaf || [];
+            rowsForType.forEach(row => {
+                let ids = row.ids_root_to_leaf || [];
+                let names = row.names_root_to_leaf || [];
                 const taxagroupid = row.taxagroupid;
 
                 // Check for standalone orphan nodes (only one ID, no path)
@@ -359,10 +471,22 @@
                     return; // Skip processing for standalone orphans
                 }
 
-                // Only process rows with at least 4 levels
-                if (ids.length >= 4 && names.length >= 4) {
-                    // Get first 4 levels
-                    for (let i = 0; i < Math.min(4, ids.length); i++) {
+                // ANCHOR TRUNCATION LOGIC
+                // If this group has a known anchor, truncate the path at that anchor
+                let pathLimit = 4; // Default level limit for overview
+                if (anchorDataMap.has(taxagroupid)) {
+                    const anchor = anchorDataMap.get(taxagroupid);
+                    const anchorId = parseInt(anchor.anchorId);
+                    const anchorIdx = ids.indexOf(anchorId);
+                    if (anchorIdx !== -1) {
+                        pathLimit = anchorIdx + 1;
+                    }
+                }
+
+                // Only process rows with enough levels (either 4 or at least anchor depth)
+                if (ids.length >= pathLimit && names.length >= pathLimit) {
+                    // Get up to pathLimit levels
+                    for (let i = 0; i < Math.min(pathLimit, ids.length); i++) {
                         const id = ids[i];
                         const name = names[i];
 
@@ -376,6 +500,7 @@
                                 id: id,
                                 name: name,
                                 taxagroupids: new Set(), // Track all taxagroupids for this node
+                                isAnchor: anchorIds.has(id),
                                 children: new Set(),
                                 pathCount: 0 // Count how many paths go through this node
                             });
@@ -638,7 +763,8 @@
                 rootId: rootId,
                 rootName: rootName,
                 isInitialView: true,
-                rootNodes: nodesToRender
+                rootNodes: nodesToRender,
+                anchorIds: anchorIds
             });
 
             // Initialize view switch for initial view
@@ -655,7 +781,8 @@
                         rootId: rootId,
                         rootName: rootName,
                         isInitialView: isInitialView, // Use current isInitialView state
-                        rootNodes: isInitialView ? initialNodesToRender : null
+                        rootNodes: isInitialView ? initialNodesToRender : null,
+                        anchorIds: anchorIds
                     });
                 },
                 rows,
@@ -778,7 +905,8 @@
                         rootId: rootId,
                         rootName: rootName,
                         isInitialView: isSyntheticTaxagroupidNode,
-                        rootNodes: isSyntheticTaxagroupidNode ? rootNodesToRender : null
+                        rootNodes: isSyntheticTaxagroupidNode ? rootNodesToRender : null,
+                        anchorIds: anchorIds
                     });
                 },
                 filteredRows,
@@ -794,7 +922,8 @@
                 rootId: renderRootId,
                 rootName: renderRootName,
                 isInitialView: isSyntheticTaxagroupidNode,
-                rootNodes: isSyntheticTaxagroupidNode ? rootNodesToRender : null
+                rootNodes: isSyntheticTaxagroupidNode ? rootNodesToRender : null,
+                anchorIds: anchorIds
             });
         }
 
@@ -824,7 +953,57 @@
                 if (toggleDiv) {
                     toggleDiv.style.display = 'none';
                 }
-                await loadTreeForGroup(currentTaxagroupid);
+
+                // Check if we need to go back to a specific intermediate node
+                const rootInfo = getRootInfo(allRows, currentTaxagroupid);
+                if (currentRootId && currentRootId !== rootInfo.rootId) {
+                    // Navigate back to the stored intermediate node, not the group root
+                    const filteredRows = allRows
+                        .filter(row => (row.ids_root_to_leaf || []).includes(currentRootId))
+                        .map(row => {
+                            const ids = row.ids_root_to_leaf || [];
+                            const names = row.names_root_to_leaf || [];
+                            const index = ids.indexOf(currentRootId);
+                            if (index >= 0) {
+                                return { ...row, ids_root_to_leaf: ids.slice(index), names_root_to_leaf: names.slice(index) };
+                            }
+                            return row;
+                        })
+                        .filter(row => row.ids_root_to_leaf.length > 1);
+
+                    const allRowsForGroup = allRows.filter(row => row.taxagroupid === currentTaxagroupid);
+
+                    d3.select('#chart').selectAll('*').remove();
+                    resetViewState();
+
+                    initViewSwitch(
+                        async (rows, rootId, rootName, allRowsForSynonyms) => {
+                            d3.select('#chart').selectAll('*').remove();
+                            await window.renderMammalTree({
+                                rows: rows,
+                                allRowsForSynonyms: allRowsForSynonyms,
+                                rootId: rootId,
+                                rootName: rootName,
+                                anchorIds: anchorIds
+                            });
+                        },
+                        filteredRows,
+                        { rootId: currentRootId, rootName: currentRootName },
+                        currentTaxagroupid,
+                        allRowsForGroup
+                    );
+
+                    await window.renderMammalTree({
+                        rows: filteredRows,
+                        allRowsForSynonyms: allRowsForGroup,
+                        rootId: currentRootId,
+                        rootName: currentRootName,
+                        anchorIds: anchorIds
+                    });
+                } else {
+                    // Going back to the group root
+                    await loadTreeForGroup(currentTaxagroupid);
+                }
             }
         }
 
@@ -945,7 +1124,8 @@
                         rows: rows,
                         allRowsForSynonyms: allRowsForSynonyms,
                         rootId: rootId,
-                        rootName: rootName
+                        rootName: rootName,
+                        anchorIds: anchorIds
                     });
                 },
                 filteredRows,
@@ -964,15 +1144,19 @@
 
             console.log(`Taxon group ${taxagroupid} has ${nodeCount} nodes`);
 
-            // Use collapsible tree for small datasets (< 50 nodes)
-            if (nodeCount < 50) {
+            // Groups that always use the collapsible list tree (flat structure, radial looks bad)
+            const FORCE_LIST_TREE_GROUPS = new Set(['WCH', 'LAB']);
+
+            // Use collapsible tree for small datasets (< 50 nodes) OR forced groups
+            if (nodeCount < 50 || FORCE_LIST_TREE_GROUPS.has(taxagroupid)) {
                 console.log('Using collapsible tree view');
                 const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
                 await renderCollapsibleTree({
                     rows: filteredRows,
                     allRowsForSynonyms: allRowsForGroup,
                     rootId: rootInfo.rootId,
-                    rootName: rootInfo.rootName
+                    rootName: rootInfo.rootName,
+                    anchorIds: anchorIds
                 });
             } else {
                 console.log('Using radial dendrogram view');
@@ -981,7 +1165,8 @@
                     rows: filteredRows,
                     allRowsForSynonyms: allRowsForGroup,
                     rootId: rootInfo.rootId,
-                    rootName: rootInfo.rootName
+                    rootName: rootInfo.rootName,
+                    anchorIds: anchorIds
                 });
             }
         }

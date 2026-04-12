@@ -1,0 +1,144 @@
+# Taxagroup Anchor Analysis Records
+
+```json
+{
+  "taxagroupid": "SPO",
+  "anchorName": "Porifera",
+  "anchorId": 5133,
+  "anchorDepth": 2,
+  "coverage": "100%",
+  "independentPaths": []
+}
+```
+
+```json
+{
+  "taxagroupid": "CNI",
+  "anchorName": "Cnidaria",
+  "anchorId": 19906,
+  "anchorDepth": 2,
+  "coverage": "100%",
+  "independentPaths": []
+}
+```
+
+```json
+{
+  "taxagroupid": "BRC",
+  "anchorName": "Brachiopoda",
+  "anchorId": 19845,
+  "anchorDepth": 2,
+  "coverage": "100%",
+  "independentPaths": []
+}
+```
+
+```json
+{
+  "taxagroupid": "ANL",
+  "anchorName": "Annelida",
+  "anchorId": 13918,
+  "anchorDepth": 2,
+  "coverage": "91.67%",
+  "independentPaths": [
+    { "taxonid": 15453, "taxonname": "Nephelis", "path": "Nephelis" },
+    { "taxonid": 23949, "taxonname": "Tubellaria", "path": "Tubellaria" }
+  ]
+}
+```
+
+```json
+{
+  "taxagroupid": "MOL",
+  "anchorName": "Mollusca",
+  "anchorId": 6166,
+  "anchorDepth": 2,
+  "coverage": "95.99%",
+  "independentPaths": [
+    { "taxonid": 7618, "taxonname": "Stagnicola elodes", "path": "Stagnicola elodes" },
+    { "taxonid": 7627, "taxonname": "Fossaria", "path": "Fossaria" },
+    { "taxonid": 7628, "taxonname": "Fossaria sp.", "path": "Fossaria sp." },
+    { "taxonid": 9208, "taxonname": "Lottia limatula", "path": "Lottia limatula" },
+    { "taxonid": 15041, "taxonname": "Lymnaea palustris nuttalliana", "path": "Lymnaea palustris nuttalliana" },
+    { "taxonid": 15042, "taxonname": "Helisoma trivolvis", "path": "Helisoma trivolvis" },
+    { "taxonid": 15117, "taxonname": "Basommatophora", "path": "Basommatophora" },
+    { "taxonid": 19268, "taxonname": "Spisula polynyma", "path": "Spisula polynyma" },
+    { "taxonid": 19895, "taxonname": "Acmaeidae", "path": "Acmaeidae" },
+    { "taxonid": 20920, "taxonname": "Acmaea limatula", "path": "Acmaea limatula" },
+    { "taxonid": 20922, "taxonname": "Acmaea limatula", "path": "Acmaea limatula" },
+    { "taxonid": 24046, "taxonname": "Lunatia groenlandica", "path": "Lunatia groenlandica" },
+    { "taxonid": 24054, "taxonname": "Natica clausa", "path": "Natica clausa" },
+    { "taxonid": 26956, "taxonname": "Fossaria parva", "path": "Fossaria parva" },
+    { "taxonid": 26967, "taxonname": "Pisidium casertanum", "path": "Pisidium casertanum" },
+    { "taxonid": 28893, "taxonname": "Amnicola lustrica", "path": "Amnicola lustrica" },
+    { "taxonid": 28894, "taxonname": "Fossaria obrussa", "path": "Fossaria obrussa" },
+    { "taxonid": 28901, "taxonname": "Helisoma campanulatum", "path": "Helisoma campanulatum" },
+    { "taxonid": 28913, "taxonname": "Sphaerium lacustre", "path": "Sphaerium lacustre" },
+    { "taxonid": 28915, "taxonname": "Fossaria obrussa decampi", "path": "Fossaria obrussa decampi" },
+    { "taxonid": 34984, "taxonname": "Pelecypoda", "path": "Pelecypoda" },
+    { "taxonid": 37457, "taxonname": "Symphynota", "path": "Symphynota" }
+  ]
+}
+```
+
+```json
+{
+  "taxagroupid": "NEM",
+  "anchorName": "Nematoda",
+  "anchorId": 5557,
+  "anchorDepth": 2,
+  "coverage": "100%",
+  "independentPaths": []
+}
+```
+
+```json
+{
+  "taxagroupid": "FLT",
+  "anchorName": "Platyhelminthes",
+  "anchorId": 5419,
+  "anchorDepth": 2,
+  "coverage": "87.10%",
+  "independentPaths": [
+    { "taxonid": 23394, "taxonname": "Turbellaria gen. sp.", "path": "Turbellaria gen. sp." },
+    { "taxonid": 42265, "taxonname": "Neorhabdocoela", "path": "Neorhabdocoela" },
+    { "taxonid": 42267, "taxonname": "Neorhabdocoela undiff.", "path": "Neorhabdocoela undiff." },
+    { "taxonid": 42269, "taxonname": "Neorhabdocoela (UG-1223)", "path": "Neorhabdocoela (UG-1223)" }
+  ]
+}
+```
+
+```json
+{
+  "taxagroupid": "ECH",
+  "anchorName": "Echinodermata",
+  "anchorId": 9484,
+  "anchorDepth": 2,
+  "coverage": "100%",
+  "independentPaths": []
+}
+```
+
+```json
+{
+  "taxagroupid": "ROT",
+  "anchorName": "Rotifera",
+  "anchorId": 3688,
+  "anchorDepth": 2,
+  "coverage": "91.55%",
+  "independentPaths": [
+    { "taxonid": 15452, "taxonname": "Callidina angusticollis", "path": "Callidina angusticollis" },
+    { "taxonid": 27711, "taxonname": "Filinia longiseta var. passa/F. hofmanni", "path": "Filinia longiseta var. passa/F. hofmanni" },
+    { "taxonid": 30745, "taxonname": "Callidina angusticollis (type-37, HdV)", "path": "Callidina angusticollis (type-37, HdV)" },
+    { "taxonid": 33835, "taxonname": "Rotatoria", "path": "Rotatoria" },
+    { "taxonid": 33838, "taxonname": "Rotatoria undiff.", "path": "Rotatoria undiff." },
+    { "taxonid": 43468, "taxonname": "Conochiloides coenobasis", "path": "Conochiloides coenobasis" }
+  ]
+}
+```
+
+
+
+
+
+

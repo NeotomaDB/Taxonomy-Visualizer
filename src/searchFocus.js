@@ -45,24 +45,59 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
       </button>
     ` : '';
 
+    // Add "Go to Group View" button if node is an anchor
+    const isAnchor = d.data && d.data.isAnchor;
+    const taxagroupid = d.data && d.data.taxagroupid;
+    const goToGroupButton = (isAnchor && taxagroupid && window.loadTreeForGroup) ? `
+      <button id="goToGroupBtn" style="
+        margin-top: 12px;
+        margin-left: 8px;
+        padding: 8px 16px;
+        background: #2e7d32;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: 'DM Sans', sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+      " onmouseover="this.style.filter='brightness(1.1)'" onmouseout="this.style.filter='brightness(1)'">
+        <span>→</span>
+        Go to Group View
+      </button>
+    ` : '';
+
     panel.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${names.length} matches)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${names.map(n => `<div style="margin-left:12px;">${n}</div>`).join('')}</div>
-      ${goToTreeButton}
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">
+        ${goToTreeButton}
+        ${goToGroupButton}
+      </div>
     `;
     panel.style.display = 'block';
 
     // Add event listener for "Go to Tree" button
     const goToTreeBtn = document.getElementById('goToTreeFromClick');
     if (goToTreeBtn && window.navigateToNode) {
-      // Remove any existing listeners by cloning the button
       const newBtn = goToTreeBtn.cloneNode(true);
       goToTreeBtn.parentNode.replaceChild(newBtn, goToTreeBtn);
-
       newBtn.addEventListener('click', () => {
         const nodeData = d.data;
-        const taxagroupid = nodeData.taxagroupid || 'MAM';
-        window.navigateToNode(nodeData.id, nodeData.name, taxagroupid);
+        const tid = nodeData.taxagroupid || 'MAM';
+        window.navigateToNode(nodeData.id, nodeData.name, tid);
+      });
+    }
+
+    // Add event listener for "Go to Group View" button
+    const goToGroupBtn = document.getElementById('goToGroupBtn');
+    if (goToGroupBtn && window.loadTreeForGroup) {
+      goToGroupBtn.addEventListener('click', () => {
+        window.loadTreeForGroup(taxagroupid);
       });
     }
 

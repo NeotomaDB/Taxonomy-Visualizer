@@ -113,6 +113,12 @@
                         ← Go Back
                     </button>
                 </div>
+
+                <!-- Anomaly status bar: shown per taxon group when anomalies / orphans exist -->
+                <div id="anomaly-bar" style="display:none; margin-top:10px; padding:7px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;"></div>
+
+                <!-- Anomaly detail panel: toggled by "View details →" link -->
+                <div id="anomaly-detail-panel" style="display:none; margin-top:8px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; max-height:420px; overflow-y:auto;"></div>
             </div>
         </div>
     </div>
@@ -121,6 +127,7 @@
     <script type="module" src="mammal_path_combined.js"></script>
     <script type="module">
         import { initViewSwitch, resetViewState } from './src/viewSwitch.js';
+        import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree
         function convertTaxonPaths(data) {
             // data is an object with a SQL query string as key and array as value
@@ -170,6 +177,39 @@
                 // Convert taxonnames (comma-separated names) to array, respecting commas inside parentheses
                 const names_root_to_leaf = parseTaxonNames(row.taxonnames);
 
+                // Inject synthetic nodes for specific taxagroups
+                if (row.taxagroupid === 'FSH') {
+                    const vertIndex = names_root_to_leaf.indexOf('Vertebrata');
+                    if (vertIndex !== -1 && vertIndex < names_root_to_leaf.length - 1) {
+                        if (names_root_to_leaf[vertIndex + 1] !== 'Fish (Synthetic)') {
+                            names_root_to_leaf.splice(vertIndex + 1, 0, 'Fish (Synthetic)');
+                            ids_root_to_leaf.splice(vertIndex + 1, 0, 999999);
+                        }
+                    }
+                } else if (row.taxagroupid === 'HRP') {
+                    const vertIndex = names_root_to_leaf.indexOf('Vertebrata');
+                    if (vertIndex !== -1 && vertIndex < names_root_to_leaf.length - 1) {
+                        if (names_root_to_leaf[vertIndex + 1] !== 'Reptiles and amphil (Synthetic)') {
+                            names_root_to_leaf.splice(vertIndex + 1, 0, 'Reptiles and amphil (Synthetic)');
+                            ids_root_to_leaf.splice(vertIndex + 1, 0, 999998);
+                        }
+                    }
+                } else if (row.taxagroupid === 'VER') {
+                    const vertIndex = names_root_to_leaf.indexOf('Vertebrata');
+                    if (vertIndex !== -1 && vertIndex < names_root_to_leaf.length - 1) {
+                        if (names_root_to_leaf[vertIndex + 1] !== 'Vertebrates undiff. (Synthetic)') {
+                            names_root_to_leaf.splice(vertIndex + 1, 0, 'Vertebrates undiff. (Synthetic)');
+                            ids_root_to_leaf.splice(vertIndex + 1, 0, 999997);
+                        }
+                    }
+                } else if (row.taxagroupid === 'ALG') {
+                    // Prepend "Algae (Group)" to preserve all disparate root nodes (Eukaryota, Algae, Prokaryota)
+                    if (names_root_to_leaf[0] !== 'Algae (Group)') {
+                        names_root_to_leaf.unshift('Algae (Group)');
+                        ids_root_to_leaf.unshift(999996);
+                    }
+                }
+
                 return {
                     taxonid: row.taxonid,
                     taxonname: row.taxonname,
@@ -212,21 +252,7 @@
                         };
                     });
             }
-
-            // 2. Fallback to existing MAM hardcoded logic if no anchor data found
-            if (taxagroupid === 'MAM') {
-                return filtered
-                    .filter(row => row.ids_root_to_leaf.includes(6171))
-                    .map(row => {
-                        const mammaliaIndex = row.ids_root_to_leaf.indexOf(6171);
-                        return {
-                            ...row,
-                            ids_root_to_leaf: row.ids_root_to_leaf.slice(mammaliaIndex),
-                            names_root_to_leaf: row.names_root_to_leaf.slice(mammaliaIndex)
-                        };
-                    });
-            } else {
-                // 3. For other groups, find the most common root node
+            // 3. For other groups, find the most common root node
                 const rootCounts = new Map();
                 filtered.forEach(row => {
                     if (row.ids_root_to_leaf.length > 0) {
@@ -250,7 +276,6 @@
                     row.ids_root_to_leaf.length > 0 &&
                     row.ids_root_to_leaf[0] === mostCommonRoot
                 );
-            }
         }
 
         // Get root info for a taxagroupid
@@ -264,9 +289,6 @@
                 };
             }
 
-            if (taxagroupid === 'MAM') {
-                return { rootId: 6171, rootName: 'Mammalia' };
-            }
 
             // For other groups, find the most common root
             const filtered = rows.filter(row => row.taxagroupid === taxagroupid);
@@ -309,7 +331,34 @@
         let anchorIds = new Set(); // Store all anchor node IDs for styling
 
         // Non-biological taxon group IDs
-        const NON_BIO_GROUPS = new Set(['WCH', 'BIM', 'AQU', 'PHY', 'MAG', 'CHM', 'SED', 'LOI', 'LAB', 'CAR', 'ISO', 'CHR']);
+        const NON_BIO_GROUPS = new Set(['WCH', 'BIM', 'AQU', 'PHY', 'MAG', 'CHM', 'SED', 'LOI', 'LAB', 'CAR', 'ISO', 'CHR', 'UPA', 'DNA', 'PHT']);
+
+        // Groups with no unique real taxonomic anchor — use a synthetic root node.
+        // sliceAfterName: find this name in the path; keep everything AFTER it.
+        // The synthetic root ID/name is prepended at position 0.
+        const SYNTHETIC_GROUP_ROOTS = {
+            // overviewDepth: how many path levels to show in the initial overview
+            // (replaces the default 4-level cutoff so anchor-equivalent nodes appear)
+            BRY: { rootId: -2001, rootName: 'Bryophytes',     sliceAfterName: 'Embryophyta',   overviewDepth: 6 },
+            PLA: { rootId: -2002, rootName: 'Plants undiff.', sliceAfterName: 'Plantae',       overviewDepth: 4 },
+        };
+
+        // Transforms rows for synthetic-root groups: slices each path AFTER
+        // sliceAfterName, then prepends the synthetic root ID/name.
+        // Rows that don't contain sliceAfterName are dropped (become orphans).
+        function buildSyntheticRootRows(allGroupRows, synth) {
+            return allGroupRows
+                .filter(row => (row.names_root_to_leaf || []).includes(synth.sliceAfterName))
+                .map(row => {
+                    const idx = row.names_root_to_leaf.indexOf(synth.sliceAfterName);
+                    return {
+                        ...row,
+                        ids_root_to_leaf:   [synth.rootId,   ...row.ids_root_to_leaf.slice(idx + 1)],
+                        names_root_to_leaf: [synth.rootName, ...row.names_root_to_leaf.slice(idx + 1)],
+                    };
+                })
+                .filter(row => row.ids_root_to_leaf.length > 1);
+        }
 
         // Current taxon type selection: 'bio' or 'nonbio'
         let currentTaxonType = 'bio';
@@ -355,6 +404,7 @@
                 anchorDataMap = new Map(anchors.map(a => [a.taxagroupid, a]));
                 // Extract all anchor IDs into a set for styling
                 anchorIds = new Set(anchors.map(a => parseInt(a.anchorId)));
+                // Merge real anchors for groups not in anchor_analysis.json
                 allRows = convertTaxonPaths(taxonData);
 
                 allTaxaGroupsList = extractTaxaGroups(allRows);
@@ -472,15 +522,30 @@
                 }
 
                 // ANCHOR TRUNCATION LOGIC
-                // If this group has a known anchor, truncate the path at that anchor
+                // If this group has a known anchor, truncate the path at that anchor.
+                // We ONLY include paths that actually reach the anchor (or independent paths).
                 let pathLimit = 4; // Default level limit for overview
                 if (anchorDataMap.has(taxagroupid)) {
                     const anchor = anchorDataMap.get(taxagroupid);
                     const anchorId = parseInt(anchor.anchorId);
+                    const independentIds = (anchor.independentPaths || []).map(p => parseInt(p.id));
+                    
                     const anchorIdx = ids.indexOf(anchorId);
                     if (anchorIdx !== -1) {
                         pathLimit = anchorIdx + 1;
+                    } else {
+                        // Check independent paths
+                        const indepIdx = ids.findIndex(id => independentIds.includes(id));
+                        if (indepIdx !== -1) {
+                            pathLimit = indepIdx + 1;
+                        } else {
+                            // Path does not contain anchor or independent variants.
+                            // For anchored groups, we skip these extraneous paths in the Major Groups view.
+                            return;
+                        }
                     }
+                } else if (SYNTHETIC_GROUP_ROOTS[taxagroupid]?.overviewDepth) {
+                    pathLimit = SYNTHETIC_GROUP_ROOTS[taxagroupid].overviewDepth;
                 }
 
                 // Only process rows with enough levels (either 4 or at least anchor depth)
@@ -540,7 +605,8 @@
 
                     // Recursively build children up to level 3 (Mammalia)
                     function buildChildren(parentNode, level, isOrphan = false) {
-                        if (level >= 3) return; // Stop at level 3 (Mammalia)
+                        // No hardcoded level cap — recursion terminates naturally when
+                        // levelMap has no further entries (beyond the group's pathLimit).
 
                         const nextLevel = levelMap.get(level + 1);
                         if (!nextLevel) return;
@@ -574,6 +640,7 @@
                                     id: childId,
                                     name: childData.name,
                                     taxagroupid: childTaxagroupid,
+                                    isAnchor: anchorIds.has(childId) || anchorIds.has(parseInt(childId)),
                                     children: []
                                 };
                                 buildChildren(childNode, level + 1, isOrphan);
@@ -606,7 +673,7 @@
                     // Build orphan tree node (nodes with single taxonname, no children)
                     // Check if this root has orphan descendants at any level
                     function hasOrphanDescendants(nodeId, level) {
-                        if (level >= 3) return false;
+                        if (level >= 6) return false; // cap to match max pathLimit
                         const nodeData = levelMap.get(level)?.get(nodeId);
                         if (!nodeData) return false;
 
@@ -694,6 +761,12 @@
             updateBackButton();
             syncDropdownValue();
             currentTreeType = treeType;
+
+            // Anomaly bar is per-group; hide it in the all-groups overview
+            const _anomBar = document.getElementById('anomaly-bar');
+            const _anomDetail = document.getElementById('anomaly-detail-panel');
+            if (_anomBar) _anomBar.style.display = 'none';
+            if (_anomDetail) _anomDetail.style.display = 'none';
 
             // Build trees if not already built
             if (mainTreeNodes.length === 0 && orphanTreeNodes.length === 0) {
@@ -955,6 +1028,11 @@
                 }
 
                 // Check if we need to go back to a specific intermediate node
+                // Synthetic root: re-load the group from scratch
+                if (currentRootId < 0) {
+                    await loadTreeForGroup(currentTaxagroupid);
+                    return;
+                }
                 const rootInfo = getRootInfo(allRows, currentTaxagroupid);
                 if (currentRootId && currentRootId !== rootInfo.rootId) {
                     // Navigate back to the stored intermediate node, not the group root
@@ -1073,6 +1151,167 @@
         let currentRootId = null;
         let currentRootName = null;
 
+        // ── Anomaly UI ────────────────────────────────────────────────────────────
+        // Cached anomalies for the currently-displayed taxon group.
+        let currentAnomalies = [];
+
+        /**
+         * Render (or hide) the anomaly status bar below the controls.
+         * Called by loadTreeForGroup after detectAnomalies() runs.
+         *
+         * @param {string} taxagroupid
+         * @param {Array}  anomalies    AnomalyRecord[] from detectAnomalies()
+         * @param {number} orphanCount  Rows with path-length ≤ 1 or incertae sedis
+         */
+        function updateAnomalyBar(taxagroupid, anomalies, orphanCount) {
+            const bar = document.getElementById('anomaly-bar');
+            const detailPanel = document.getElementById('anomaly-detail-panel');
+            if (!bar) return;
+
+            // Always collapse detail panel when switching groups
+            if (detailPanel) detailPanel.style.display = 'none';
+
+            currentAnomalies = anomalies;
+
+            if (orphanCount === 0 && anomalies.length === 0) {
+                bar.style.display = 'none';
+                return;
+            }
+
+            const parts = [];
+
+            if (orphanCount > 0) {
+                parts.push(
+                    `<span style="color:#6b7280;">${orphanCount.toLocaleString()} orphan nodes</span>`
+                );
+            }
+
+            if (anomalies.length > 0) {
+                // Build tooltip: list example path beginning so researchers can spot the issue
+                const exPath = anomalies[0].actualPath.split(' → ').slice(0, 3).join(', ');
+                const tooltipText =
+                    `${anomalies.length} record(s) in ${taxagroupid} have paths ` +
+                    `inconsistent with this taxagroup (e.g. ${exPath}). ` +
+                    `These are excluded from the tree.`;
+
+                parts.push(`
+                    <span style="color:#6b7280;">
+                        <span style="color:#dc2626; font-weight:600;">${anomalies.length}</span>
+                        &nbsp;data anomalies
+                        <abbr title="${tooltipText}" style="
+                            cursor:help; text-decoration:none;
+                            display:inline-flex; align-items:center; justify-content:center;
+                            width:15px; height:15px; border-radius:50%;
+                            background:#fee2e2; color:#dc2626;
+                            font-size:9px; font-weight:700;
+                            margin-left:3px; vertical-align:middle;
+                        ">?</abbr>
+                        <a href="#" id="viewAnomalyDetails" style="
+                            margin-left:7px; color:#9ca3af; font-size:11px; text-decoration:underline;
+                        ">View details →</a>
+                    </span>
+                `);
+            }
+
+            const sep = `<span style="color:#d1d5db; margin:0 2px;">|</span>`;
+            bar.innerHTML =
+                `<div style="font-size:12px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">` +
+                parts.join(sep) +
+                `</div>`;
+            bar.style.display = 'block';
+
+            // Wire up "View details →" toggle
+            const viewLink = document.getElementById('viewAnomalyDetails');
+            if (viewLink) {
+                viewLink.addEventListener('click', e => {
+                    e.preventDefault();
+                    showAnomalyDetail(taxagroupid, anomalies);
+                });
+            }
+        }
+
+        /**
+         * Toggle the anomaly detail panel.
+         * On first open (or after group switch) renders the table; subsequent
+         * clicks collapse it.
+         *
+         * @param {string} taxagroupid
+         * @param {Array}  anomalies
+         */
+        function showAnomalyDetail(taxagroupid, anomalies) {
+            const panel = document.getElementById('anomaly-detail-panel');
+            if (!panel) return;
+
+            // Toggle: close if already open
+            if (panel.style.display !== 'none') {
+                panel.style.display = 'none';
+                return;
+            }
+
+            const rows = anomalies.map(a => {
+                const meta = getAnomalyMeta(a.anomalyType);
+                // Truncate long paths for readability — full path available on hover
+                const shortPath = a.actualPath.length > 90
+                    ? a.actualPath.slice(0, 87) + '…'
+                    : a.actualPath;
+                return `
+                    <tr style="border-top:1px solid #f3f4f6;">
+                        <td style="padding:6px 8px; color:#9ca3af; white-space:nowrap;">${a.taxonid}</td>
+                        <td style="padding:6px 8px; font-weight:500; color:#1f2937;">${a.taxonname}</td>
+                        <td style="padding:6px 8px; white-space:nowrap;">
+                            <span style="
+                                display:inline-block; padding:2px 7px; border-radius:4px;
+                                background:${meta.bg}; color:${meta.color};
+                                font-size:11px; font-weight:600;
+                            ">${meta.label}</span>
+                        </td>
+                        <td title="${a.actualPath}" style="padding:6px 8px; color:#6b7280; font-size:11px; max-width:200px; word-break:break-all; cursor:help;">
+                            ${shortPath}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            panel.innerHTML = `
+                <div style="font-weight:600; font-size:13px; color:#1f2937; margin-bottom:10px;">
+                    Data Anomalies in ${taxagroupid}
+                    <span style="font-weight:400; color:#6b7280; font-size:12px;">(${anomalies.length} record${anomalies.length !== 1 ? 's' : ''})</span>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                        <thead>
+                            <tr style="background:#f9fafb; text-align:left; color:#6b7280; font-size:11px; font-weight:600;">
+                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">taxonid</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">taxonname</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">anomaly type</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">actual path</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                <div style="margin-top:10px; font-size:11px; color:#9ca3af; font-style:italic; line-height:1.5;">
+                    Note: These records are not shown in the taxonomy tree.
+                    They may reflect database entry errors or legacy classifications.
+                </div>
+                <button id="closeAnomalyDetail" style="
+                    margin-top:10px; padding:4px 12px;
+                    border:1px solid #e5e7eb; border-radius:6px;
+                    background:#f9fafb; color:#6b7280;
+                    font-size:12px; cursor:pointer;
+                ">Close</button>
+            `;
+            panel.style.display = 'block';
+
+            const closeBtn = document.getElementById('closeAnomalyDetail');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    panel.style.display = 'none';
+                });
+            }
+        }
+        // ── End anomaly UI ────────────────────────────────────────────────────────
+
         async function loadTreeForGroup(taxagroupid) {
             if (!taxagroupid) {
                 // Clear the chart if no group selected
@@ -1091,8 +1330,25 @@
                 toggleDiv.style.display = 'none';
             }
 
-            // Filter rows by taxagroupid for the tree
-            const filteredRows = filterRowsByGroup(allRows, taxagroupid);
+            // Get ALL rows for this taxagroupid (including those without full paths)
+            // This is needed for anomaly detection and synonym nodes
+            const allRowsForGroup = allRows.filter(row => row.taxagroupid === taxagroupid);
+
+            // Filter rows for the tree — synthetic-root groups get path-sliced rows
+            let filteredRows, renderRootId, renderRootName;
+            if (SYNTHETIC_GROUP_ROOTS[taxagroupid]) {
+                const synth = SYNTHETIC_GROUP_ROOTS[taxagroupid];
+                filteredRows   = buildSyntheticRootRows(allRowsForGroup, synth);
+                renderRootId   = synth.rootId;
+                renderRootName = synth.rootName;
+            } else {
+                filteredRows = filterRowsByGroup(allRows, taxagroupid);
+                const rootInfo = getRootInfo(allRows, taxagroupid);
+                renderRootId   = rootInfo.rootId;
+                renderRootName = rootInfo.rootName;
+            }
+            currentRootId   = renderRootId;
+            currentRootName = renderRootName;
 
             if (filteredRows.length === 0) {
                 console.warn(`No data found for taxagroupid: ${taxagroupid}`);
@@ -1101,14 +1357,30 @@
                 return;
             }
 
-            // Get ALL rows for this taxagroupid (including those without full paths)
-            // This is needed to add missing synonym nodes
-            const allRowsForGroup = allRows.filter(row => row.taxagroupid === taxagroupid);
+            // ── Anomaly detection ─────────────────────────────────────────────────
+            // Run on the full (un-sliced) group rows so domain/kingdom checks see
+            // the complete path from Eukaryota downward.  Anomalous rows are already
+            // absent from filteredRows (they lack the anchor name), so this is purely
+            // for counting + UI display — it does not change what the tree renders.
+            if (!NON_BIO_GROUPS.has(taxagroupid)) {
+                const { anomalies } = detectAnomalies(allRowsForGroup, taxagroupid);
 
-            // Get root info for this taxagroupid
-            const rootInfo = getRootInfo(allRows, taxagroupid);
-            currentRootId = rootInfo.rootId;
-            currentRootName = rootInfo.rootName;
+                // Orphan count: standalone (path ≤ 1 node) + incertae sedis rows
+                const orphanCount = allRowsForGroup.filter(row => {
+                    const names = row.names_root_to_leaf || [];
+                    return names.length <= 1 ||
+                        names.some(n => (n || '').toLowerCase().includes('incertae sedis'));
+                }).length;
+
+                updateAnomalyBar(taxagroupid, anomalies, orphanCount);
+            } else {
+                // Non-bio group — hide bar if previously shown
+                const bar = document.getElementById('anomaly-bar');
+                const detailPanel = document.getElementById('anomaly-detail-panel');
+                if (bar) bar.style.display = 'none';
+                if (detailPanel) detailPanel.style.display = 'none';
+            }
+            // ── End anomaly detection ─────────────────────────────────────────────
 
             // Clear previous chart
             d3.select('#chart').selectAll('*').remove();
@@ -1129,7 +1401,7 @@
                     });
                 },
                 filteredRows,
-                rootInfo,
+                { rootId: renderRootId, rootName: renderRootName },
                 taxagroupid,
                 allRowsForGroup
             );
@@ -1154,8 +1426,8 @@
                 await renderCollapsibleTree({
                     rows: filteredRows,
                     allRowsForSynonyms: allRowsForGroup,
-                    rootId: rootInfo.rootId,
-                    rootName: rootInfo.rootName,
+                    rootId: renderRootId,
+                    rootName: renderRootName,
                     anchorIds: anchorIds
                 });
             } else {
@@ -1164,15 +1436,16 @@
                 await window.renderMammalTree({
                     rows: filteredRows,
                     allRowsForSynonyms: allRowsForGroup,
-                    rootId: rootInfo.rootId,
-                    rootName: rootInfo.rootName,
+                    rootId: renderRootId,
+                    rootName: renderRootName,
                     anchorIds: anchorIds
                 });
             }
         }
 
-        // Export navigateToNode for use in renderMammalTree
+        // Export navigateToNode and loadTreeForGroup for use in modules
         window.navigateToNode = navigateToNode;
+        window.loadTreeForGroup = loadTreeForGroup;
     </script>
 </body>
 

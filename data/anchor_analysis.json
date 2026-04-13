@@ -258,5 +258,54 @@
     "anchorId": "535",
     "anchorDepth": 1,
     "independentPaths": []
+  },
+  {
+    "taxagroupid": "PHT",
+    "anchorName": "phytolith",
+    "anchorId": "27790",
+    "anchorDepth": 2,
+    "independentPaths": []
+  },
+  {
+    "taxagroupid": "AVE",
+    "anchorName": "Aves",
+    "anchorId": "5856",
+    "anchorDepth": 3,
+    "independentPaths": []
+  },
+  {
+    "taxagroupid": "FSH",
+    "anchorName": "Fish (Synthetic)",
+    "anchorId": "999999",
+    "anchorDepth": 3,
+    "independentPaths": []
+  },
+  {
+    "taxagroupid": "HRP",
+    "anchorName": "Reptiles and amphil (Synthetic)",
+    "anchorId": "999998",
+    "anchorDepth": 3,
+    "independentPaths": []
+  },
+  {
+    "taxagroupid": "VER",
+    "anchorName": "Vertebrates undiff. (Synthetic)",
+    "anchorId": "999997",
+    "anchorDepth": 3,
+    "independentPaths": []
+  },
+  {
+    "taxagroupid": "MAM",
+    "anchorName": "Mammalia",
+    "anchorId": "6171",
+    "anchorDepth": 3,
+    "independentPaths": []
+  },
+  {
+    "taxagroupid": "ALG",
+    "anchorName": "Algae (Group)",
+    "anchorId": "999996",
+    "anchorDepth": 0,
+    "independentPaths": []
   }
 ]

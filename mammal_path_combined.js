@@ -378,7 +378,7 @@ async function renderMammalTree({
           nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
           nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
           nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
-        return isCollapsedGroup ? '#ff6b35' : '#202124';
+        return isCollapsedGroup ? '#6b7280' : '#202124';
       });
 
     nodeEnter.append('text')
@@ -396,7 +396,7 @@ async function renderMammalTree({
           nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
           nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
           nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
-        return isCollapsedGroup ? '#ff6b35' : null;
+        return isCollapsedGroup ? '#6b7280' : null;
       })
       .text(d => {
         let name = d.data.name;
@@ -438,8 +438,8 @@ async function renderMammalTree({
 
     toggleGroup.append('circle')
       .attr('r', 9)
-      .attr('fill', '#fff8f0')
-      .attr('stroke', '#ff6b35')
+      .attr('fill', '#f3f4f6')
+      .attr('stroke', '#6b7280')
       .attr('stroke-width', 1.5);
 
     toggleGroup.append('text')
@@ -448,7 +448,7 @@ async function renderMammalTree({
       .attr('dy', '0.35em')
       .style('font-weight', '700')
       .style('font-size', '14px')
-      .style('fill', '#ff6b35')
+      .style('fill', '#6b7280')
       .style('pointer-events', 'none')
       .text(d => {
         if (d._children && d._children.length) return '+';

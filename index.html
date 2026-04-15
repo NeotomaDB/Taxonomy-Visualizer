@@ -483,7 +483,7 @@
                         }
 
                         updateBackButton();
-                        loadTreeForGroup(currentTaxagroupid);
+                        loadTreeForGroup(currentTaxagroupid, false);
                     }
                 });
             })
@@ -1030,7 +1030,7 @@
                 // Check if we need to go back to a specific intermediate node
                 // Synthetic root: re-load the group from scratch
                 if (currentRootId < 0) {
-                    await loadTreeForGroup(currentTaxagroupid);
+                    await loadTreeForGroup(currentTaxagroupid, false);
                     return;
                 }
                 const rootInfo = getRootInfo(allRows, currentTaxagroupid);
@@ -1080,7 +1080,7 @@
                     });
                 } else {
                     // Going back to the group root
-                    await loadTreeForGroup(currentTaxagroupid);
+                    await loadTreeForGroup(currentTaxagroupid, false);
                 }
             }
         }
@@ -1122,10 +1122,11 @@
             const backBtn = document.getElementById('backButton');
 
             if (navDiv && backBtn) {
-                if (isInitialView && navigationStack.length === 0) {
-                    navDiv.style.display = 'none';
-                } else {
+                // Only show Back button if there's a real previous state to go back to
+                if (navigationStack.length > 0) {
                     navDiv.style.display = 'block';
+                } else {
+                    navDiv.style.display = 'none';
                 }
             }
         }
@@ -1312,12 +1313,24 @@
         }
         // ── End anomaly UI ────────────────────────────────────────────────────────
 
-        async function loadTreeForGroup(taxagroupid) {
+        async function loadTreeForGroup(taxagroupid, pushToStack = true) {
             if (!taxagroupid) {
                 // Clear the chart if no group selected
                 d3.select('#chart').selectAll('*').remove();
                 resetViewState();
                 return;
+            }
+
+            // Save current state so Back button can return here
+            if (pushToStack) {
+                navigationStack.push({
+                    taxagroupid: currentTaxagroupid,
+                    isInitialView: isInitialView,
+                    rootId: currentRootId,
+                    rootName: currentRootName,
+                    treeType: currentTreeType
+                });
+                updateBackButton();
             }
 
             currentTaxagroupid = taxagroupid;

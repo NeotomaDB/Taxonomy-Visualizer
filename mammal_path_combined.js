@@ -169,11 +169,24 @@ async function renderMammalTree({
     .size([2 * Math.PI, radius])
     .separation(customSeparation)(root);
 
-  // 2.5) Default-view decluttering rule for "Chemical Substance"
-  // This collapses leaf-level descendants under the "Chemical Substance" subtree by default,
+  // 2.5) Default-view decluttering rule for "Chemical Substance" and "Mammalia"
+  // This collapses leaf-level descendants under the subtrees by default,
   // and provides + / – toggles for interactive exploration.
   if (isInitialView) {
     collapseChemicalSubstanceLeavesByDefault(root);
+  }
+
+  // MAM-specific tiered summary view: Collapse orders by default
+  const taxagroupid = rows[0]?.taxagroupid;
+  if (taxagroupid === 'MAM' && !isInitialView) {
+    // Mammalia is root. Children are Orders.
+    // Collapse everything below Orders
+    root.children?.forEach(orderNode => {
+      if (orderNode.children && orderNode.children.length > 0) {
+        orderNode._children = orderNode.children;
+        orderNode.children = null;
+      }
+    });
   }
 
   // 3) SVG scaffold
@@ -336,7 +349,14 @@ async function renderMammalTree({
           nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
         return isCollapsedGroup ? '#ff6b35' : null;
       })
-      .text(d => d.data.name);
+      .text(d => {
+        let name = d.data.name;
+        // Append count if node is collapsed and has a leafCount
+        if (d._children && d._children.length > 0 && d.data.leafCount) {
+          name += ` (${d.data.leafCount})`;
+        }
+        return name;
+      });
 
     // Toggle control (+ / –) button with background circle for visibility
     const toggleGroup = nodeEnter.append('g')
@@ -515,6 +535,23 @@ async function renderMammalTree({
     rotateInput.addEventListener('input', (e) => applyRotation(Number(e.target.value)));
   }
 
+  // Function to ensure a node's full path is visible (expanded)
+  function expandToNode(d) {
+    let current = d;
+    let anyExpanded = false;
+    while (current.parent) {
+      if (current.parent._children) {
+        current.parent.children = current.parent._children;
+        current.parent._children = null;
+        anyExpanded = true;
+      }
+      current = current.parent;
+    }
+    if (anyExpanded) {
+      update();
+    }
+  }
+
   // 7.5) Search + focus
   setupSearch({
     root,
@@ -523,7 +560,8 @@ async function renderMammalTree({
     info,
     setCurrentRotate: (value) => { currentRotate = value; },
     updateRotate,
-    updateLabelOrientation
+    updateLabelOrientation,
+    expandToNode // Pass expansion function to search
   });
 
   // 8) Zoom/pan (wheel/pinch)

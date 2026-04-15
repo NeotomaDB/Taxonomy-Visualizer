@@ -27,10 +27,18 @@ export function setupSearch({
   info,
   setCurrentRotate,
   updateRotate,
-  updateLabelOrientation
+  updateLabelOrientation,
+  expandToNode
 }) {
+  function getAllNodes(n) {
+    const arr = [n];
+    if (n.children) n.children.forEach(c => arr.push(...getAllNodes(c)));
+    if (n._children) n._children.forEach(c => arr.push(...getAllNodes(c)));
+    return arr;
+  }
+
   const idToNode = new Map();
-  root.descendants().forEach(n => idToNode.set(n.data.id, n));
+  getAllNodes(root).forEach(n => idToNode.set(n.data.id, n));
   let currentMatches = [];
   let currentMatchIndex = -1;
   let isShowingDetails = false; // Track if we're showing details of a single result
@@ -41,6 +49,9 @@ export function setupSearch({
   let synonymResolutions = new Map();
 
   function focusNode(d) {
+    // Ensure path to node is expanded first
+    if (expandToNode) expandToNode(d);
+
     setCurrentRotate(90 - (d.x * 180 / Math.PI));
     updateRotate();
     updateLabelOrientation();
@@ -52,6 +63,11 @@ export function setupSearch({
   }
 
   function highlightAllMatches(matches) {
+    // Expand paths to all matching nodes so they are visible in the tree
+    if (expandToNode && matches.length > 0) {
+      matches.forEach(m => expandToNode(m));
+    }
+
     // Clear previous highlights
     link.classed('highlight', false);
     link.classed('highlight-synonym', false);
@@ -423,7 +439,7 @@ export function setupSearch({
       const lower = q.toLowerCase().replace(/^\?+/, '').trim(); // strip leading ? (uncertain name notation)
 
       // Pass 1: direct name match against nodes in the tree
-      root.descendants().forEach(n => {
+      getAllNodes(root).forEach(n => {
         if ((n.data.name || '').toLowerCase().includes(lower)) {
           if (!matchedIds.has(n.data.id)) {
             matches.push(n);
@@ -435,7 +451,7 @@ export function setupSearch({
 
       // Pass 2: match against synonym metadata attached to canonical nodes
       // Each canonical node carries node.data.synonymMetadata.synonyms[]
-      root.descendants().forEach(n => {
+      getAllNodes(root).forEach(n => {
         const meta = n.data.synonymMetadata;
         if (!meta) return;
 

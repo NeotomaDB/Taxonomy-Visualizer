@@ -71,9 +71,13 @@ export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia', anchorId
   for (const r of rows) {
     const ids = r.ids_root_to_leaf;
     const names = r.names_root_to_leaf;
-    if (ids[0] !== root.id) continue;
+    
+    // Find the index of our intended root in the full path
+    const rootIndex = ids.indexOf(root.id);
+    if (rootIndex === -1) continue;
+    
     let parent = root;
-    for (let i = 1; i < ids.length; i++) {
+    for (let i = rootIndex + 1; i < ids.length; i++) {
       const id = ids[i];
       const name = names[i] ?? nameDict.get(id) ?? String(id);
       let child = byId.get(id);
@@ -91,6 +95,21 @@ export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia', anchorId
     }
   }
   (function prune(n) { if (n.children && n.children.length) n.children.forEach(prune); else delete n.children; })(root);
+
+  // Calculate cumulative leaf counts (actual taxa at the ends of paths)
+  (function countLeaves(node) {
+    if (!node.children || node.children.length === 0) {
+      node.leafCount = 1;
+      return 1;
+    }
+    let sum = 0;
+    node.children.forEach(child => {
+      sum += countLeaves(child);
+    });
+    node.leafCount = sum;
+    return sum;
+  })(root);
+
   return { root, byId };
 }
 

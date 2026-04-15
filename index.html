@@ -126,7 +126,7 @@
     <script src="src/taxon-group-select.js"></script>
     <script type="module" src="mammal_path_combined.js"></script>
     <script type="module">
-        import { initViewSwitch, resetViewState } from './src/viewSwitch.js';
+        import { initViewSwitch, resetViewState, activateFocusView } from './src/viewSwitch.js';
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree
         function convertTaxonPaths(data) {
@@ -343,6 +343,10 @@
             PLA: { rootId: -2002, rootName: 'Plants undiff.', sliceAfterName: 'Plantae',       overviewDepth: 4 },
         };
 
+        const GROUP_OVERVIEW_CONFIG = {
+            INS: { overviewDepth: 2, rootId: 0, rootName: 'Root', hideSingletonRootChildren: true },
+        };
+
         // Transforms rows for synthetic-root groups: slices each path AFTER
         // sliceAfterName, then prepends the synthetic root ID/name.
         // Rows that don't contain sliceAfterName are dropped (become orphans).
@@ -358,6 +362,16 @@
                     };
                 })
                 .filter(row => row.ids_root_to_leaf.length > 1);
+        }
+
+        function buildGroupOverviewRows(groupRows, overview) {
+            return groupRows
+                .filter(row => (row.ids_root_to_leaf || []).length > 0 && (row.names_root_to_leaf || []).length > 0)
+                .map(row => ({
+                    ...row,
+                    ids_root_to_leaf: [overview.rootId, ...(row.ids_root_to_leaf || [])],
+                    names_root_to_leaf: [overview.rootName, ...(row.names_root_to_leaf || [])],
+                }));
         }
 
         // Current taxon type selection: 'bio' or 'nonbio'
@@ -405,6 +419,19 @@
                 // Extract all anchor IDs into a set for styling
                 anchorIds = new Set(anchors.map(a => parseInt(a.anchorId)));
                 // Merge real anchors for groups not in anchor_analysis.json
+                const BUILTIN_ANCHORS = {
+                    VPL: { anchorName: 'Tracheophyta',     anchorId: 9534  },
+                    DIN: { anchorName: 'Miozoa',           anchorId: 32187 },
+                    AVE: { anchorName: 'Aves',             anchorId: 5856  },
+                    DIA: { anchorName: 'Bacillariophyta',  anchorId: 5396  },
+                    OST: { anchorName: 'Ostracoda',        anchorId: 13914 },
+                };
+                Object.entries(BUILTIN_ANCHORS).forEach(([id, entry]) => {
+                    if (!anchorDataMap.has(id)) {
+                        anchorDataMap.set(id, { taxagroupid: id, ...entry });
+                        anchorIds.add(entry.anchorId);
+                    }
+                });
                 allRows = convertTaxonPaths(taxonData);
 
                 allTaxaGroupsList = extractTaxaGroups(allRows);
@@ -1349,11 +1376,17 @@
 
             // Filter rows for the tree — synthetic-root groups get path-sliced rows
             let filteredRows, renderRootId, renderRootName;
+            let overviewConfig = null;
             if (SYNTHETIC_GROUP_ROOTS[taxagroupid]) {
                 const synth = SYNTHETIC_GROUP_ROOTS[taxagroupid];
                 filteredRows   = buildSyntheticRootRows(allRowsForGroup, synth);
                 renderRootId   = synth.rootId;
                 renderRootName = synth.rootName;
+            } else if (GROUP_OVERVIEW_CONFIG[taxagroupid]) {
+                overviewConfig = GROUP_OVERVIEW_CONFIG[taxagroupid];
+                filteredRows = buildGroupOverviewRows(allRowsForGroup, overviewConfig);
+                renderRootId = overviewConfig.rootId;
+                renderRootName = overviewConfig.rootName;
             } else {
                 filteredRows = filterRowsByGroup(allRows, taxagroupid);
                 const rootInfo = getRootInfo(allRows, taxagroupid);
@@ -1405,11 +1438,30 @@
             initViewSwitch(
                 async (rows, rootId, rootName, allRowsForSynonyms) => {
                     d3.select('#chart').selectAll('*').remove();
+                    const isFilteredSearchView = taxagroupid === 'INS' && rows !== filteredRows;
+                    if (isFilteredSearchView) {
+                        const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
+                        const currentQuery = document.getElementById('searchInput')?.value?.trim() || '';
+                        await renderCollapsibleTree({
+                            rows: rows,
+                            allRowsForSynonyms: allRowsForSynonyms,
+                            rootId: rootId,
+                            rootName: rootName,
+                            anchorIds: anchorIds,
+                            expandAll: true,
+                            initialQuery: currentQuery,
+                            autoRunSearch: !!currentQuery,
+                        });
+                        return;
+                    }
+
                     await window.renderMammalTree({
                         rows: rows,
                         allRowsForSynonyms: allRowsForSynonyms,
                         rootId: rootId,
                         rootName: rootName,
+                        overviewDepth: rows === filteredRows ? overviewConfig?.overviewDepth : null,
+                        hideSingletonRootChildren: rows === filteredRows ? !!overviewConfig?.hideSingletonRootChildren : false,
                         anchorIds: anchorIds
                     });
                 },
@@ -1432,6 +1484,11 @@
             // Groups that always use the collapsible list tree (flat structure, radial looks bad)
             const FORCE_LIST_TREE_GROUPS = new Set(['WCH', 'LAB']);
 
+            // Groups where the collapsible tree should be fully expanded at init
+            const EXPAND_ALL_COLLAPSIBLE = new Set([
+                'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN',
+            ]);
+
             // Use collapsible tree for small datasets (< 50 nodes) OR forced groups
             if (nodeCount < 50 || FORCE_LIST_TREE_GROUPS.has(taxagroupid)) {
                 console.log('Using collapsible tree view');
@@ -1441,7 +1498,8 @@
                     allRowsForSynonyms: allRowsForGroup,
                     rootId: renderRootId,
                     rootName: renderRootName,
-                    anchorIds: anchorIds
+                    anchorIds: anchorIds,
+                    expandAll: EXPAND_ALL_COLLAPSIBLE.has(taxagroupid),
                 });
             } else {
                 console.log('Using radial dendrogram view');
@@ -1451,6 +1509,8 @@
                     allRowsForSynonyms: allRowsForGroup,
                     rootId: renderRootId,
                     rootName: renderRootName,
+                    overviewDepth: overviewConfig?.overviewDepth ?? null,
+                    hideSingletonRootChildren: !!overviewConfig?.hideSingletonRootChildren,
                     anchorIds: anchorIds
                 });
             }
@@ -1459,6 +1519,7 @@
         // Export navigateToNode and loadTreeForGroup for use in modules
         window.navigateToNode = navigateToNode;
         window.loadTreeForGroup = loadTreeForGroup;
+        window.activateFocusView = activateFocusView;
     </script>
 </body>
 

@@ -35,6 +35,8 @@ async function renderMammalTree({
   siblingSeparation = 0.3,  // Minimum angle between siblings (in radians)
   isInitialView = false,  // Whether this is the initial 4-level view
   rootNodes = null,  // For initial view, the root nodes structure
+  overviewDepth = null, // Collapse nodes deeper than this visible depth
+  hideSingletonRootChildren = false, // Hide top-level singleton leaves in overview mode
   anchorIds = new Set(), // Set of anchor IDs to highlight in green
 } = {}) {
   if (!rows || !rows.length) {
@@ -112,6 +114,40 @@ async function renderMammalTree({
 
   const root = d3.hierarchy(treeData);
 
+  function applyOverviewCollapse(rootNode, visibleDepth, hideSingletonRoots) {
+    if (hideSingletonRoots && rootNode.children && rootNode.children.length > 0) {
+      const visibleChildren = [];
+      const hiddenChildren = [];
+      rootNode.children.forEach(child => {
+        if ((child.children && child.children.length > 0) || (child.data && child.data.leafCount > 1)) {
+          visibleChildren.push(child);
+        } else {
+          hiddenChildren.push(child);
+        }
+      });
+      rootNode.children = visibleChildren.length > 0 ? visibleChildren : null;
+      rootNode._children = hiddenChildren.length > 0 ? hiddenChildren : null;
+    }
+
+    rootNode.each(d => {
+      if (d.depth >= visibleDepth && d.children && d.children.length > 0) {
+        d._children = d.children;
+        d.children = null;
+      }
+    });
+  }
+
+  if (overviewDepth != null) {
+    applyOverviewCollapse(root, overviewDepth, hideSingletonRootChildren);
+  }
+
+  function expandHiddenChildren(node) {
+    if (!node || !node._children || node._children.length === 0) return false;
+    node.children = node.children ? [...node.children, ...node._children] : node._children;
+    node._children = null;
+    return true;
+  }
+
   // 1.5) Reorder tree to group leaves by family
   reorderTreeForGrouping(root, groupDepth);
 
@@ -176,16 +212,29 @@ async function renderMammalTree({
     collapseChemicalSubstanceLeavesByDefault(root);
   }
 
-  // MAM-specific tiered summary view: Collapse orders by default
+  // Tiered summary view for large groups: show anchor + one level of children,
+  // collapse everything deeper so the initial view is readable.
   const taxagroupid = rows[0]?.taxagroupid;
-  if (taxagroupid === 'MAM' && !isInitialView) {
-    // Mammalia is root. Children are Orders.
-    // Collapse everything below Orders
-    root.children?.forEach(orderNode => {
-      if (orderNode.children && orderNode.children.length > 0) {
-        orderNode._children = orderNode.children;
-        orderNode.children = null;
+  const ONE_LEVEL_GROUPS = new Set(['MAM', 'AVE', 'DIA']);
+
+  // Small / manageable groups: force-expand all nodes so nothing is hidden.
+  const EXPAND_ALL_GROUPS = new Set([
+    'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN',
+  ]);
+
+  if (ONE_LEVEL_GROUPS.has(taxagroupid) && !isInitialView) {
+    // Anchor node is root. Its direct children (Orders / Classes) stay visible;
+    // everything below them is collapsed into _children for +/– expansion.
+    root.children?.forEach(child => {
+      if (child.children && child.children.length > 0) {
+        child._children = child.children;
+        child.children = null;
       }
+    });
+  } else if (EXPAND_ALL_GROUPS.has(taxagroupid) && !isInitialView) {
+    // Ensure no node is accidentally collapsed on first render.
+    root.descendants().forEach(d => {
+      if (d._children) { d.children = d._children; d._children = null; }
     });
   }
 
@@ -372,8 +421,7 @@ async function renderMammalTree({
         event.stopPropagation();
         if (d._children && d._children.length) {
           // expand
-          d.children = d._children;
-          d._children = null;
+          expandHiddenChildren(d);
         } else if (d.children && d.children.length) {
           // collapse
           d._children = d.children;
@@ -383,6 +431,9 @@ async function renderMammalTree({
         // After update, refresh interactions bound to node/link
         bindNodeInteractions();
         updateLabelOrientation();
+        // Re-run label culling after transition so newly visible labels are
+        // correctly shown/hidden (fixes text overcrowding on re-expand).
+        if (cull) setTimeout(() => cull.refresh(), 320);
       });
 
     toggleGroup.append('circle')
@@ -434,7 +485,8 @@ async function renderMammalTree({
     const rotRad = (currentRotate * Math.PI) / 180;
     const tau = Math.PI * 2;
     function outward(d) { return ((d.x + rotRad) % tau + tau) % tau < Math.PI; }
-    node.select('text:not(.toggle)')
+    // Re-query live DOM so newly entered nodes (after expand) are included.
+    gNodes.selectAll('g.node').select('text:not(.toggle)')
       .attr('x', d => outward(d) ? 10 : -10)
       .attr('text-anchor', d => outward(d) ? 'start' : 'end')
       .attr('transform', d => outward(d) ? null : 'rotate(180)');
@@ -493,15 +545,18 @@ async function renderMammalTree({
         showPopupAt(event.pageX, event.pageY, d.data.name, '');
       });
 
-    // Click on empty space (SVG background) to clear all highlights
+    // Click on empty space (SVG background) to reset search state/highlights
     svg.on('click', (event) => {
       // Only clear if clicking directly on the SVG (not on nodes or links)
       if (event.target === event.currentTarget || event.target.tagName === 'svg') {
-        document.querySelectorAll('.highlight').forEach(el => {
-          el.classList.remove('highlight');
-        });
-        // Also clear the info panel if it exists
-        if (info) info.clear();
+        if (searchControls && typeof searchControls.resetSearchState === 'function') {
+          searchControls.resetSearchState();
+        } else {
+          document.querySelectorAll('.highlight').forEach(el => {
+            el.classList.remove('highlight');
+          });
+          if (info) info.clear();
+        }
       }
     });
 
@@ -514,7 +569,8 @@ async function renderMammalTree({
   bindNodeInteractions();
 
   // Angle-based label culling (avoid overlap at initial scale)
-  const cull = applyAngleCulling(root, gNodes.selectAll('g.node'), 1.1);
+  // Pass a getter so recompute() always queries the live DOM after expand/collapse.
+  const cull = applyAngleCulling(root, () => gNodes.selectAll('g.node'), 1.1);
   const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate);
   const { showAt: showPopupAt } = createPopup('popup');
 
@@ -540,9 +596,7 @@ async function renderMammalTree({
     let current = d;
     let anyExpanded = false;
     while (current.parent) {
-      if (current.parent._children) {
-        current.parent.children = current.parent._children;
-        current.parent._children = null;
+      if (expandHiddenChildren(current.parent)) {
         anyExpanded = true;
       }
       current = current.parent;
@@ -553,15 +607,23 @@ async function renderMammalTree({
   }
 
   // 7.5) Search + focus
-  setupSearch({
+  const searchControls = setupSearch({
     root,
-    link: gLinks.selectAll('path'),
-    node: gNodes.selectAll('g.node'),
+    link: gLinks.selectAll('path'),       // kept for fallback
+    node: gNodes.selectAll('g.node'),     // kept for fallback
+    svg,                                  // SVG D3 selection for search-active class
+    getLiveLinks: () => gLinks.selectAll('path'),
+    getLiveNodes: () => gNodes.selectAll('g.node'),
     info,
     setCurrentRotate: (value) => { currentRotate = value; },
     updateRotate,
     updateLabelOrientation,
-    expandToNode // Pass expansion function to search
+    expandToNode,
+    searchPathOnly: taxagroupid === 'INS',
+    onSearchResults: taxagroupid === 'INS' && typeof window !== 'undefined' && window.activateFocusView
+      ? () => window.activateFocusView()
+      : null,
+    onSearchClear: () => { if (cull) cull.refresh(); },
   });
 
   // 8) Zoom/pan (wheel/pinch)

@@ -24,11 +24,20 @@ export function setupSearch({
   root,
   link,
   node,
+  svg          = null,   // D3 SVG selection — for .search-active class
+  getLiveLinks = null,   // () => live D3 link selection
+  getLiveNodes = null,   // () => live D3 node selection
   info,
   setCurrentRotate,
   updateRotate,
   updateLabelOrientation,
-  expandToNode
+  expandToNode,
+  searchPathOnly = false, // when true, search keeps only one focused path visible
+  initialQuery = '',
+  autoRunSearch = false,
+  keepResultsListOnSelect = false,
+  onSearchResults = null, // called after matches are resolved
+  onSearchClear = null,  // called when search is cleared (e.g. cull.refresh)
 }) {
   function getAllNodes(n) {
     const arr = [n];
@@ -48,67 +57,148 @@ export function setupSearch({
   // e.g. { searchedTerm, invalidId, invalidName, synonymtype, recdatemodified }
   let synonymResolutions = new Map();
 
+  // Helpers to get fresh selections on every call so expand/collapse changes
+  // are reflected (avoids stale D3 selections captured at init time).
+  function liveLinks() { return getLiveLinks ? getLiveLinks() : link; }
+  function liveNodes() { return getLiveNodes ? getLiveNodes() : node; }
+
+  // Enter / exit search-active overlay mode.
+  // search-active: dim non-matching nodes + links via CSS.
+  function setSearchActive(active) {
+    if (svg) svg.classed('search-active', active);
+  }
+
+  // Mark nodes that lie on at least one match path with .match-path so the
+  // CSS overlay keeps them fully visible.
+  function applyMatchPathClass(pathNodeSet) {
+    liveNodes().classed('match-path', d => pathNodeSet.has(d));
+  }
+
+  function liveNodeLabels() {
+    return liveNodes()
+      .selectAll('text')
+      .filter(function () {
+        return !this.classList.contains('toggle') && !this.classList.contains('label-halo');
+      });
+  }
+
+  function resetSearchState() {
+    const searchInputEl = document.getElementById('searchInput');
+    if (searchInputEl) searchInputEl.value = '';
+
+    currentMatches = [];
+    currentMatchIndex = -1;
+    isShowingDetails = false;
+    primaryMatchIds = new Set();
+    synonymMatchIds = new Set();
+    synonymResolutions = new Map();
+
+    const ll = liveLinks();
+    const ln = liveNodes();
+    const labels = liveNodeLabels();
+    ll.classed('highlight', false);
+    ll.classed('highlight-synonym', false);
+    ll.classed('match-path-link', false);
+    ln.classed('match-path', false);
+    labels.classed('highlight', false);
+    labels.classed('highlight-synonym', false);
+
+    setSearchActive(false);
+    clearHighlightedPath();
+    if (info) info.clear();
+    if (onSearchClear) onSearchClear();
+  }
+
   function focusNode(d) {
-    // Ensure path to node is expanded first
     if (expandToNode) expandToNode(d);
 
     setCurrentRotate(90 - (d.x * 180 / Math.PI));
     updateRotate();
     updateLabelOrientation();
+
     const A = new Set(d.ancestors());
-    link.classed('highlight', l => A.has(l.source) && A.has(l.target));
-    node.select('text').classed('highlight', n => A.has(n));
+    const ll = liveLinks();
+    const ln = liveNodes();
+    const labels = liveNodeLabels();
+
+    // Clear multi-match gray structure — now showing a single focused path.
+    ll.classed('match-path-link', false);
+    ll.classed('highlight-synonym', false);
+    ll.classed('highlight', l => A.has(l.source) && A.has(l.target));
+    ln.classed('match-path', n => A.has(n));
+    labels.classed('highlight-synonym', false);
+    labels.classed('highlight', n => A.has(n));
+    setSearchActive(true);
     setHighlightedPath(d);
     if (info) info.show(d);
   }
 
   function highlightAllMatches(matches) {
-    // Expand paths to all matching nodes so they are visible in the tree
+    // Expand paths to all matching nodes so they are visible in the tree.
     if (expandToNode && matches.length > 0) {
       matches.forEach(m => expandToNode(m));
     }
 
-    // Clear previous highlights
-    link.classed('highlight', false);
-    link.classed('highlight-synonym', false);
-    node.select('text').classed('highlight', false);
-    node.select('text').classed('highlight-synonym', false);
+    const ll = liveLinks();
+    const ln = liveNodes();
+    const labels = liveNodeLabels();
 
-    if (matches.length === 0) return;
+    // Clear previous state (including match-path-link from prior multi-match).
+    ll.classed('highlight', false);
+    ll.classed('highlight-synonym', false);
+    ll.classed('match-path-link', false);
+    ln.classed('match-path', false);
+    labels.classed('highlight', false);
+    labels.classed('highlight-synonym', false);
 
-    // Collect all ancestors for primary and synonym matches separately
+    if (matches.length === 0) {
+      setSearchActive(false);
+      return;
+    }
+
+    if (searchPathOnly) {
+      const activeMatchIndex = currentMatchIndex >= 0 && currentMatchIndex < matches.length ? currentMatchIndex : 0;
+      focusNode(matches[activeMatchIndex]);
+      return;
+    }
+
+    // Collect all ancestors for primary and synonym matches separately.
     const primaryAncestors = new Set();
     const synonymAncestors = new Set();
 
-    // First pass: collect primary ancestors
     matches.forEach(m => {
       if (primaryMatchIds.has(m.data.id)) {
         m.ancestors().forEach(a => primaryAncestors.add(a));
       }
     });
-
-    // Second pass: collect synonym ancestors (including shared ones)
     matches.forEach(m => {
       if (synonymMatchIds.has(m.data.id)) {
         m.ancestors().forEach(a => synonymAncestors.add(a));
       }
     });
 
-    // Highlight links
-    // A link gets primary highlight if both nodes are in primary path
-    // A link gets synonym highlight if both nodes are in synonym path but NOT both in primary path
-    link.classed('highlight', l =>
-      primaryAncestors.has(l.source) && primaryAncestors.has(l.target)
-    );
-    link.classed('highlight-synonym', l => {
-      const inSynonym = synonymAncestors.has(l.source) && synonymAncestors.has(l.target);
-      const inPrimary = primaryAncestors.has(l.source) && primaryAncestors.has(l.target);
-      return inSynonym && !inPrimary;
-    });
+    // All nodes on any match path (union of both ancestor sets + matched nodes).
+    const allPathNodes = new Set([...primaryAncestors, ...synonymAncestors]);
 
-    // Highlight text nodes
-    node.select('text').classed('highlight', d => primaryMatchIds.has(d.data.id));
-    node.select('text').classed('highlight-synonym', d => synonymMatchIds.has(d.data.id));
+    // ── Links ────────────────────────────────────────────────────────────────
+    // Mark shared-ancestor links as gray structure (.match-path-link).
+    // Do NOT paint blue here — blue is revealed per-result on hover/click,
+    // so users see one clear path at a time instead of a tangled bundle.
+    ll.classed('match-path-link', l =>
+      allPathNodes.has(l.source) && allPathNodes.has(l.target)
+    );
+
+    // ── Nodes ────────────────────────────────────────────────────────────────
+    // .match-path → keeps node fully visible under .search-active overlay
+    applyMatchPathClass(allPathNodes);
+
+    // Highlight only the matched leaf names (not every ancestor) so it's clear
+    // which nodes are the actual results vs shared path structure.
+    labels.classed('highlight', d => primaryMatchIds.has(d.data.id));
+    labels.classed('highlight-synonym', d => synonymMatchIds.has(d.data.id));
+
+    // Activate the dimming overlay.
+    setSearchActive(true);
   }
 
   function showSearchResultsList() {
@@ -173,22 +263,50 @@ export function setupSearch({
 
     // Add click handlers for each result
     panel.querySelectorAll('.search-result-item').forEach((item, idx) => {
+      if (idx === currentMatchIndex && keepResultsListOnSelect) {
+        item.style.backgroundColor = '#e8f5e9';
+      }
       item.addEventListener('click', (e) => {
         // Don't trigger if clicking the "Go to Tree" button
         if (e.target.classList.contains('go-to-tree-btn')) {
           return;
         }
         currentMatchIndex = idx;
-        isShowingDetails = true;
         const selectedNode = currentMatches[idx];
         focusNode(selectedNode);
-        showNodeDetails(selectedNode);
+        if (keepResultsListOnSelect) {
+          showSearchResultsList();
+        } else {
+          isShowingDetails = true;
+          showNodeDetails(selectedNode);
+        }
       });
       item.addEventListener('mouseenter', () => {
         item.style.backgroundColor = '#f3f4f6';
+        // Temporarily reveal this single result's path in the tree as blue.
+        const m = currentMatches[idx];
+        const A = new Set(m.ancestors());
+        const ll = liveLinks();
+        const isSynonym = synonymMatchIds.has(m.data.id);
+        if (isSynonym) {
+          ll.classed('highlight-synonym', l => A.has(l.source) && A.has(l.target));
+        } else {
+          ll.classed('highlight', l => A.has(l.source) && A.has(l.target));
+        }
       });
       item.addEventListener('mouseleave', () => {
-        item.style.backgroundColor = 'transparent';
+        if (idx === currentMatchIndex && keepResultsListOnSelect) {
+          item.style.backgroundColor = '#e8f5e9';
+          if (currentMatches[currentMatchIndex]) {
+            focusNode(currentMatches[currentMatchIndex]);
+          }
+        } else {
+          item.style.backgroundColor = 'transparent';
+          // Revert to the neutral gray match-path-link state.
+          const ll = liveLinks();
+          ll.classed('highlight', false);
+          ll.classed('highlight-synonym', false);
+        }
       });
     });
 
@@ -382,16 +500,7 @@ export function setupSearch({
     if (info) info.clear();
 
     if (!q) {
-      // Clear search results
-      currentMatches = [];
-      currentMatchIndex = -1;
-      primaryMatchIds = new Set();
-      synonymMatchIds = new Set();
-      link.classed('highlight', false);
-      link.classed('highlight-synonym', false);
-      node.select('text').classed('highlight', false);
-      node.select('text').classed('highlight-synonym', false);
-      clearHighlightedPath();
+      resetSearchState();
       return;
     }
 
@@ -576,14 +685,27 @@ export function setupSearch({
       // setHighlightedPath is called in focusNode
     } else {
       // Multiple matches - show list
-      // Set highlighted path to first match so Focus View can work
-      setHighlightedPath(matches[0]);
+      currentMatchIndex = 0;
+      if (searchPathOnly) {
+        focusNode(matches[0]);
+      }
       showSearchResultsList();
+    }
+
+    if (matches.length > 0 && onSearchResults) {
+      onSearchResults({
+        matches,
+        primaryMatchIds: new Set(primaryMatchIds),
+        synonymMatchIds: new Set(synonymMatchIds),
+      });
     }
   }
 
   if (searchBtn) searchBtn.addEventListener('click', runSearch);
   if (searchInput) {
+    if (initialQuery && !searchInput.value.trim()) {
+      searchInput.value = initialQuery;
+    }
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         runSearch();
@@ -604,18 +726,14 @@ export function setupSearch({
     // Clear results when input is cleared
     searchInput.addEventListener('input', (e) => {
       if (!e.target.value.trim()) {
-        currentMatches = [];
-        currentMatchIndex = -1;
-        primaryMatchIds = new Set();
-        synonymMatchIds = new Set();
-        link.classed('highlight', false);
-        link.classed('highlight-synonym', false);
-        node.select('text').classed('highlight', false);
-        node.select('text').classed('highlight-synonym', false);
-        clearHighlightedPath();
-        if (info) info.clear();
+        resetSearchState();
       }
     });
   }
-}
 
+  if (autoRunSearch) {
+    runSearch();
+  }
+
+  return { resetSearchState, runSearch };
+}

@@ -66,7 +66,7 @@ const TAXAGROUP_CONSTRAINTS = {
     wrongKingdoms: new Set(['plantae', 'fungi']),
     expectedKingdomLabel: 'Animalia',
   },
-  BIR: {
+  AVE: {
     domain: 'eukaryota',
     wrongKingdoms: new Set(['plantae', 'fungi']),
     expectedKingdomLabel: 'Animalia',

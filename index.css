@@ -11,6 +11,34 @@ text.highlight {
   stroke-linejoin: round !important;
 }
 
+/* ── Search-active overlay ─────────────────────────────────────────────────
+   When a search is running, hide everything not on a match path.
+   .match-path      = node is on the path from root to a search result
+   .match-path-link = link connects two match-path nodes (shown in gray)
+   .search-active   = applied to the SVG while a search is active
+   ──────────────────────────────────────────────────────────────────────── */
+.search-active g.node:not(.match-path) {
+  opacity: 0;
+  pointer-events: none;
+}
+/* Force-hide label text for non-match nodes (overrides culling display:block) */
+.search-active g.node:not(.match-path) text {
+  display: none !important;
+}
+/* Force-show label text for every node on the match path */
+.search-active g.node.match-path text:not(.toggle) {
+  display: block !important;
+}
+/* Hide all links that are not highlighted and not on any match path */
+.search-active path:not(.highlight):not(.highlight-synonym):not(.match-path-link) {
+  opacity: 0;
+}
+/* Match-path links between shared ancestors: keep visible as gray structure */
+.search-active path.match-path-link:not(.highlight):not(.highlight-synonym) {
+  opacity: 0.5;
+  stroke: #9aa0a6;
+}
+
 #chart svg text {
   font-size: 11px;
   font-family: "DM Sans", sans-serif;

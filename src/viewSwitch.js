@@ -2,7 +2,7 @@
 // Focus View shows only the highlighted path, Whole View shows the full tree
 
 let currentHighlightedPath = null; // The currently highlighted node path
-let currentMatchIds = new Set(); // IDs of all currently matched nodes (from search)
+let currentMatchIds = new Set(); // IDs of the matched search result taxa
 let isFocusView = false; // Current view state
 let originalRows = null; // Store original rows for restoring
 let originalRootInfo = null; // Store original root info
@@ -99,7 +99,7 @@ export function setHighlightedPath(node) {
 
 /**
  * Set the matched node IDs from search results
- * @param {Set|Array} matchIds - Set or array of matched node IDs
+ * @param {Set|Array} matchIds - Set or array of matched result node IDs
  */
 export function setMatchIds(matchIds) {
   currentMatchIds = matchIds instanceof Set ? matchIds : new Set(matchIds);
@@ -123,6 +123,13 @@ export function clearHighlightedPath() {
   if (isFocusView) {
     switchToWholeView();
   }
+}
+
+/**
+ * Programmatically switch into Focus View using the current match/path state.
+ */
+export async function activateFocusView() {
+  await switchToFocusView();
 }
 
 /**
@@ -166,16 +173,13 @@ async function switchToFocusView() {
   hideFocusViewWarning();
   updateButtonState();
   
-  // Filter rows: include all rows that contain any of the matched node IDs
-  // This is much simpler and more reliable than trying to match paths
   let filteredRows = [];
   
   if (currentMatchIds.size > 0) {
-    // Use match IDs from search results - this is the most reliable approach
     filteredRows = originalRows.filter(row => {
       const rowIds = (row.ids_root_to_leaf || []).map(id => Number(id));
-      // Check if any matched ID is in this row's path
-      return Array.from(currentMatchIds).some(matchId => rowIds.includes(Number(matchId)));
+      const leafId = rowIds[rowIds.length - 1];
+      return currentMatchIds.has(Number(row.taxonid)) || currentMatchIds.has(Number(leafId));
     });
     
     console.log('Filtered by match IDs:', {
@@ -184,6 +188,19 @@ async function switchToFocusView() {
       matchIdsCount: currentMatchIds.size,
       sampleMatchIds: Array.from(currentMatchIds).slice(0, 5)
     });
+
+    if (filteredRows.length === 0 && currentHighlightedPath) {
+      const highlightedNodeId = currentHighlightedPath.pathIds[currentHighlightedPath.pathIds.length - 1];
+      filteredRows = originalRows.filter(row => {
+        const rowIds = (row.ids_root_to_leaf || []).map(id => Number(id));
+        return rowIds.includes(Number(highlightedNodeId));
+      });
+      
+      console.log('Fell back to highlighted node ID after zero exact match rows:', {
+        filteredCount: filteredRows.length,
+        nodeId: highlightedNodeId
+      });
+    }
   } else if (currentHighlightedPath) {
     // Fallback: use highlighted path if no match IDs available
     const highlightedNodeId = currentHighlightedPath.pathIds[currentHighlightedPath.pathIds.length - 1];
@@ -321,4 +338,3 @@ function hideFocusViewWarning() {
     }
   }
 }
-

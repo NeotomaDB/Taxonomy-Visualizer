@@ -17,6 +17,9 @@ export async function renderCollapsibleTree({
     width = 900,
     height = 600,
     anchorIds = new Set(), // Set of anchor IDs to highlight in green
+    expandAll = false,     // If true, show the full tree fully expanded at init
+    initialQuery = '',
+    autoRunSearch = false,
 } = {}) {
     if (!rows || !rows.length) {
         console.warn('renderCollapsibleTree: rows is empty.');
@@ -60,11 +63,17 @@ export async function renderCollapsibleTree({
     const dy = width / (hierarchyRoot.height + 1);
     const tree = d3.tree().nodeSize([dx, dy]);
 
-    // Collapse all except first level
+    // Default: collapse everything beyond depth 1 so the tree opens compactly.
+    // When expandAll=true (small, manageable groups) keep every node open.
     hierarchyRoot.descendants().forEach((d) => {
-        d._children = d.children;
-        if (d.depth > 1) {
-            d.children = null;
+        if (expandAll) {
+            // Leave d.children intact; stash a copy in _children for toggle use
+            d._children = d.children && d.children.length ? d.children : null;
+        } else {
+            d._children = d.children;
+            if (d.depth > 1) {
+                d.children = null;
+            }
         }
     });
 
@@ -138,6 +147,7 @@ export async function renderCollapsibleTree({
             .data(nodes, d => d.id || (d.id = ++i));
 
         const nodeEnter = node.enter().append('g')
+            .attr('class', 'node')
             .attr('transform', d => `translate(${source.y0 || 0},${source.x0 || 0})`)
             .attr('fill-opacity', 0)
             .attr('stroke-opacity', 0)
@@ -157,11 +167,13 @@ export async function renderCollapsibleTree({
             .attr('stroke-width', 10);
 
         nodeEnter.append('text')
+            .attr('class', 'node-label')
             .attr('dy', '0.31em')
             .attr('x', d => d._children ? -8 : 8)
             .attr('text-anchor', d => d._children ? 'end' : 'start')
             .text(d => d.data.name)
             .clone(true).lower()
+            .attr('class', 'node-label label-halo')
             .attr('stroke-linejoin', 'round')
             .attr('stroke-width', 3)
             .attr('stroke', 'white');
@@ -216,10 +228,17 @@ export async function renderCollapsibleTree({
     setupSearch({
         root: hierarchyRoot,
         link: gLink.selectAll('path'),
-        node: gNode.selectAll('g'),
+        node: gNode.selectAll('g.node'),
+        svg,
+        getLiveLinks: () => gLink.selectAll('path'),
+        getLiveNodes: () => gNode.selectAll('g.node'),
         info: null,
         setCurrentRotate: () => { },
         updateRotate: () => { },
-        updateLabelOrientation: () => { }
+        updateLabelOrientation: () => { },
+        initialQuery,
+        autoRunSearch,
+        keepResultsListOnSelect: true,
+        onSearchClear: () => { },
     });
 }

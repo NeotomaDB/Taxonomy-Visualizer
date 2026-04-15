@@ -141,10 +141,23 @@ async function renderMammalTree({
     applyOverviewCollapse(root, overviewDepth, hideSingletonRootChildren);
   }
 
-  function expandHiddenChildren(node) {
+  function expandHiddenChildren(node, lazy = false) {
     if (!node || !node._children || node._children.length === 0) return false;
     node.children = node.children ? [...node.children, ...node._children] : node._children;
     node._children = null;
+
+    // Lazy mode (user clicked +): if the subtree is large (>30 nodes total),
+    // only reveal one level at a time — collapse each newly-visible child that
+    // itself has children so the tree doesn't explode all at once.
+    if (lazy && countSubtreeNodes(node) > 30) {
+      node.children.forEach(child => {
+        if (child.children && child.children.length > 0) {
+          child._children = child.children;
+          child.children = null;
+        }
+      });
+    }
+
     return true;
   }
 
@@ -278,6 +291,13 @@ async function renderMammalTree({
   }
   function updateRotate() {
     gRoot.attr('transform', `rotate(${currentRotate})`);
+  }
+
+  // Count ALL descendants in a subtree (through both children and _children).
+  // Used to decide whether to expand one level at a time or all at once.
+  function countSubtreeNodes(d) {
+    const kids = d.children || d._children || [];
+    return kids.reduce((sum, c) => sum + 1 + countSubtreeNodes(c), 0);
   }
 
   // 4) Links
@@ -420,8 +440,8 @@ async function renderMammalTree({
       .on('click', (event, d) => {
         event.stopPropagation();
         if (d._children && d._children.length) {
-          // expand
-          expandHiddenChildren(d);
+          // expand — lazy=true: only one level at a time if subtree > 30 nodes
+          expandHiddenChildren(d, true);
         } else if (d.children && d.children.length) {
           // collapse
           d._children = d.children;

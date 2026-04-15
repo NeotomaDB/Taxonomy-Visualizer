@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Neotoma Mammal Visualization</title>
+    <title>Neotoma Taxonomy Visualization</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -76,23 +76,28 @@
                     </div>
                 </div>
                 <div id="info"></div>
-                <div id="color-legend" style="margin-top:8px; padding:10px 12px; background:#f9fafb; border-radius:8px; font-size:13px;">
+                <div id="color-legend"
+                    style="margin-top:8px; padding:10px 12px; background:#f9fafb; border-radius:8px; font-size:13px;">
                     <div style="font-weight:600; margin-bottom:6px;">Legend</div>
                     <div style="display:flex; flex-wrap:wrap; gap:8px 16px;">
                         <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#202124;"></span>
+                            <span
+                                style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#202124;"></span>
                             <span>Node</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6b7280;"></span>
+                            <span
+                                style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6b7280;"></span>
                             <span>Collapsible group</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="display:inline-block;width:14px;height:3px;background:#1976d2;border-radius:1px;"></span>
+                            <span
+                                style="display:inline-block;width:14px;height:3px;background:#1976d2;border-radius:1px;"></span>
                             <span>Search match</span>
                         </div>
                         <div style="display:flex; align-items:center; gap:5px;">
-                            <span style="display:inline-block;width:14px;height:3px;background:#f59e0b;border-radius:1px;"></span>
+                            <span
+                                style="display:inline-block;width:14px;height:3px;background:#f59e0b;border-radius:1px;"></span>
                             <span>Synonym match</span>
                         </div>
                     </div>
@@ -115,10 +120,14 @@
                 </div>
 
                 <!-- Anomaly status bar: shown per taxon group when anomalies / orphans exist -->
-                <div id="anomaly-bar" style="display:none; margin-top:10px; padding:7px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;"></div>
+                <div id="anomaly-bar"
+                    style="display:none; margin-top:10px; padding:7px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
+                </div>
 
                 <!-- Anomaly detail panel: toggled by "View details →" link -->
-                <div id="anomaly-detail-panel" style="display:none; margin-top:8px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; max-height:420px; overflow-y:auto;"></div>
+                <div id="anomaly-detail-panel"
+                    style="display:none; margin-top:8px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; max-height:420px; overflow-y:auto;">
+                </div>
             </div>
         </div>
     </div>
@@ -253,29 +262,29 @@
                     });
             }
             // 3. For other groups, find the most common root node
-                const rootCounts = new Map();
-                filtered.forEach(row => {
-                    if (row.ids_root_to_leaf.length > 0) {
-                        const rootId = row.ids_root_to_leaf[0];
-                        rootCounts.set(rootId, (rootCounts.get(rootId) || 0) + 1);
-                    }
-                });
+            const rootCounts = new Map();
+            filtered.forEach(row => {
+                if (row.ids_root_to_leaf.length > 0) {
+                    const rootId = row.ids_root_to_leaf[0];
+                    rootCounts.set(rootId, (rootCounts.get(rootId) || 0) + 1);
+                }
+            });
 
-                // Find the most common root
-                let mostCommonRoot = 32182; // Default to Eukaryota
-                let maxCount = 0;
-                rootCounts.forEach((count, rootId) => {
-                    if (count > maxCount) {
-                        maxCount = count;
-                        mostCommonRoot = rootId;
-                    }
-                });
+            // Find the most common root
+            let mostCommonRoot = 32182; // Default to Eukaryota
+            let maxCount = 0;
+            rootCounts.forEach((count, rootId) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    mostCommonRoot = rootId;
+                }
+            });
 
-                // Filter to only include paths starting from the most common root
-                return filtered.filter(row =>
-                    row.ids_root_to_leaf.length > 0 &&
-                    row.ids_root_to_leaf[0] === mostCommonRoot
-                );
+            // Filter to only include paths starting from the most common root
+            return filtered.filter(row =>
+                row.ids_root_to_leaf.length > 0 &&
+                row.ids_root_to_leaf[0] === mostCommonRoot
+            );
         }
 
         // Get root info for a taxagroupid
@@ -339,8 +348,8 @@
         const SYNTHETIC_GROUP_ROOTS = {
             // overviewDepth: how many path levels to show in the initial overview
             // (replaces the default 4-level cutoff so anchor-equivalent nodes appear)
-            BRY: { rootId: -2001, rootName: 'Bryophytes',     sliceAfterName: 'Embryophyta',   overviewDepth: 6 },
-            PLA: { rootId: -2002, rootName: 'Plants undiff.', sliceAfterName: 'Plantae',       overviewDepth: 4 },
+            BRY: { rootId: -2001, rootName: 'Bryophytes', sliceAfterName: 'Embryophyta', overviewDepth: 6 },
+            PLA: { rootId: -2002, rootName: 'Plants undiff.', sliceAfterName: 'Plantae', overviewDepth: 4 },
         };
 
         const GROUP_OVERVIEW_CONFIG = {
@@ -357,7 +366,7 @@
                     const idx = row.names_root_to_leaf.indexOf(synth.sliceAfterName);
                     return {
                         ...row,
-                        ids_root_to_leaf:   [synth.rootId,   ...row.ids_root_to_leaf.slice(idx + 1)],
+                        ids_root_to_leaf: [synth.rootId, ...row.ids_root_to_leaf.slice(idx + 1)],
                         names_root_to_leaf: [synth.rootName, ...row.names_root_to_leaf.slice(idx + 1)],
                     };
                 })
@@ -420,11 +429,11 @@
                 anchorIds = new Set(anchors.map(a => parseInt(a.anchorId)));
                 // Merge real anchors for groups not in anchor_analysis.json
                 const BUILTIN_ANCHORS = {
-                    VPL: { anchorName: 'Tracheophyta',     anchorId: 9534  },
-                    DIN: { anchorName: 'Miozoa',           anchorId: 32187 },
-                    AVE: { anchorName: 'Aves',             anchorId: 5856  },
-                    DIA: { anchorName: 'Bacillariophyta',  anchorId: 5396  },
-                    OST: { anchorName: 'Ostracoda',        anchorId: 13914 },
+                    VPL: { anchorName: 'Tracheophyta', anchorId: 9534 },
+                    DIN: { anchorName: 'Miozoa', anchorId: 32187 },
+                    AVE: { anchorName: 'Aves', anchorId: 5856 },
+                    DIA: { anchorName: 'Bacillariophyta', anchorId: 5396 },
+                    OST: { anchorName: 'Ostracoda', anchorId: 13914 },
                 };
                 Object.entries(BUILTIN_ANCHORS).forEach(([id, entry]) => {
                     if (!anchorDataMap.has(id)) {
@@ -556,7 +565,7 @@
                     const anchor = anchorDataMap.get(taxagroupid);
                     const anchorId = parseInt(anchor.anchorId);
                     const independentIds = (anchor.independentPaths || []).map(p => parseInt(p.id));
-                    
+
                     const anchorIdx = ids.indexOf(anchorId);
                     if (anchorIdx !== -1) {
                         pathLimit = anchorIdx + 1;
@@ -1379,8 +1388,8 @@
             let overviewConfig = null;
             if (SYNTHETIC_GROUP_ROOTS[taxagroupid]) {
                 const synth = SYNTHETIC_GROUP_ROOTS[taxagroupid];
-                filteredRows   = buildSyntheticRootRows(allRowsForGroup, synth);
-                renderRootId   = synth.rootId;
+                filteredRows = buildSyntheticRootRows(allRowsForGroup, synth);
+                renderRootId = synth.rootId;
                 renderRootName = synth.rootName;
             } else if (GROUP_OVERVIEW_CONFIG[taxagroupid]) {
                 overviewConfig = GROUP_OVERVIEW_CONFIG[taxagroupid];
@@ -1390,10 +1399,10 @@
             } else {
                 filteredRows = filterRowsByGroup(allRows, taxagroupid);
                 const rootInfo = getRootInfo(allRows, taxagroupid);
-                renderRootId   = rootInfo.rootId;
+                renderRootId = rootInfo.rootId;
                 renderRootName = rootInfo.rootName;
             }
-            currentRootId   = renderRootId;
+            currentRootId = renderRootId;
             currentRootName = renderRootName;
 
             if (filteredRows.length === 0) {

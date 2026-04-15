@@ -36,6 +36,7 @@ export function setupSearch({
   initialQuery = '',
   autoRunSearch = false,
   keepResultsListOnSelect = false,
+  deferLocalResultsRendering = false,
   onSearchResults = null, // called after matches are resolved
   onSearchClear = null,  // called when search is cleared (e.g. cull.refresh)
 }) {
@@ -201,6 +202,31 @@ export function setupSearch({
     setSearchActive(true);
   }
 
+  function selectNodeWithinMatches(d) {
+    highlightAllMatches(currentMatches);
+
+    const A = new Set(d.ancestors());
+    const ll = liveLinks();
+    const labels = liveNodeLabels();
+    const isSynonym = synonymMatchIds.has(d.data.id);
+
+    if (isSynonym) {
+      ll.classed('highlight-synonym', l => A.has(l.source) && A.has(l.target));
+      ll.classed('highlight', false);
+      labels.classed('highlight-synonym', n => A.has(n));
+      labels.classed('highlight', false);
+    } else {
+      ll.classed('highlight', l => A.has(l.source) && A.has(l.target));
+      ll.classed('highlight-synonym', false);
+      labels.classed('highlight', n => A.has(n));
+      labels.classed('highlight-synonym', false);
+    }
+
+    setSearchActive(true);
+    setHighlightedPath(d);
+    if (info) info.show(d);
+  }
+
   function showSearchResultsList() {
     // Show the list of all search results
     isShowingDetails = false;
@@ -273,10 +299,15 @@ export function setupSearch({
         }
         currentMatchIndex = idx;
         const selectedNode = currentMatches[idx];
-        focusNode(selectedNode);
         if (keepResultsListOnSelect) {
+          if (currentMatches.length > 1) {
+            selectNodeWithinMatches(selectedNode);
+          } else {
+            focusNode(selectedNode);
+          }
           showSearchResultsList();
         } else {
+          focusNode(selectedNode);
           isShowingDetails = true;
           showNodeDetails(selectedNode);
         }
@@ -298,7 +329,11 @@ export function setupSearch({
         if (idx === currentMatchIndex && keepResultsListOnSelect) {
           item.style.backgroundColor = '#e8f5e9';
           if (currentMatches[currentMatchIndex]) {
-            focusNode(currentMatches[currentMatchIndex]);
+            if (currentMatches.length > 1) {
+              selectNodeWithinMatches(currentMatches[currentMatchIndex]);
+            } else {
+              focusNode(currentMatches[currentMatchIndex]);
+            }
           }
         } else {
           item.style.backgroundColor = 'transparent';
@@ -492,7 +527,7 @@ export function setupSearch({
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
 
-  function runSearch() {
+  async function runSearch() {
     if (!searchInput) return;
     const q = searchInput.value.trim();
 
@@ -667,6 +702,18 @@ export function setupSearch({
       });
     }
 
+    if (matches.length > 0 && onSearchResults) {
+      await onSearchResults({
+        matches,
+        primaryMatchIds: new Set(primaryMatchIds),
+        synonymMatchIds: new Set(synonymMatchIds),
+      });
+    }
+
+    if (matches.length > 0 && deferLocalResultsRendering) {
+      return;
+    }
+
     if (matches.length === 0) {
       if (info) {
         const panel = document.getElementById('info');
@@ -685,19 +732,11 @@ export function setupSearch({
       // setHighlightedPath is called in focusNode
     } else {
       // Multiple matches - show list
-      currentMatchIndex = 0;
+      currentMatchIndex = keepResultsListOnSelect ? -1 : 0;
       if (searchPathOnly) {
         focusNode(matches[0]);
       }
       showSearchResultsList();
-    }
-
-    if (matches.length > 0 && onSearchResults) {
-      onSearchResults({
-        matches,
-        primaryMatchIds: new Set(primaryMatchIds),
-        synonymMatchIds: new Set(synonymMatchIds),
-      });
     }
   }
 

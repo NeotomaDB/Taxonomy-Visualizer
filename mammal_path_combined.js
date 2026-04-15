@@ -620,6 +620,7 @@ async function renderMammalTree({
     updateLabelOrientation,
     expandToNode,
     searchPathOnly: taxagroupid === 'INS',
+    deferLocalResultsRendering: taxagroupid === 'INS',
     onSearchResults: taxagroupid === 'INS' && typeof window !== 'undefined' && window.activateFocusView
       ? () => window.activateFocusView()
       : null,

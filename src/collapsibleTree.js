@@ -26,6 +26,10 @@ export async function renderCollapsibleTree({
         return;
     }
 
+    // Defensive clear so repeated Focus View renders cannot stack multiple
+    // collapsible SVGs inside the same chart container.
+    d3.select(selector).selectAll('*').remove();
+
     // Build hierarchy from path-list
     const byId = new Map();
     const root = { id: rootId, name: rootName, children: [] };

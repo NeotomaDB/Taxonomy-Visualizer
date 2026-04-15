@@ -91,8 +91,10 @@ export function setHighlightedPath(node) {
     isFocusView
   });
   
-  // If in focus view, update the view
-  if (isFocusView) {
+  // If we're already in Focus View due to an active search result set, the
+  // current filtered tree is already correct. In that case we only need to
+  // update the in-place highlight, not trigger another full re-render.
+  if (isFocusView && currentMatchIds.size === 0) {
     switchToFocusView();
   }
 }

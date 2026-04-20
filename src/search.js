@@ -61,6 +61,14 @@ export function setupSearch({
   // e.g. { searchedTerm, invalidId, invalidName, synonymtype, recdatemodified }
   let synonymResolutions = new Map();
 
+  // ── Comparison-mode state ────────────────────────────────────────────────
+  let isCompareMode = false;
+  let compareMatchGroupIds = new Map(); // node id → 1 (q1) or 2 (q2)
+  let compareQ1Label = '';
+  let compareQ2Label = '';
+  let compareQ1Matches = [];
+  let compareQ2Matches = [];
+
   // Helpers to get fresh selections on every call so expand/collapse changes
   // are reflected (avoids stale D3 selections captured at init time).
   function liveLinks() { return getLiveLinks ? getLiveLinks() : link; }
@@ -86,6 +94,71 @@ export function setupSearch({
       });
   }
 
+  // ── findMatchesForTerm ────────────────────────────────────────────────────
+  // Runs the full name-search (3 passes) for a single query string.
+  // Returns {matches, primaryMatchIds, synonymMatchIds, synonymResolutions}.
+  function findMatchesForTerm(qStr) {
+    const matches = [];
+    const matchedIds = new Set();
+    const primaryIds = new Set();
+    const synonymIds = new Set();
+    const resolutions = new Map();
+    const reverseMap = window.__invalidIdToCanonicalId || new Map();
+    const lower = qStr.toLowerCase().replace(/^\?+/, '').trim();
+
+    // Pass 1: direct name match
+    getAllNodes(root).forEach(n => {
+      if ((n.data.name || '').toLowerCase().includes(lower)) {
+        if (!matchedIds.has(n.data.id)) {
+          matches.push(n); matchedIds.add(n.data.id); primaryIds.add(n.data.id);
+        }
+      }
+    });
+    // Pass 2: synonym metadata
+    getAllNodes(root).forEach(n => {
+      const meta = n.data.synonymMetadata;
+      if (!meta) return;
+      const matchingSyns = meta.synonyms.filter(s => s.invalid_name.toLowerCase().includes(lower));
+      if (matchingSyns.length > 0) {
+        const cid = n.data.id;
+        if (!matchedIds.has(cid)) { matches.push(n); matchedIds.add(cid); synonymIds.add(cid); }
+        const ex = resolutions.get(cid) || [];
+        matchingSyns.forEach(syn => {
+          if (!ex.some(r => r.invalidId === syn.invalid_id))
+            ex.push({
+              searchedTerm: qStr, invalidId: syn.invalid_id, invalidName: syn.invalid_name,
+              synonymtype: syn.synonymtype ?? '', recdatemodified: syn.recdatemodified ?? ''
+            });
+        });
+        resolutions.set(cid, ex);
+      }
+    });
+    // Pass 3: reverseMap by name
+    reverseMap.forEach((canonicalId, key) => {
+      if (typeof key !== 'string') return;
+      if (!key.includes(lower) || !idToNode.has(canonicalId) || matchedIds.has(canonicalId)) return;
+      const cn = idToNode.get(canonicalId);
+      matches.push(cn); matchedIds.add(canonicalId); synonymIds.add(canonicalId);
+      const synDetail = cn.data.synonymMetadata?.synonyms?.find(s => s.invalid_name.toLowerCase() === key);
+      const ex = resolutions.get(canonicalId) || [];
+      ex.push({
+        searchedTerm: qStr, invalidId: synDetail?.invalid_id ?? null,
+        invalidName: synDetail?.invalid_name ?? key,
+        synonymtype: synDetail?.synonymtype ?? '', recdatemodified: synDetail?.recdatemodified ?? ''
+      });
+      resolutions.set(canonicalId, ex);
+    });
+    return { matches, primaryMatchIds: primaryIds, synonymMatchIds: synonymIds, synonymResolutions: resolutions };
+  }
+
+  // ── findLCA ───────────────────────────────────────────────────────────────
+  function findLCA(nodeA, nodeB) {
+    if (!nodeA || !nodeB) return null;
+    const ancestorsA = new Set(nodeA.ancestors().map(n => n.data.id));
+    for (const anc of nodeB.ancestors()) { if (ancestorsA.has(anc.data.id)) return anc; }
+    return null;
+  }
+
   function resetSearchState() {
     const searchInputEl = document.getElementById('searchInput');
     if (searchInputEl) searchInputEl.value = '';
@@ -102,10 +175,17 @@ export function setupSearch({
     const labels = liveNodeLabels();
     ll.classed('highlight', false);
     ll.classed('highlight-synonym', false);
+    ll.classed('highlight-q1', false);
+    ll.classed('highlight-q2', false);
     ll.classed('match-path-link', false);
     ln.classed('match-path', false);
     labels.classed('highlight', false);
     labels.classed('highlight-synonym', false);
+    labels.classed('highlight-q1', false);
+    labels.classed('highlight-q2', false);
+    isCompareMode = false; compareMatchGroupIds = new Map();
+    compareQ1Label = ''; compareQ2Label = '';
+    compareQ1Matches = []; compareQ2Matches = [];
 
     setSearchActive(false);
     clearHighlightedPath();
@@ -150,13 +230,36 @@ export function setupSearch({
     // Clear previous state (including match-path-link from prior multi-match).
     ll.classed('highlight', false);
     ll.classed('highlight-synonym', false);
+    ll.classed('highlight-q1', false);
+    ll.classed('highlight-q2', false);
     ll.classed('match-path-link', false);
     ln.classed('match-path', false);
     labels.classed('highlight', false);
     labels.classed('highlight-synonym', false);
+    labels.classed('highlight-q1', false);
+    labels.classed('highlight-q2', false);
 
-    if (matches.length === 0) {
-      setSearchActive(false);
+    if (matches.length === 0) { setSearchActive(false); return; }
+
+    // ── Comparison mode: blue (q1) / orange (q2) dual-color ─────────────────
+    if (isCompareMode && compareQ1Matches.length > 0 && compareQ2Matches.length > 0) {
+      if (expandToNode) matches.forEach(m => expandToNode(m));
+      const q1Ids = new Set(), q2Ids = new Set();
+      compareQ1Matches.forEach(n => n.ancestors().forEach(a => q1Ids.add(a.data.id)));
+      compareQ2Matches.forEach(n => n.ancestors().forEach(a => q2Ids.add(a.data.id)));
+      const lca = findLCA(compareQ1Matches[0], compareQ2Matches[0]);
+      const sharedIds = new Set(lca ? lca.ancestors().map(n => n.data.id) : []);
+      if (lca) sharedIds.add(lca.data.id);
+      const q1Unique = new Set([...q1Ids].filter(id => !sharedIds.has(id)));
+      const q2Unique = new Set([...q2Ids].filter(id => !sharedIds.has(id)));
+      const allPathNodes = new Set([...q1Ids, ...q2Ids].map(id => idToNode.get(id)).filter(Boolean));
+      applyMatchPathClass(allPathNodes);
+      ll.classed('match-path-link', l => sharedIds.has(l.source.data.id) && sharedIds.has(l.target.data.id));
+      ll.classed('highlight-q1', l => q1Unique.has(l.target.data.id) && q1Ids.has(l.source.data.id));
+      ll.classed('highlight-q2', l => q2Unique.has(l.target.data.id) && q2Ids.has(l.source.data.id));
+      labels.classed('highlight-q1', d => compareMatchGroupIds.get(d.data.id) === 1);
+      labels.classed('highlight-q2', d => compareMatchGroupIds.get(d.data.id) === 2);
+      setSearchActive(true);
       return;
     }
 
@@ -605,20 +708,97 @@ export function setupSearch({
     }
   }
 
+  // ── showComparisonPanel ─────────────────────────────────────────────────
+  function showComparisonPanel(q1Label, q2Label, q1Matches, q2Matches) {
+    const panel = document.getElementById('info');
+    if (!panel) return;
+    const missing = q1Matches.length === 0 ? q1Label : (q2Matches.length === 0 ? q2Label : null);
+    if (missing) {
+      panel.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">Comparison</div>
+        <div style="color:#c2410c;">No matches found for "<em>${missing}</em>".</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px;">Check spelling or try a different taxon group.</div>`;
+      panel.style.display = 'block'; return;
+    }
+    const node1 = q1Matches[0], node2 = q2Matches[0];
+    const lca = findLCA(node1, node2);
+    const path1 = node1.ancestors().reverse().map(n => n.data.name);
+    const path2 = node2.ancestors().reverse().map(n => n.data.name);
+    const lcaDepth = lca ? lca.depth : -1;
+    const div1 = lcaDepth >= 0 ? path1.slice(lcaDepth + 1) : path1;
+    const div2 = lcaDepth >= 0 ? path2.slice(lcaDepth + 1) : path2;
+    panel.innerHTML = `
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px;color:#1f2937;">Comparing Two Taxa</div>
+      ${lca ? `
+        <div style="margin-bottom:10px;padding:8px 12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:4px;">
+          <div style="font-size:11px;color:#4b7c59;font-weight:700;margin-bottom:3px;">SHARED ANCESTOR</div>
+          <div style="font-weight:700;font-size:14px;color:#15803d;">${lca.data.name}</div>
+          ${div1.length > 0
+          ? `<div style="font-size:11px;color:#6b7280;margin-top:4px;">Diverges at: <strong>${div1[0]}</strong> / <strong>${div2[0] || '?'}</strong></div>`
+          : '<div style="font-size:11px;color:#6b7280;margin-top:4px;">Paths are identical</div>'}
+        </div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="padding:8px 10px;background:#eff6ff;border-left:3px solid #1d4ed8;border-radius:4px;">
+          <div style="font-size:11px;color:#1d4ed8;font-weight:700;margin-bottom:5px;">🔵 ${q1Label}</div>
+          ${div1.length > 0
+        ? div1.map(n => `<div style="font-size:12px;color:#1e3a8a;padding:1px 0 1px 8px;">${n}</div>`).join('')
+        : '<div style="font-size:12px;color:#6b7280;font-style:italic;">(same as shared ancestor)</div>'}
+          ${q1Matches.length > 1 ? `<div style="font-size:10px;color:#6b7280;margin-top:4px;">+${q1Matches.length - 1} more</div>` : ''}
+        </div>
+        <div style="padding:8px 10px;background:#fff7ed;border-left:3px solid #c2410c;border-radius:4px;">
+          <div style="font-size:11px;color:#c2410c;font-weight:700;margin-bottom:5px;">🟠 ${q2Label}</div>
+          ${div2.length > 0
+        ? div2.map(n => `<div style="font-size:12px;color:#7c2d12;padding:1px 0 1px 8px;">${n}</div>`).join('')
+        : '<div style="font-size:12px;color:#6b7280;font-style:italic;">(same as shared ancestor)</div>'}
+          ${q2Matches.length > 1 ? `<div style="font-size:10px;color:#6b7280;margin-top:4px;">+${q2Matches.length - 1} more</div>` : ''}
+        </div>
+      </div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
+        🔵 ${q1Matches.length} match(es) · 🟠 ${q2Matches.length} match(es)
+      </div>
+    `;
+    panel.style.display = 'block';
+  }
+
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
 
   async function runSearch() {
     if (!searchInput) return;
     const q = searchInput.value.trim();
-
-    // Clear previous focus labels before starting new search
     if (info) info.clear();
+    if (!q) { resetSearchState(); return; }
 
-    if (!q) {
-      resetSearchState();
+    // ── Comparison mode: comma-separated two queries ────────────────────────
+    const parts = q.split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      const r1 = findMatchesForTerm(parts[0]);
+      const r2 = findMatchesForTerm(parts[1]);
+      const allMatches = [...r1.matches, ...r2.matches];
+      const groupIds = new Map();
+      r1.matches.forEach(n => groupIds.set(n.data.id, 1));
+      r2.matches.forEach(n => { if (!groupIds.has(n.data.id)) groupIds.set(n.data.id, 2); });
+      isCompareMode = true;
+      compareMatchGroupIds = groupIds;
+      compareQ1Label = parts[0]; compareQ2Label = parts[1];
+      compareQ1Matches = r1.matches; compareQ2Matches = r2.matches;
+      currentMatches = allMatches;
+      primaryMatchIds = new Set([...r1.primaryMatchIds, ...r2.primaryMatchIds]);
+      synonymMatchIds = new Set([...r1.synonymMatchIds, ...r2.synonymMatchIds]);
+      synonymResolutions = new Map([...r1.synonymResolutions, ...r2.synonymResolutions]);
+      currentMatchIndex = -1;
+      setMatchIds(new Set([...primaryMatchIds, ...synonymMatchIds]));
+      if (allMatches.length > 0 && onSearchResults) {
+        await onSearchResults({ matches: allMatches, primaryMatchIds, synonymMatchIds });
+      }
+      highlightAllMatches(allMatches);
+      showComparisonPanel(compareQ1Label, compareQ2Label, compareQ1Matches, compareQ2Matches);
       return;
     }
+
+    // Single query — reset comparison state
+    isCompareMode = false; compareMatchGroupIds = new Map();
+    compareQ1Label = ''; compareQ2Label = '';
+    compareQ1Matches = []; compareQ2Matches = [];
 
     let matches = [];
     const matchedIds = new Set();

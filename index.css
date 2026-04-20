@@ -30,7 +30,7 @@ text.highlight {
   display: block !important;
 }
 /* Hide all links that are not highlighted and not on any match path */
-.search-active path:not(.highlight):not(.highlight-synonym):not(.match-path-link) {
+.search-active path:not(.highlight):not(.highlight-synonym):not(.highlight-q1):not(.highlight-q2):not(.match-path-link) {
   opacity: 0;
 }
 /* Match-path links between shared ancestors: keep visible as gray structure */
@@ -510,6 +510,26 @@ svg text.highlight {
 svg text.highlight-synonym {
   fill: #f59e0b !important;
   font-weight: 600 !important;
+}
+
+/* Comparison mode: query 1 = blue, query 2 = orange */
+svg path.highlight-q1 {
+  fill: none !important;
+  stroke: #1d4ed8 !important;
+  stroke-width: 2.5px;
+}
+svg path.highlight-q2 {
+  fill: none !important;
+  stroke: #c2410c !important;
+  stroke-width: 2.5px;
+}
+svg text.highlight-q1 {
+  fill: #1d4ed8 !important;
+  font-weight: 700 !important;
+}
+svg text.highlight-q2 {
+  fill: #c2410c !important;
+  font-weight: 700 !important;
 }
 
 /* Focus label styling */

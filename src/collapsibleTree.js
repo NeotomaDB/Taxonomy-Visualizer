@@ -65,6 +65,15 @@ export async function renderCollapsibleTree({
         }
     });
 
+    // Sort children alphabetically at every level so siblings appear A→Z.
+    // Applied before d3.hierarchy() so the layout reflects sorted order.
+    (function sortTree(node) {
+        if (node.children && node.children.length > 1) {
+            node.children.sort((a, b) => a.name.localeCompare(b.name));
+            node.children.forEach(sortTree);
+        }
+    })(root);
+
     // Attach synonym metadata onto canonical nodes so search & info panel can
     // resolve synonym queries (same as the radial tree does via mammal_path_combined.js).
     const synonymManager = {
@@ -80,6 +89,10 @@ export async function renderCollapsibleTree({
 
     // Convert to d3 hierarchy
     const hierarchyRoot = d3.hierarchy(root);
+
+    // Also sort on the d3 hierarchy object to guarantee alphabetical order
+    // even if the pre-sort above was somehow skipped (e.g. module cache).
+    hierarchyRoot.sort((a, b) => a.data.name.localeCompare(b.data.name));
 
     // Tree layout
     const dx = 25;

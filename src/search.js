@@ -16,7 +16,8 @@ import {
   getAllSynonymNames,
   isInvalidId,
   getSynonymInfo,
-  isSynonymsReady
+  isSynonymsReady,
+  getInvalidNameInfo,
 } from './synonyms.js';
 import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwitch.js';
 
@@ -24,7 +25,7 @@ export function setupSearch({
   root,
   link,
   node,
-  svg          = null,   // D3 SVG selection — for .search-active class
+  svg = null,   // D3 SVG selection — for .search-active class
   getLiveLinks = null,   // () => live D3 link selection
   getLiveNodes = null,   // () => live D3 node selection
   info,
@@ -375,69 +376,107 @@ export function setupSearch({
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    // ── Synonym resolution banner ─────────────────────────────────────────────
-    // Shown when the user searched an invalid (synonym) name and we resolved it
-    // to this canonical node.
+    // ── Case 2: user searched an INVALID synonym name ────────────────────────
+    // Clearly tells the user what they searched is not valid,
+    // why it's invalid, and what the correct accepted name is.
     let resolutionBanner = '';
     const resolutions = synonymResolutions.get(nodeId);
     if (resolutions && resolutions.length > 0) {
-      resolutionBanner = `
+      resolutionBanner = resolutions.map(r => `
         <div style="
-          margin-top:10px; padding:10px 12px;
-          background:#fffbeb; border-left:3px solid #f59e0b; border-radius:4px;
+          margin-top:10px; padding:10px 14px;
+          background:#fff7ed; border-left:3px solid #f97316; border-radius:4px;
         ">
-          <div style="font-weight:700;font-size:13px;color:#92400e;margin-bottom:6px;">
-            🔍 Matched via synonym
+          <div style="font-weight:700;font-size:13px;color:#c2410c;margin-bottom:6px;">
+            ⚠️ "<span style="font-style:italic;">${r.invalidName}</span>" is not the currently accepted name
           </div>
-          ${resolutions.map(r => `
-            <div style="margin-bottom:6px;">
-              <span style="
-                display:inline-block; padding:2px 7px;
-                background:#fef3c7; color:#92400e;
-                border-radius:4px; font-size:12px; font-weight:600;
-              ">${r.invalidName}</span>
-              <span style="font-size:12px;color:#6b7280;margin-left:4px;">is an invalid name (synonym) for this taxon</span>
-              ${r.synonymtype ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px;">Type: ${r.synonymtype}${r.recdatemodified ? ' · Modified: ' + formatDate(r.recdatemodified) : ''}</div>` : ''}
+          ${r.synonymtype ? `
+            <div style="font-size:12px;color:#7c3a1e;margin-bottom:4px;">
+              <strong>Reason:</strong> ${r.synonymtype}
             </div>
-          `).join('')}
-          <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-            The tree shows the valid (accepted) name:
-            <strong style="color:#1f2937;">${selectedNode.data.name}</strong>
+          ` : ''}
+          ${r.recdatemodified ? `
+            <div style="font-size:12px;color:#9a3412;margin-bottom:6px;">
+              <strong>Last updated:</strong> ${formatDate(r.recdatemodified)}
+            </div>
+          ` : ''}
+          <div style="font-size:13px;color:#1f2937;margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">
+            The currently accepted name is:
+            <strong style="color:#15803d;">${selectedNode.data.name}</strong>
           </div>
         </div>
-      `;
+      `).join('');
     }
 
-    // ── Synonym list from metadata on the canonical node ──────────────────────
+    // ── Cross-check: canonical node whose name is ALSO listed as invalid ───────
+    // This catches the case where Neotoma has "Aulacoseira distans var. humilis"
+    // both as a valid taxon (with occurrence records) AND as a synonym of
+    // "Aulacoseira humilis". The user searched the valid Neotoma name but the
+    // taxonomic literature considers it invalid.
+    if (!resolutionBanner) {
+      const invalidInfo = getInvalidNameInfo(selectedNode.data.name);
+      if (invalidInfo) {
+        resolutionBanner = `
+          <div style="
+            margin-top:10px; padding:10px 14px;
+            background:#fff7ed; border-left:3px solid #f97316; border-radius:4px;
+          ">
+            <div style="font-weight:700;font-size:13px;color:#c2410c;margin-bottom:6px;">
+              ⚠️ "<span style="font-style:italic;">${selectedNode.data.name}</span>" is listed as an invalid name in current taxonomy
+            </div>
+            ${invalidInfo.synonymtype ? `
+              <div style="font-size:12px;color:#7c3a1e;margin-bottom:4px;">
+                <strong>Reason:</strong> ${invalidInfo.synonymtype}
+              </div>
+            ` : ''}
+            ${invalidInfo.recdatemodified ? `
+              <div style="font-size:12px;color:#9a3412;margin-bottom:6px;">
+                <strong>Last updated:</strong> ${formatDate(invalidInfo.recdatemodified)}
+              </div>
+            ` : ''}
+            <div style="font-size:13px;color:#1f2937;margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">
+              The currently accepted name is:
+              <strong style="color:#15803d;">${invalidInfo.validName}</strong>
+            </div>
+            <div style="font-size:11px;color:#9a3412;margin-top:6px;font-style:italic;">
+              Note: this taxon has occurrence records in Neotoma under this name. The accepted name above reflects current taxonomic consensus.
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // ── Case 1: user searched the VALID name, node has known synonyms ─────────
+    // Confirms the searched name is correct, and shows what it used to be called.
     let synonymSection = '';
     const meta = selectedNode.data.synonymMetadata;
     if (meta && meta.synonyms && meta.synonyms.length > 0) {
       synonymSection = `
         <div style="
-          margin-top:12px; padding:10px;
-          background:#f9fafb; border-left:3px solid #1976d2; border-radius:4px;
+          margin-top:12px; padding:10px 14px;
+          background:#f0fdf4; border-left:3px solid #16a34a; border-radius:4px;
         ">
-          <div style="font-weight:600;font-size:14px;color:#1f2937;margin-bottom:8px;">
-            Known synonyms (invalid names)
+          <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:4px;">
+            ✓ <em>${selectedNode.data.name}</em> is the currently accepted name
           </div>
-          <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">
-            These names appear in the literature but are not accepted in the current taxonomy.
+          <div style="font-size:12px;color:#4b7c59;margin-bottom:8px;">
+            This taxon was previously known by the following name${meta.synonyms.length > 1 ? 's' : ''}:
           </div>
           ${meta.synonyms.map(syn => `
-            <div style="padding:5px 0;border-top:1px solid #e5e7eb;margin-top:4px;">
-              <div style="font-weight:600;color:#f59e0b;">
-                • ${syn.invalid_name}
-                <span style="font-size:11px;color:#dc2626;font-weight:400;margin-left:4px;">invalid name</span>
+            <div style="padding:6px 0;border-top:1px solid #bbf7d0;margin-top:2px;">
+              <div style="font-weight:600;color:#b45309;font-size:13px;">
+                • <em>${syn.invalid_name}</em>
+                <span style="font-size:11px;color:#dc2626;font-weight:400;margin-left:6px;">now invalid</span>
               </div>
-              <div style="font-size:11px;color:#9ca3af;margin-left:12px;margin-top:2px;">
-                ${syn.synonymtype ? 'Type: ' + syn.synonymtype : ''}
+              <div style="font-size:11px;color:#6b7280;margin-left:14px;margin-top:2px;">
+                ${syn.synonymtype ? `Reason: ${syn.synonymtype}` : ''}
                 ${syn.synonymtype && syn.recdatemodified ? ' · ' : ''}
-                ${syn.recdatemodified ? 'Modified: ' + formatDate(syn.recdatemodified) : ''}
+                ${syn.recdatemodified ? 'Last updated: ' + formatDate(syn.recdatemodified) : ''}
               </div>
             </div>
           `).join('')}
           <div style="font-size:11px;color:#9ca3af;margin-top:8px;font-style:italic;">
-            Synonym data from the Neotoma database. Invalid names are not rendered as tree nodes.
+            Synonym data from the Neotoma Paleoecology Database.
           </div>
         </div>
       `;
@@ -712,7 +751,7 @@ export function setupSearch({
     console.log('Total matches:', matches.length);
     matches.forEach(m => {
       const type = primaryMatchIds.has(m.data.id) ? 'PRIMARY' :
-                   synonymMatchIds.has(m.data.id) ? 'SYNONYM' : 'UNKNOWN';
+        synonymMatchIds.has(m.data.id) ? 'SYNONYM' : 'UNKNOWN';
       console.log(`  - ${m.data.name} (ID: ${m.data.id}) [${type}]`);
     });
 
@@ -760,14 +799,14 @@ export function setupSearch({
       if (info) {
         const panel = document.getElementById('info');
         if (panel) {
-              panel.innerHTML = `
+          panel.innerHTML = `
                 <div style="font-weight:600;margin-bottom:6px;">Search Results</div>
                 <div style="color:#6b7280;margin-bottom:8px;">No matches found for "<em>${q}</em>".</div>
                 <div style="font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:6px;padding:8px 10px;line-height:1.5;">
                   💡 <strong>Tip:</strong> If you are searching for a taxon below Class level (e.g., order, family, genus, or species), try selecting a <strong>Taxon Group</strong> from the dropdown first, then search again.
                 </div>
               `;
-              panel.style.display = 'block';
+          panel.style.display = 'block';
         }
       }
       highlightAllMatches([]);

@@ -200,3 +200,26 @@ export function isSynonymsReady() {
   return synonymManager.isReady();
 }
 
+/**
+ * Check if a taxon NAME is listed as invalid in the synonym data.
+ * Returns null if not invalid, or {validName, synonymtype, recdatemodified} if it is.
+ */
+export function getInvalidNameInfo(name) {
+  if (!synonymManager.isReady()) return null;
+  const validId = synonymManager.getValidIdByName(name);
+  if (!validId) return null;
+  const info = synonymManager.validIdToInfo.get(validId);
+  if (!info) return null;
+  // Only flag as invalid if the name doesn't match the valid name
+  if (info.validName.toLowerCase() === name.toLowerCase()) return null;
+  // Find the specific synonym entry for this name to get type/date
+  const synEntry = (info.synonyms || []).find(
+    s => s.invalid_name.toLowerCase() === name.toLowerCase()
+  );
+  return {
+    validName: info.validName,
+    validId,
+    synonymtype: synEntry ? synEntry.synonymtype : null,
+    recdatemodified: synEntry ? synEntry.recdatemodified : null,
+  };
+}

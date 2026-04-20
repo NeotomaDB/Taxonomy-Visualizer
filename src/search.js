@@ -718,8 +718,14 @@ export function setupSearch({
       if (info) {
         const panel = document.getElementById('info');
         if (panel) {
-          panel.innerHTML = `<div style="font-weight:600;margin-bottom:6px;">Search Results</div><div style="color:#6b7280;">No matches found for "${q}"</div>`;
-          panel.style.display = 'block';
+              panel.innerHTML = `
+                <div style="font-weight:600;margin-bottom:6px;">Search Results</div>
+                <div style="color:#6b7280;margin-bottom:8px;">No matches found for "<em>${q}</em>".</div>
+                <div style="font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:6px;padding:8px 10px;line-height:1.5;">
+                  💡 <strong>Tip:</strong> If you are searching for a taxon below Class level (e.g., order, family, genus, or species), try selecting a <strong>Taxon Group</strong> from the dropdown first, then search again.
+                </div>
+              `;
+              panel.style.display = 'block';
         }
       }
       highlightAllMatches([]);

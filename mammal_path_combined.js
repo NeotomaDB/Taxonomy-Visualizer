@@ -4,6 +4,7 @@ import { normalizeRows, pathsToTree, attachSynonymMetadata } from './src/data.js
 import { createPopup } from './src/popup.js';
 import { highlightPath } from './src/highlight.js';
 import { enrichTreeWithPaths, reorderTreeForGrouping, computeLeafOrder } from './src/grouping.js';
+import { groupUncertainLeaves } from './src/groupUncertain.js';
 import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
@@ -97,6 +98,11 @@ async function renderMammalTree({
     const result = pathsToTree(normalizedRows, rootId, rootName, anchorIds);
     treeData = result.root;
     byId = result.byId;
+    // Group "Undetermined …" and "Unknown …" leaf siblings under synthetic
+    // collapsible parents to reduce visual clutter (e.g. Diatoms view).
+    if (!isInitialView) {
+      groupUncertainLeaves(treeData, byId, { minGroupSize: 2 });
+    }
   }
 
   // 1.5) Attach synonym metadata onto canonical nodes (no invalid nodes added to tree)
@@ -244,10 +250,24 @@ async function renderMammalTree({
         child.children = null;
       }
     });
-  } else if (EXPAND_ALL_GROUPS.has(taxagroupid) && !isInitialView) {
-    // Ensure no node is accidentally collapsed on first render.
+  }
+
+  // Collapse synthetic "Undetermined (N)" / "Unknown (N)" group nodes by default
+  // so they don't explode the layout on first render.
+  if (!isInitialView) {
     root.descendants().forEach(d => {
-      if (d._children) { d.children = d._children; d._children = null; }
+      if (d.data.isSyntheticGroup && d.children && d.children.length > 0) {
+        d._children = d.children;
+        d.children = null;
+      }
+    });
+  }
+
+  if (EXPAND_ALL_GROUPS.has(taxagroupid) && !isInitialView) {
+    // Ensure no node is accidentally collapsed on first render —
+    // but leave synthetic uncertain-group nodes collapsed (they handle their own expand/collapse).
+    root.descendants().forEach(d => {
+      if (d._children && !d.data.isSyntheticGroup) { d.children = d._children; d._children = null; }
     });
   }
 
@@ -392,7 +412,8 @@ async function renderMammalTree({
         if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
 
         const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
-        const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
+        const isCollapsedGroup = d.data.isSyntheticGroup ||
+          nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
           nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
           nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
           nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
@@ -410,7 +431,8 @@ async function renderMammalTree({
 
         // Check if this node is one of the collapsed groups
         const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
-        const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
+        const isCollapsedGroup = d.data.isSyntheticGroup ||
+          nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
           nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
           nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
           nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||

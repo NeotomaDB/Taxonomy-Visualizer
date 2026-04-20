@@ -1450,7 +1450,8 @@
             initViewSwitch(
                 async (rows, rootId, rootName, allRowsForSynonyms) => {
                     d3.select('#chart').selectAll('*').remove();
-                    const isFilteredSearchView = taxagroupid === 'INS' && rows !== filteredRows;
+                    const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA']);
+                    const isFilteredSearchView = FOCUS_VIEW_GROUPS.has(taxagroupid) && rows !== filteredRows;
                     if (isFilteredSearchView) {
                         const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
                         const currentQuery = document.getElementById('searchInput')?.value?.trim() || '';
@@ -1463,6 +1464,7 @@
                             expandAll: true,
                             initialQuery: currentQuery,
                             autoRunSearch: !!currentQuery,
+                            taxagroupid: taxagroupid,
                         });
                         return;
                     }

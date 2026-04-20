@@ -120,7 +120,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
           nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
           nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
 
-        nodeGroup.select('text:not(.toggle)')
+        nodeGroup.select('text:not(.toggle):not(.label-halo)')
           .classed('focused-text', true)
           .style('fill', isCollapsedGroup ? '#6b7280' : '#0d47a1');
       });
@@ -133,7 +133,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
 
     // Remove focus styling from dendrogram
     if (nodeSelection) {
-      nodeSelection.select('text').classed('focused-text', false).style('fill', null);
+      nodeSelection.select('text:not(.label-halo)').classed('focused-text', false).style('fill', null);
     }
   }
 

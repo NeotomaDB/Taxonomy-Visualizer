@@ -2,6 +2,8 @@ import { setupFocusInfo } from './searchFocus.js';
 import { setupSearch } from './search.js';
 import { highlightPath } from './highlight.js';
 import { setHighlightedPath } from './viewSwitch.js';
+import { attachSynonymMetadata } from './data.js';
+import { initSynonyms, getSynonymInfo, isSynonymsReady } from './synonyms.js';
 
 /**
  * Render a collapsible tree layout.
@@ -20,6 +22,7 @@ export async function renderCollapsibleTree({
     expandAll = false,     // If true, show the full tree fully expanded at init
     initialQuery = '',
     autoRunSearch = false,
+    taxagroupid = null,    // e.g. 'DIA' — used to show external links like AlgaeBase
 } = {}) {
     if (!rows || !rows.length) {
         console.warn('renderCollapsibleTree: rows is empty.');
@@ -29,6 +32,9 @@ export async function renderCollapsibleTree({
     // Defensive clear so repeated Focus View renders cannot stack multiple
     // collapsible SVGs inside the same chart container.
     d3.select(selector).selectAll('*').remove();
+
+    // Ensure synonym data is loaded before attaching metadata.
+    await initSynonyms();
 
     // Build hierarchy from path-list
     const byId = new Map();
@@ -58,6 +64,19 @@ export async function renderCollapsibleTree({
             }
         }
     });
+
+    // Attach synonym metadata onto canonical nodes so search & info panel can
+    // resolve synonym queries (same as the radial tree does via mammal_path_combined.js).
+    const synonymManager = {
+        isReady: () => isSynonymsReady(),
+        getSynonymInfo: (id) => getSynonymInfo(id),
+    };
+    const rowsForSynonymLookup = allRowsForSynonyms || rows;
+    const invalidIdToCanonicalId = attachSynonymMetadata(
+        root, byId, synonymManager, rowsForSynonymLookup
+    );
+    // Expose the reverse lookup globally so search.js can resolve synonym queries.
+    window.__invalidIdToCanonicalId = invalidIdToCanonicalId;
 
     // Convert to d3 hierarchy
     const hierarchyRoot = d3.hierarchy(root);
@@ -228,6 +247,10 @@ export async function renderCollapsibleTree({
     let i = 0;
     update(hierarchyRoot);
 
+    // Wire up the info panel so clicking a node shows its taxonomy path +
+    // synonym info (same behaviour as the radial tree view).
+    const info = setupFocusInfo(gNode.selectAll('g.node'), () => 0);
+
     // Setup search functionality
     setupSearch({
         root: hierarchyRoot,
@@ -236,13 +259,16 @@ export async function renderCollapsibleTree({
         svg,
         getLiveLinks: () => gLink.selectAll('path'),
         getLiveNodes: () => gNode.selectAll('g.node'),
-        info: null,
+        info,
         setCurrentRotate: () => { },
         updateRotate: () => { },
         updateLabelOrientation: () => { },
         initialQuery,
         autoRunSearch,
-        keepResultsListOnSelect: true,
+        keepResultsListOnSelect: false,  // click a result → show details + synonym + Back button
+        disableGoToTree: true,           // we're already in a tree; navigateToNode is irrelevant here
+        taxagroupid: taxagroupid || rows?.[0]?.taxagroupid || null,
         onSearchClear: () => { },
     });
 }
+

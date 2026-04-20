@@ -661,12 +661,13 @@ async function renderMammalTree({
     updateRotate,
     updateLabelOrientation,
     expandToNode,
-    searchPathOnly: taxagroupid === 'INS',
-    deferLocalResultsRendering: taxagroupid === 'INS',
-    onSearchResults: taxagroupid === 'INS' && typeof window !== 'undefined' && window.activateFocusView
+    searchPathOnly: ['INS', 'DIA'].includes(taxagroupid),
+    deferLocalResultsRendering: ['INS', 'DIA'].includes(taxagroupid),
+    onSearchResults: ['INS', 'DIA'].includes(taxagroupid) && typeof window !== 'undefined' && window.activateFocusView
       ? () => window.activateFocusView()
       : null,
     onSearchClear: () => { if (cull) cull.refresh(); },
+    taxagroupid,
   });
 
   // 8) Zoom/pan (wheel/pinch)

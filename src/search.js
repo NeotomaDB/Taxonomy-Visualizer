@@ -39,6 +39,8 @@ export function setupSearch({
   deferLocalResultsRendering = false,
   onSearchResults = null, // called after matches are resolved
   onSearchClear = null,  // called when search is cleared (e.g. cull.refresh)
+  disableGoToTree = false, // when true, hide "Go to Tree" buttons in results list
+  taxagroupid = null,      // current taxon group id — used to show external links (e.g. AlgaeBase for DIA)
 }) {
   function getAllNodes(n) {
     const arr = [n];
@@ -254,9 +256,9 @@ export function setupSearch({
         ">via synonym: ${resolvedNames}</span>`;
       }
 
-      // Add "Go to Tree" button if node has children
+      // Add "Go to Tree" button if node has children and we're not in collapsible-tree context
       const hasChildren = m.children && m.children.length > 0;
-      const goToTreeBtn = hasChildren && window.navigateToNode ? `
+      const goToTreeBtn = !disableGoToTree && hasChildren && window.navigateToNode ? `
         <button class="go-to-tree-btn" data-index="${idx}" style="
           margin-top: 4px;
           padding: 4px 8px;
@@ -492,11 +494,51 @@ export function setupSearch({
       </button>
     ` : '';
 
+    // ── AlgaeBase external link ───────────────────────────────────────────────
+    // Shown for DIA (Diatoms) when the selected node is a species-level taxon
+    // (binomial name — 2 or more words, not an Undetermined/Unknown synthetic node).
+    let algaeBaseLink = '';
+    const ALGAEBASE_GROUPS = new Set(['DIA']);
+    const nodeName = selectedNode.data.name || '';
+    const wordCount = nodeName.trim().split(/\s+/).length;
+    const isSyntheticOrUncertain = nodeName.toLowerCase().startsWith('undetermined')
+      || nodeName.toLowerCase().startsWith('unknown')
+      || selectedNode.data.isSyntheticGroup;
+    if (ALGAEBASE_GROUPS.has(taxagroupid) && wordCount >= 2 && !isSyntheticOrUncertain) {
+      const algaeBaseUrl = 'https://www.algaebase.org/search/species/?name='
+        + nodeName.trim().replace(/\s+/g, '+') + '&authority=';
+      algaeBaseLink = `
+        <div style="margin-top:12px;">
+          <a href="${algaeBaseUrl}" target="_blank" rel="noopener noreferrer" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            color: #1565c0;
+            text-decoration: none;
+            padding: 5px 10px;
+            border: 1px solid #bbdefb;
+            border-radius: 6px;
+            background: #f0f7ff;
+            transition: background 0.15s;
+          " onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#f0f7ff'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Search this species in AlgaeBase
+          </a>
+        </div>
+      `;
+    }
+
     panel.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matches)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${names.map(n => `<div style="margin-left:12px;">${n}</div>`).join('')}</div>
       ${resolutionBanner}
       ${synonymSection}
+      ${algaeBaseLink}
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         ${backButton}
         ${goToTreeButton}

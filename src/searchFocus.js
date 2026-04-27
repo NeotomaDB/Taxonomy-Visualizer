@@ -4,7 +4,7 @@
 //   const info = setupFocusInfo(node, getCurrentRotate);
 //   info.show(d); // to display d and its ancestors + label on dendrogram
 //   info.clear(); // to hide
-export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
+export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
   const panel = document.getElementById('info');
   let currentNode = null; // Store current node for button handler
 
@@ -45,10 +45,11 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
       </button>
     ` : '';
 
-    // Add "Go to Group View" button if node is an anchor
+    // Add "Go to Group View" button if node is an anchor or a synthetic taxa group entry (like non-bio categories)
     const isAnchor = d.data && d.data.isAnchor;
+    const isSyntheticEntry = d.data && d.data.isSyntheticGroup;
     const taxagroupid = d.data && d.data.taxagroupid;
-    const goToGroupButton = (isAnchor && taxagroupid && window.loadTreeForGroup) ? `
+    const goToGroupButton = ((isAnchor || isSyntheticEntry) && taxagroupid && window.loadTreeForGroup) ? `
       <button id="goToGroupBtn" style="
         margin-top: 12px;
         margin-left: 8px;
@@ -109,6 +110,10 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0) {
       // Get all ancestors (the complete path from root to selected node)
       const pathNodes = d.ancestors();
       pathNodes.forEach(ancestorNode => {
+        // Obey filtering rule: if we only want the target node name, skip intermediate nodes
+        if (highlightOnlyTargetNode && ancestorNode !== d) {
+          return;
+        }
         const nodeGroup = nodeSelection.filter(n => n === ancestorNode);
 
         // Check if this is a collapsed group node

@@ -183,9 +183,14 @@ export function setupSearch({
     labels.classed('highlight-synonym', false);
     labels.classed('highlight-q1', false);
     labels.classed('highlight-q2', false);
+    labels.style('paint-order', null)
+          .style('stroke', null)
+          .style('stroke-width', null)
+          .style('stroke-linejoin', null);
     isCompareMode = false; compareMatchGroupIds = new Map();
     compareQ1Label = ''; compareQ2Label = '';
     compareQ1Matches = []; compareQ2Matches = [];
+    if (svg) svg.classed('compare-mode', false);
 
     setSearchActive(false);
     clearHighlightedPath();
@@ -255,10 +260,31 @@ export function setupSearch({
       const allPathNodes = new Set([...q1Ids, ...q2Ids].map(id => idToNode.get(id)).filter(Boolean));
       applyMatchPathClass(allPathNodes);
       ll.classed('match-path-link', l => sharedIds.has(l.source.data.id) && sharedIds.has(l.target.data.id));
-      ll.classed('highlight-q1', l => q1Unique.has(l.target.data.id) && q1Ids.has(l.source.data.id));
-      ll.classed('highlight-q2', l => q2Unique.has(l.target.data.id) && q2Ids.has(l.source.data.id));
+      
+      // Highlight and raise q1 links
+      ll.filter(l => q1Unique.has(l.target.data.id) && q1Ids.has(l.source.data.id))
+        .classed('highlight-q1', true).raise();
+      // Highlight and raise q2 links
+      ll.filter(l => q2Unique.has(l.target.data.id) && q2Ids.has(l.source.data.id))
+        .classed('highlight-q2', true).raise();
+      
+      // Raise the entire node group for any highlighted path, sorted by depth descending
+      // This ensures parent nodes are drawn LAST, putting their long text ON TOP of descendant circles!
+      ln.filter(n => q1Ids.has(n.data.id) || q2Ids.has(n.data.id))
+        .sort((a, b) => b.depth - a.depth)
+        .raise();
+
       labels.classed('highlight-q1', d => compareMatchGroupIds.get(d.data.id) === 1);
       labels.classed('highlight-q2', d => compareMatchGroupIds.get(d.data.id) === 2);
+      
+      // Defeat CSS caching by enforcing the white stroke halo directly inline for comparison texts
+      labels.filter(d => compareMatchGroupIds.has(d.data.id))
+            .style('paint-order', 'stroke fill')
+            .style('stroke', 'white')
+            .style('stroke-width', '3.5px')
+            .style('stroke-linejoin', 'round');
+
+      if (svg) svg.classed('compare-mode', true);
       setSearchActive(true);
       return;
     }
@@ -313,20 +339,33 @@ export function setupSearch({
 
     const A = new Set(d.ancestors());
     const ll = liveLinks();
+    const ln = liveNodes();
     const labels = liveNodeLabels();
     const isSynonym = synonymMatchIds.has(d.data.id);
 
     if (isSynonym) {
-      ll.classed('highlight-synonym', l => A.has(l.source) && A.has(l.target));
+      ll.filter(l => A.has(l.source) && A.has(l.target)).classed('highlight-synonym', true).raise();
       ll.classed('highlight', false);
       labels.classed('highlight-synonym', n => A.has(n));
       labels.classed('highlight', false);
     } else {
-      ll.classed('highlight', l => A.has(l.source) && A.has(l.target));
+      ll.filter(l => A.has(l.source) && A.has(l.target)).classed('highlight', true).raise();
       ll.classed('highlight-synonym', false);
       labels.classed('highlight', n => A.has(n));
       labels.classed('highlight-synonym', false);
     }
+    
+    // Raise the node groups to stay above links and sibling unhighlighted nodes, sorted nicely
+    ln.filter(n => A.has(n))
+      .sort((a, b) => b.depth - a.depth)
+      .raise();
+    
+    // Fallback inline styling to guarantee text halo
+    labels.filter(n => A.has(n))
+          .style('paint-order', 'stroke fill')
+          .style('stroke', 'white')
+          .style('stroke-width', '3.5px')
+          .style('stroke-linejoin', 'round');
 
     setSearchActive(true);
     setHighlightedPath(d);

@@ -10,6 +10,15 @@ export function highlightPath(linkSel, nodeSel, focusNode) {
 
   // Then apply new highlights
   const A = new Set(focusNode.ancestors());
-  linkSel.classed('highlight', l => A.has(l.source) && A.has(l.target));
-  nodeSel.selectAll('text').classed('highlight', n => A.has(n));
+
+  // Highlight and raise the links in the path
+  linkSel.filter(l => A.has(l.source) && A.has(l.target))
+    .classed('highlight', true)
+    .raise();
+
+  // Highlight and raise the entire node group (circle, text, toggle) to ensure it renders on top of everything else
+  nodeSel.filter(n => A.has(n))
+    .raise()
+    .selectAll('text')
+    .classed('highlight', true);
 }

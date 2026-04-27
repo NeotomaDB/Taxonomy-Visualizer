@@ -17,12 +17,14 @@ export async function renderCollapsibleTree({
     rootId,
     rootName,
     width = 900,
-    height = 600,
+    height = 900,
     anchorIds = new Set(), // Set of anchor IDs to highlight in green
     expandAll = false,     // If true, show the full tree fully expanded at init
     initialQuery = '',
     autoRunSearch = false,
     taxagroupid = null,    // e.g. 'DIA' — used to show external links like AlgaeBase
+    dx = 25,               // Vertical node spacing
+    dy = null,             // Horizontal level spacing (null = auto-calculate)
 } = {}) {
     if (!rows || !rows.length) {
         console.warn('renderCollapsibleTree: rows is empty.');
@@ -50,7 +52,18 @@ export async function renderCollapsibleTree({
             const name = names[i];
 
             if (!byId.has(id)) {
-                byId.set(id, { id, name, children: [] });
+                byId.set(id, { 
+                    id, 
+                    name, 
+                    taxagroupid: row.taxagroupid,
+                    isSyntheticGroup: row.isSyntheticGroup,
+                    isAnchor: anchorIds.has(parseInt(id)) || anchorIds.has(id.toString()),
+                    children: [] 
+                });
+            } else {
+                const nodeRef = byId.get(id);
+                if (!nodeRef.taxagroupid && row.taxagroupid) nodeRef.taxagroupid = row.taxagroupid;
+                if (!nodeRef.isSyntheticGroup && row.isSyntheticGroup) nodeRef.isSyntheticGroup = row.isSyntheticGroup;
             }
 
             if (i > 0) {
@@ -75,7 +88,7 @@ export async function renderCollapsibleTree({
     })(root);
 
     // Attach synonym metadata onto canonical nodes so search & info panel can
-    // resolve synonym queries (same as the radial tree does via mammal_path_combined.js).
+    // resolve synonym queries (same as the radial tree does via taxon_group_viz.js).
     const synonymManager = {
         isReady: () => isSynonymsReady(),
         getSynonymInfo: (id) => getSynonymInfo(id),
@@ -95,9 +108,10 @@ export async function renderCollapsibleTree({
     hierarchyRoot.sort((a, b) => a.data.name.localeCompare(b.data.name));
 
     // Tree layout
-    const dx = 25;
-    const dy = width / (hierarchyRoot.height + 1);
-    const tree = d3.tree().nodeSize([dx, dy]);
+    const _dx = dx;
+    // Use explicitly passed dy, fallback to manual large scale or auto scale
+    const _dy = dy !== null ? dy : (width / (hierarchyRoot.height + 1));
+    const tree = d3.tree().nodeSize([_dx, _dy]);
 
     // Default: collapse everything beyond depth 1 so the tree opens compactly.
     // When expandAll=true (small, manageable groups) keep every node open.
@@ -172,7 +186,22 @@ export async function renderCollapsibleTree({
         // Only centre the view on the very first render
         if (!initialised) {
             const centerY = height / 2 - (topNode.x + bottomNode.x) / 2;
-            svg.call(zoom.transform, d3.zoomIdentity.translate(leftMargin, centerY));
+
+            // Calculate max horizontal position of the nodes
+            let maxNodeY = 0;
+            hierarchyRoot.each(node => {
+                if (node.y > maxNodeY) maxNodeY = node.y;
+            });
+
+            // Align the rightmost nodes with the right edge of the white box, padding 160px for names
+            let translateX = width - maxNodeY - 180;
+
+            // Fallback so small trees don't get stuck to the far right if they easily fit
+            if (translateX > leftMargin) {
+                translateX = leftMargin;
+            }
+
+            svg.call(zoom.transform, d3.zoomIdentity.translate(translateX, centerY));
             initialised = true;
         }
 
@@ -188,9 +217,31 @@ export async function renderCollapsibleTree({
             .attr('fill-opacity', 0)
             .attr('stroke-opacity', 0)
             .on('click', (event, d) => {
+                // Clear any previous highlights manually
+                document.querySelectorAll('.highlight').forEach(el => {
+                    el.classList.remove('highlight');
+                });
+
+                // Set new highlight to the clicked path
+                // Note: gLink and gNode are defined in the outer scope
+                highlightPath(gLink.selectAll('path'), gNode.selectAll('g.node'), d);
+                setHighlightedPath(d);
+
+                // Show side panel / info popup if the 'info' variable is initialized
+                if (typeof info !== 'undefined' && info) {
+                    info.show(d);
+                }
+
+                // Standard expansion/collapse logic
                 if (d.children || d._children) {
                     d.children = d.children ? null : d._children;
                     update(d);
+                }
+            })
+            .on('dblclick', (event, d) => {
+                if (window.navigateToNode && d.data && d.data.taxagroupid) {
+                    // Navigate directly to the clicked taxagroup if the function exists
+                    window.navigateToNode(d.data.id, d.data.name, d.data.taxagroupid);
                 }
             });
 
@@ -258,11 +309,11 @@ export async function renderCollapsibleTree({
     }
 
     let i = 0;
-    update(hierarchyRoot);
 
-    // Wire up the info panel so clicking a node shows its taxonomy path +
-    // synonym info (same behaviour as the radial tree view).
+    // Setup info panel BEFORE running update() so node click bindings don't trigger ReferenceError on "info"
     const info = setupFocusInfo(gNode.selectAll('g.node'), () => 0);
+
+    update(hierarchyRoot);
 
     // Setup search functionality
     setupSearch({

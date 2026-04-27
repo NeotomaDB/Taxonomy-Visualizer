@@ -1,0 +1,38 @@
+/**
+ * Configuration for the initial view behaviors of different taxa groups.
+ * Centralizing logic here makes adding new groups or changing tree styles easier.
+ */
+
+// Groups that always use the vertically collapsible (linear) tree,
+// usually because their hierarchy is extremely flat, irregular, or radial view looks bad.
+export const FORCE_LIST_TREE_GROUPS = new Set(['WCH', 'LAB', 'CHO', 'BRZ', 'PLA', 'PRO', 'PRZ', 'ROT', 'VER']);
+
+export const NON_BIO_GROUPS = new Set(['WCH', 'BIM', 'AQU', 'PHY', 'MAG', 'CHM', 'SED', 'LOI', 'LAB', 'CAR', 'ISO', 'CHR', 'UPA', 'DNA', 'PHT']);
+
+// Groups where the collapsible list tree should be completely expanded at initialization.
+export const EXPAND_ALL_COLLAPSIBLE = new Set([
+    'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN', 'CHO', 'FOR', 'SIL', 'PLA', 'PRO', 'PRZ', 'VER', 'ISO',
+]);
+
+// Small/manageable groups using the radial view where all nodes are force-expanded.
+export const EXPAND_ALL_RADIAL = new Set([
+    'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN', 'FOR', 'SIL', 'CHO',
+]);
+
+// Large groups for radial view where we show only the top/anchor level and orders/classes,
+// immediately collapsing deeper nodes.
+export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA']);
+
+// Groups that trigger the focus view mode or unique search optimizations.
+export const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA']);
+
+// Define layout spacing overrides for linear tree views. 
+// Narrow horizontal spans (e.g., dy=130) prevent visually disconnected layouts 
+// when names are longer, giving it a list-like rather than scattered feel.
+export function getTreeViewSpacing(taxagroupid) {
+    const customSpacingGroups = new Set(['FOR', 'SIL', 'CHO', 'BRZ', 'PLA']);
+    if (customSpacingGroups.has(taxagroupid)) {
+        return { dx: 25, dy: 130 };
+    }
+    return { dx: 25, dy: null };
+}

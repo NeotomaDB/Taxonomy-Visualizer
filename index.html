@@ -139,10 +139,12 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="src/taxon-group-select.js"></script>
-    <script type="module" src="mammal_path_combined.js"></script>
+    <script type="module" src="taxon_group_viz.js"></script>
     <script type="module">
+        import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js';
         import { initViewSwitch, resetViewState, activateFocusView } from './src/viewSwitch.js';
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
+        import { updateAnomalyBar } from './src/anomaly_bar.js';
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree
         function convertTaxonPaths(data) {
             // data is an object with a SQL query string as key and array as value
@@ -344,9 +346,6 @@
         let taxagroupNames = {}; // Store taxagroupid to full name mapping
         let anchorDataMap = new Map(); // Store taxagroupid to anchor info mapping
         let anchorIds = new Set(); // Store all anchor node IDs for styling
-
-        // Non-biological taxon group IDs
-        const NON_BIO_GROUPS = new Set(['WCH', 'BIM', 'AQU', 'PHY', 'MAG', 'CHM', 'SED', 'LOI', 'LAB', 'CAR', 'ISO', 'CHR', 'UPA', 'DNA', 'PHT']);
 
         // Groups with no unique real taxonomic anchor — use a synthetic root node.
         // sliceAfterName: find this name in the path; keep everything AFTER it.
@@ -810,6 +809,14 @@
             if (_anomBar) _anomBar.style.display = 'none';
             if (_anomDetail) _anomDetail.style.display = 'none';
 
+            // Special initial view for non-biological taxon
+            if (currentTaxonType === 'nonbio') {
+                const { renderNonBioInitView } = await import('./src/non_bio_init_view.js');
+                const select = document.getElementById('taxagroupSelect');
+                await renderNonBioInitView(select.options);
+                return;
+            }
+
             // Build trees if not already built
             if (mainTreeNodes.length === 0 && orphanTreeNodes.length === 0) {
                 const trees = buildInitialView();
@@ -1195,165 +1202,8 @@
         let currentRootName = null;
 
         // ── Anomaly UI ────────────────────────────────────────────────────────────
-        // Cached anomalies for the currently-displayed taxon group.
-        let currentAnomalies = [];
-
-        /**
-         * Render (or hide) the anomaly status bar below the controls.
-         * Called by loadTreeForGroup after detectAnomalies() runs.
-         *
-         * @param {string} taxagroupid
-         * @param {Array}  anomalies    AnomalyRecord[] from detectAnomalies()
-         * @param {number} orphanCount  Rows with path-length ≤ 1 or incertae sedis
-         */
-        function updateAnomalyBar(taxagroupid, anomalies, orphanCount) {
-            const bar = document.getElementById('anomaly-bar');
-            const detailPanel = document.getElementById('anomaly-detail-panel');
-            if (!bar) return;
-
-            // Always collapse detail panel when switching groups
-            if (detailPanel) detailPanel.style.display = 'none';
-
-            currentAnomalies = anomalies;
-
-            if (orphanCount === 0 && anomalies.length === 0) {
-                bar.style.display = 'none';
-                return;
-            }
-
-            const parts = [];
-
-            if (orphanCount > 0) {
-                parts.push(
-                    `<span style="color:#6b7280;">${orphanCount.toLocaleString()} orphan nodes</span>`
-                );
-            }
-
-            if (anomalies.length > 0) {
-                // Build tooltip: list example path beginning so researchers can spot the issue
-                const exPath = anomalies[0].actualPath.split(' → ').slice(0, 3).join(', ');
-                const tooltipText =
-                    `${anomalies.length} record(s) in ${taxagroupid} have paths ` +
-                    `inconsistent with this taxagroup (e.g. ${exPath}). ` +
-                    `These are excluded from the tree.`;
-
-                parts.push(`
-                    <span style="color:#6b7280;">
-                        <span style="color:#dc2626; font-weight:600;">${anomalies.length}</span>
-                        &nbsp;data anomalies
-                        <abbr title="${tooltipText}" style="
-                            cursor:help; text-decoration:none;
-                            display:inline-flex; align-items:center; justify-content:center;
-                            width:15px; height:15px; border-radius:50%;
-                            background:#fee2e2; color:#dc2626;
-                            font-size:9px; font-weight:700;
-                            margin-left:3px; vertical-align:middle;
-                        ">?</abbr>
-                        <a href="#" id="viewAnomalyDetails" style="
-                            margin-left:7px; color:#9ca3af; font-size:11px; text-decoration:underline;
-                        ">View details →</a>
-                    </span>
-                `);
-            }
-
-            const sep = `<span style="color:#d1d5db; margin:0 2px;">|</span>`;
-            bar.innerHTML =
-                `<div style="font-size:12px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">` +
-                parts.join(sep) +
-                `</div>`;
-            bar.style.display = 'block';
-
-            // Wire up "View details →" toggle
-            const viewLink = document.getElementById('viewAnomalyDetails');
-            if (viewLink) {
-                viewLink.addEventListener('click', e => {
-                    e.preventDefault();
-                    showAnomalyDetail(taxagroupid, anomalies);
-                });
-            }
-        }
-
-        /**
-         * Toggle the anomaly detail panel.
-         * On first open (or after group switch) renders the table; subsequent
-         * clicks collapse it.
-         *
-         * @param {string} taxagroupid
-         * @param {Array}  anomalies
-         */
-        function showAnomalyDetail(taxagroupid, anomalies) {
-            const panel = document.getElementById('anomaly-detail-panel');
-            if (!panel) return;
-
-            // Toggle: close if already open
-            if (panel.style.display !== 'none') {
-                panel.style.display = 'none';
-                return;
-            }
-
-            const rows = anomalies.map(a => {
-                const meta = getAnomalyMeta(a.anomalyType);
-                // Truncate long paths for readability — full path available on hover
-                const shortPath = a.actualPath.length > 90
-                    ? a.actualPath.slice(0, 87) + '…'
-                    : a.actualPath;
-                return `
-                    <tr style="border-top:1px solid #f3f4f6;">
-                        <td style="padding:6px 8px; color:#9ca3af; white-space:nowrap;">${a.taxonid}</td>
-                        <td style="padding:6px 8px; font-weight:500; color:#1f2937;">${a.taxonname}</td>
-                        <td style="padding:6px 8px; white-space:nowrap;">
-                            <span style="
-                                display:inline-block; padding:2px 7px; border-radius:4px;
-                                background:${meta.bg}; color:${meta.color};
-                                font-size:11px; font-weight:600;
-                            ">${meta.label}</span>
-                        </td>
-                        <td title="${a.actualPath}" style="padding:6px 8px; color:#6b7280; font-size:11px; max-width:200px; word-break:break-all; cursor:help;">
-                            ${shortPath}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            panel.innerHTML = `
-                <div style="font-weight:600; font-size:13px; color:#1f2937; margin-bottom:10px;">
-                    Data Anomalies in ${taxagroupid}
-                    <span style="font-weight:400; color:#6b7280; font-size:12px;">(${anomalies.length} record${anomalies.length !== 1 ? 's' : ''})</span>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:12px;">
-                        <thead>
-                            <tr style="background:#f9fafb; text-align:left; color:#6b7280; font-size:11px; font-weight:600;">
-                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">taxonid</th>
-                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">taxonname</th>
-                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">anomaly type</th>
-                                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">actual path</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>
-                <div style="margin-top:10px; font-size:11px; color:#9ca3af; font-style:italic; line-height:1.5;">
-                    Note: These records are not shown in the taxonomy tree.
-                    They may reflect database entry errors or legacy classifications.
-                </div>
-                <button id="closeAnomalyDetail" style="
-                    margin-top:10px; padding:4px 12px;
-                    border:1px solid #e5e7eb; border-radius:6px;
-                    background:#f9fafb; color:#6b7280;
-                    font-size:12px; cursor:pointer;
-                ">Close</button>
-            `;
-            panel.style.display = 'block';
-
-            const closeBtn = document.getElementById('closeAnomalyDetail');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => {
-                    panel.style.display = 'none';
-                });
-            }
-        }
-        // ── End anomaly UI ────────────────────────────────────────────────────────
+        // Anomaly UI logic has been moved to src/anomaly_bar.js
+        // ── End Anomaly UI ────────────────────────────────────────────────────────
 
         async function loadTreeForGroup(taxagroupid, pushToStack = true) {
             if (!taxagroupid) {
@@ -1426,14 +1276,15 @@
             if (!NON_BIO_GROUPS.has(taxagroupid)) {
                 const { anomalies } = detectAnomalies(allRowsForGroup, taxagroupid);
 
-                // Orphan count: standalone (path ≤ 1 node) + incertae sedis rows
-                const orphanCount = allRowsForGroup.filter(row => {
+                // Get orphan nodes: standalone (path ≤ 1 node) + incertae sedis rows
+                const orphanNodes = allRowsForGroup.filter(row => {
                     const names = row.names_root_to_leaf || [];
                     return names.length <= 1 ||
                         names.some(n => (n || '').toLowerCase().includes('incertae sedis'));
-                }).length;
+                });
 
-                updateAnomalyBar(taxagroupid, anomalies, orphanCount);
+                const groupName = taxagroupNames ? (taxagroupNames[taxagroupid] || taxagroupid) : taxagroupid;
+                updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes);
             } else {
                 // Non-bio group — hide bar if previously shown
                 const bar = document.getElementById('anomaly-bar');
@@ -1453,7 +1304,6 @@
             initViewSwitch(
                 async (rows, rootId, rootName, allRowsForSynonyms) => {
                     d3.select('#chart').selectAll('*').remove();
-                    const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA']);
                     const isFilteredSearchView = FOCUS_VIEW_GROUPS.has(taxagroupid) && rows !== filteredRows;
                     if (isFilteredSearchView) {
                         const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
@@ -1468,6 +1318,8 @@
                             initialQuery: currentQuery,
                             autoRunSearch: !!currentQuery,
                             taxagroupid: taxagroupid,
+                            dx: getTreeViewSpacing(taxagroupid).dx,
+                            dy: getTreeViewSpacing(taxagroupid).dy,
                         });
                         return;
                     }
@@ -1498,14 +1350,6 @@
 
             console.log(`Taxon group ${taxagroupid} has ${nodeCount} nodes`);
 
-            // Groups that always use the collapsible list tree (flat structure, radial looks bad)
-            const FORCE_LIST_TREE_GROUPS = new Set(['WCH', 'LAB']);
-
-            // Groups where the collapsible tree should be fully expanded at init
-            const EXPAND_ALL_COLLAPSIBLE = new Set([
-                'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN',
-            ]);
-
             // Use collapsible tree for small datasets (< 50 nodes) OR forced groups
             if (nodeCount < 50 || FORCE_LIST_TREE_GROUPS.has(taxagroupid)) {
                 console.log('Using collapsible tree view');
@@ -1517,6 +1361,9 @@
                     rootName: renderRootName,
                     anchorIds: anchorIds,
                     expandAll: EXPAND_ALL_COLLAPSIBLE.has(taxagroupid),
+                    dx: getTreeViewSpacing(taxagroupid).dx,
+                    dy: getTreeViewSpacing(taxagroupid).dy,
+                    taxagroupid: taxagroupid,
                 });
             } else {
                 console.log('Using radial dendrogram view');

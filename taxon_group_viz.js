@@ -9,6 +9,7 @@ import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
+import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS } from './src/taxaViewConfig.js';
 // Data helpers now imported from ./src/data.js
 
 /**
@@ -234,14 +235,8 @@ async function renderMammalTree({
   // Tiered summary view for large groups: show anchor + one level of children,
   // collapse everything deeper so the initial view is readable.
   const taxagroupid = rows[0]?.taxagroupid;
-  const ONE_LEVEL_GROUPS = new Set(['MAM', 'AVE', 'DIA']);
 
-  // Small / manageable groups: force-expand all nodes so nothing is hidden.
-  const EXPAND_ALL_GROUPS = new Set([
-    'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN',
-  ]);
-
-  if (ONE_LEVEL_GROUPS.has(taxagroupid) && !isInitialView) {
+  if (ONE_LEVEL_RADIAL_GROUPS.has(taxagroupid) && !isInitialView) {
     // Anchor node is root. Its direct children (Orders / Classes) stay visible;
     // everything below them is collapsed into _children for +/– expansion.
     root.children?.forEach(child => {
@@ -263,7 +258,7 @@ async function renderMammalTree({
     });
   }
 
-  if (EXPAND_ALL_GROUPS.has(taxagroupid) && !isInitialView) {
+  if (EXPAND_ALL_RADIAL.has(taxagroupid) && !isInitialView) {
     // Ensure no node is accidentally collapsed on first render —
     // but leave synthetic uncertain-group nodes collapsed (they handle their own expand/collapse).
     root.descendants().forEach(d => {
@@ -406,7 +401,7 @@ async function renderMammalTree({
       .style('pointer-events', 'all');
 
     nodeEnter.append('circle')
-      .attr('r', 3.5)
+      .attr('r', d => d.depth === 0 ? 0 : 3.5)
       .style('pointer-events', 'none')
       .attr('fill', d => {
         if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
@@ -426,6 +421,7 @@ async function renderMammalTree({
       .attr('dy', '0.32em')
       .attr('x', 10) // Will be updated by updateLabelOrientation()
       .attr('text-anchor', 'start') // Will be updated by updateLabelOrientation()
+      .style('display', d => d.depth === 0 ? 'none' : 'block')
       .style('fill', d => {
         if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
 
@@ -449,12 +445,15 @@ async function renderMammalTree({
         return name;
       });
 
-    // Toggle control (+ / –) button with background circle for visibility
+    // Toggle control (+ / –) button — placed along the radial spoke toward
+    // the parent node (negative x in the node's rotated local frame) so it
+    // sits visually on the connecting path rather than floating beside the node.
     const toggleGroup = nodeEnter.append('g')
       .attr('class', 'toggle-group')
-      .attr('transform', 'translate(0, -14)')
+      .attr('transform', 'translate(-22, 0)')
       .style('cursor', 'pointer')
       .style('display', d => {
+        if (d.depth === 0) return 'none'; // Never show toggle for the root node itself
         if (d._children && d._children.length) return 'block';
         if (d.children && d.children.length) return 'block';
         return 'none';
@@ -479,17 +478,17 @@ async function renderMammalTree({
       });
 
     toggleGroup.append('circle')
-      .attr('r', 9)
+      .attr('r', 6)
       .attr('fill', '#f3f4f6')
       .attr('stroke', '#6b7280')
-      .attr('stroke-width', 1.5);
+      .attr('stroke-width', 1);
 
     toggleGroup.append('text')
       .attr('class', 'toggle')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
       .style('font-weight', '700')
-      .style('font-size', '14px')
+      .style('font-size', '10px')
       .style('fill', '#6b7280')
       .style('pointer-events', 'none')
       .text(d => {
@@ -507,6 +506,7 @@ async function renderMammalTree({
     // Update toggle symbols and visibility per current expand/collapse state
     nodeMerge.select('.toggle-group')
       .style('display', d => {
+        if (d.depth === 0) return 'none'; // Never show toggle for the root node itself
         if (d._children && d._children.length) return 'block';
         if (d.children && d.children.length) return 'block';
         return 'none';
@@ -611,9 +611,8 @@ async function renderMammalTree({
   bindNodeInteractions();
 
   // Angle-based label culling (avoid overlap at initial scale)
-  // Pass a getter so recompute() always queries the live DOM after expand/collapse.
   const cull = applyAngleCulling(root, () => gNodes.selectAll('g.node'), 1.1);
-  const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate);
+  const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate, !isInitialView);
   const { showAt: showPopupAt } = createPopup('popup');
 
   // Rebind interactions after initial info is created

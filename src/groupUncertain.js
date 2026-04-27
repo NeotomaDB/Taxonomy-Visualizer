@@ -79,7 +79,7 @@ export function groupUncertainLeaves(treeRoot, byId, options = {}) {
 
       const synNode = {
         id: synId,
-        name: `${label} (${members.length})`,
+        name: label, // Renderer natively appends count upon collapse, assigning here causes double (N)(N)
         isSyntheticGroup: true,
         syntheticCategory: cat,   // 'undetermined' | 'unknown'
         leafCount: members.length,

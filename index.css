@@ -510,6 +510,10 @@ svg text.highlight {
 svg text.highlight-synonym {
   fill: #f59e0b !important;
   font-weight: 600 !important;
+  paint-order: stroke fill;
+  stroke: white !important;
+  stroke-width: 3px !important;
+  stroke-linejoin: round !important;
 }
 
 /* Comparison mode: query 1 = blue, query 2 = orange */
@@ -526,10 +530,24 @@ svg path.highlight-q2 {
 svg text.highlight-q1 {
   fill: #1d4ed8 !important;
   font-weight: 700 !important;
+  paint-order: stroke fill;
+  stroke: white !important;
+  stroke-width: 3px !important;
+  stroke-linejoin: round !important;
 }
 svg text.highlight-q2 {
   fill: #c2410c !important;
   font-weight: 700 !important;
+  paint-order: stroke fill;
+  stroke: white !important;
+  stroke-width: 3px !important;
+  stroke-linejoin: round !important;
+}
+
+/* In comparison mode: hide intermediate ancestor labels to reduce clutter;
+   only the matched leaf labels (highlight-q1 / highlight-q2) remain visible */
+svg.compare-mode.search-active g.node.match-path text:not(.toggle):not(.highlight-q1):not(.highlight-q2) {
+  display: none !important;
 }
 
 /* Focus label styling */

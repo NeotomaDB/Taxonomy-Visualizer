@@ -4,11 +4,11 @@
  * Scans normalized rows (names_root_to_leaf as string arrays) and classifies
  * each row into one of two anomaly types, or clean:
  *
- *   Type 1 — wrong_domain (域错误): path contains non-eukaryotic domain markers
+ *   Type 1 — wrong_domain: path contains non-eukaryotic domain markers
  *     (e.g. Bacteria, Cyanobacteria). Most severe — record does not belong to
  *     any Eukaryota-based tree.
  *
- *   Type 2 — wrong_kingdom (界错误): path contains a kingdom that contradicts
+ *   Type 2 — wrong_kingdom: path contains a kingdom that contradicts
  *     the expected kingdom for this taxagroup (e.g. Animalia in a VPL/Plantae
  *     group). Severe but potentially a legacy classification.
  *
@@ -175,11 +175,11 @@ export function detectAnomalies(normalizedRows, taxagroupid) {
 
     if (anomalyType) {
       anomalies.push({
-        taxonid:    row.taxonid,
-        taxonname:  row.taxonname,
+        taxonid: row.taxonid,
+        taxonname: row.taxonname,
         anomalyType,
         actualPath: names.join(' → '),
-        detail:     anomalyDetail,
+        detail: anomalyDetail,
       });
     } else {
       cleanRows.push(row);
@@ -197,23 +197,23 @@ export function getAnomalyMeta(anomalyType) {
   switch (anomalyType) {
     case 'wrong_domain':
       return {
-        label:  'wrong domain',
-        color:  '#dc2626',   // red-600
-        bg:     '#fef2f2',   // red-50
+        label: 'wrong domain',
+        color: '#dc2626',   // red-600
+        bg: '#fef2f2',   // red-50
         border: '#fca5a5',   // red-300
       };
     case 'wrong_kingdom':
       return {
-        label:  'wrong kingdom',
-        color:  '#d97706',   // amber-600
-        bg:     '#fffbeb',   // amber-50
+        label: 'wrong kingdom',
+        color: '#d97706',   // amber-600
+        bg: '#fffbeb',   // amber-50
         border: '#fcd34d',   // amber-300
       };
     default:
       return {
-        label:  anomalyType,
-        color:  '#6b7280',
-        bg:     '#f9fafb',
+        label: anomalyType,
+        color: '#6b7280',
+        bg: '#f9fafb',
         border: '#e5e7eb',
       };
   }

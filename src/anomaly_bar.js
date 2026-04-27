@@ -24,11 +24,11 @@ export function updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes)
     if (orphanNodes.length > 0) {
         parts.push(`
             <span style="color:#6b7280; display:flex; align-items:center;">
-                Orphan nodes under the ${groupName} Group: ${orphanNodes.length.toLocaleString()} (Taxa that lack a recorded parent or hierarchical path in the database)
+                Unplaced Taxa, Orphan Taxa or Taxa Lacking Subordinate Data under the ${groupName} Group: ${orphanNodes.length.toLocaleString()} 
                 <button id="viewOrphansBtn" style="
                     background:none; border:none; color:#0d47a1; cursor:pointer; 
                     font-size:14px; margin-left:4px; padding:0; display:inline-flex; align-items:center;
-                " title="View Orphan Nodes">
+                " title="View Unplaced Taxa">
                     ▼
                 </button>
             </span>
@@ -112,18 +112,22 @@ function showOrphanDetail(groupName, orphanNodes) {
         return `<tr>
             <td style="padding:6px; border-bottom:1px solid #e5e7eb; font-weight:600;">${node.taxonid}</td>
             <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${node.taxonname}</td>
+            <td style="padding:6px; border-bottom:1px solid #e5e7eb; color:#4b5563; font-family:monospace; font-size:11px;">
+                ${(node.names_root_to_leaf || []).join(' <span style="color:#9ca3af;">→</span> ')}
+            </td>
         </tr>`;
     }).join('');
 
     panel.innerHTML = `
         <div style="font-weight:600; font-size:14px; margin-bottom:10px;">
-            Orphan Nodes in ${groupName} (${orphanNodes.length})
+            Unplaced Taxa & Orphan Nodes in ${groupName} (${orphanNodes.length})
         </div>
         <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
             <thead>
                 <tr style="background:#f3f4f6;">
-                    <th style="padding:6px; font-weight:600;">ID</th>
-                    <th style="padding:6px; font-weight:600;">Name</th>
+                    <th style="padding:6px; font-weight:600; width:15%;">ID</th>
+                    <th style="padding:6px; font-weight:600; width:25%;">Name</th>
+                    <th style="padding:6px; font-weight:600;">Path Recorded</th>
                 </tr>
             </thead>
             <tbody>
@@ -168,11 +172,11 @@ function showAnomalyDetail(taxagroupid, anomalies) {
         let expectedStr = a.expectedValidPath || '';
         let expectedArr = expectedStr ? expectedStr.split(' → ') : [];
         let actualArr = (a.actualPath || '').split(' → ');
-        
+
         let pathHtml = '';
         const len = Math.max(expectedArr.length, actualArr.length);
-        for(let i=0; i<len; i++) {
-            if(actualArr[i] === expectedArr[i]) {
+        for (let i = 0; i < len; i++) {
+            if (actualArr[i] === expectedArr[i]) {
                 pathHtml += `<span>${actualArr[i]}</span>`;
             } else {
                 let act = actualArr[i] || '';

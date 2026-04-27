@@ -120,6 +120,24 @@ async function renderMammalTree({
   enrichTreeWithPaths(treeData, normalizedRows);
 
   const root = d3.hierarchy(treeData);
+  
+  const maxDepth = d3.max(root.descendants(), d => d.depth);
+
+  function getToggleRule(d) {
+    if (d.depth === 0) return 'NONE'; // Never show toggle for the root node
+
+    const kids = d.children || d._children;
+    if (!kids || kids.length === 0) return 'NONE'; // Leaf nodes
+
+    const combinedLength = (d.children ? d.children.length : 0) + (d._children ? d._children.length : 0);
+    if (combinedLength < 3) return 'NONE'; // Internal nodes with < 3 children
+
+    if (d.depth >= maxDepth - 1) return 'NONE'; // Near max depth
+
+    if (d.depth === 1) return 'ALWAYS'; // Rule 1
+
+    return 'HOVER'; // Rule 3
+  }
 
   function applyOverviewCollapse(rootNode, visibleDepth, hideSingletonRoots) {
     if (hideSingletonRoots && rootNode.children && rootNode.children.length > 0) {
@@ -392,10 +410,15 @@ async function renderMammalTree({
       .attr('transform', d => `rotate(${(d.x * 180 / Math.PI - 90)}) translate(${d.y},0)`)
       .style('opacity', 0);
 
-    // Invisible hit area for easier clicking (Fitts's Law)
-    nodeEnter.append('circle')
+    // Invisible hit area bridging the node and the toggle to prevent hover drops
+    nodeEnter.append('rect')
       .attr('class', 'hit-area')
-      .attr('r', 10)
+      .attr('x', -30)
+      .attr('y', -12)
+      .attr('width', 44)
+      .attr('height', 24)
+      .attr('rx', 12)
+      .attr('ry', 12)
       .attr('fill', 'transparent')
       .attr('stroke', 'none')
       .style('pointer-events', 'all');
@@ -414,7 +437,7 @@ async function renderMammalTree({
           nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
           nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
           nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
-        return isCollapsedGroup ? '#6b7280' : '#202124';
+        return isCollapsedGroup ? '#7cafae' : '#202124';
       });
 
     nodeEnter.append('text')
@@ -434,7 +457,7 @@ async function renderMammalTree({
           nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
           nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
           nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
-        return isCollapsedGroup ? '#6b7280' : null;
+        return isCollapsedGroup ? '#7cafae' : null;
       })
       .text(d => {
         let name = d.data.name;
@@ -452,12 +475,9 @@ async function renderMammalTree({
       .attr('class', 'toggle-group')
       .attr('transform', 'translate(-22, 0)')
       .style('cursor', 'pointer')
-      .style('display', d => {
-        if (d.depth === 0) return 'none'; // Never show toggle for the root node itself
-        if (d._children && d._children.length) return 'block';
-        if (d.children && d.children.length) return 'block';
-        return 'none';
-      })
+      .style('display', d => getToggleRule(d) === 'NONE' ? 'none' : 'block')
+      .style('opacity', d => getToggleRule(d) === 'HOVER' ? 0 : 1)
+      .style('pointer-events', d => getToggleRule(d) === 'HOVER' ? 'none' : 'all')
       .on('click', (event, d) => {
         event.stopPropagation();
         if (d._children && d._children.length) {
@@ -480,7 +500,7 @@ async function renderMammalTree({
     toggleGroup.append('circle')
       .attr('r', 6)
       .attr('fill', '#f3f4f6')
-      .attr('stroke', '#6b7280')
+      .attr('stroke', '#7cafae')
       .attr('stroke-width', 1);
 
     toggleGroup.append('text')
@@ -489,7 +509,7 @@ async function renderMammalTree({
       .attr('dy', '0.35em')
       .style('font-weight', '700')
       .style('font-size', '10px')
-      .style('fill', '#6b7280')
+      .style('fill', '#7cafae')
       .style('pointer-events', 'none')
       .text(d => {
         if (d._children && d._children.length) return '+';
@@ -505,12 +525,9 @@ async function renderMammalTree({
 
     // Update toggle symbols and visibility per current expand/collapse state
     nodeMerge.select('.toggle-group')
-      .style('display', d => {
-        if (d.depth === 0) return 'none'; // Never show toggle for the root node itself
-        if (d._children && d._children.length) return 'block';
-        if (d.children && d.children.length) return 'block';
-        return 'none';
-      });
+      .style('display', d => getToggleRule(d) === 'NONE' ? 'none' : 'block')
+      .style('opacity', d => getToggleRule(d) === 'HOVER' ? 0 : 1)
+      .style('pointer-events', d => getToggleRule(d) === 'HOVER' ? 'none' : 'all');
     nodeMerge.select('text.toggle')
       .text(d => {
         if (d._children && d._children.length) return '+';
@@ -602,7 +619,60 @@ async function renderMammalTree({
       }
     });
 
-    setupHover(gNodes.selectAll('g.node'));
+    let tooltip = document.getElementById('hover-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'hover-tooltip';
+        tooltip.style.position = 'absolute';
+        tooltip.style.background = '#fff';
+        tooltip.style.border = '1px solid #ddd';
+        tooltip.style.padding = '5px 10px';
+        tooltip.style.borderRadius = '4px';
+        tooltip.style.pointerEvents = 'none'; // Important so mouse doesn't get stuck on tooltip
+        tooltip.style.zIndex = '1001';
+        tooltip.style.display = 'none';
+        tooltip.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+        tooltip.style.fontSize = '12px';
+        tooltip.style.fontWeight = '500';
+        tooltip.style.color = '#333';
+        document.body.appendChild(tooltip);
+    }
+
+    gNodes.selectAll('g.node')
+        .on('mouseenter.hover', (event, d) => {
+            const rule = getToggleRule(d);
+            const isLeaf = !(d.children && d.children.length) && !(d._children && d._children.length);
+            
+            // Tooltips apply to internal nodes (excluding permanent labels like Root or Leaves)
+            if (d.depth > 0 && !isLeaf) {
+                tooltip.style.display = 'block';
+                tooltip.textContent = d.data.name;
+                tooltip.style.left = (event.pageX + 10) + 'px';
+                tooltip.style.top = (event.pageY + 10) + 'px';
+            }
+
+            // Reveal button dynamically if Rule 3
+            if (rule === 'HOVER') {
+                d3.select(event.currentTarget).select('.toggle-group')
+                  .style('opacity', 1)
+                  .style('pointer-events', 'all');
+            }
+        })
+        .on('mousemove.hover', (event) => {
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY + 10) + 'px';
+        })
+        .on('mouseleave.hover', (event, d) => {
+            tooltip.style.display = 'none';
+            const rule = getToggleRule(d);
+            
+            // Hide button dynamically if Rule 3
+            if (rule === 'HOVER') {
+                d3.select(event.currentTarget).select('.toggle-group')
+                  .style('opacity', 0)
+                  .style('pointer-events', 'none');
+            }
+        });
   }
 
   // Initial draw

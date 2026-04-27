@@ -25,8 +25,15 @@ text.highlight {
 .search-active g.node:not(.match-path) text {
   display: none !important;
 }
-/* Force-show label text for every node on the match path */
-.search-active g.node.match-path text:not(.toggle) {
+/* Force-hide middle nodes unconditionally */
+.search-active g.node.match-path text:not(.highlight):not(.highlight-synonym):not(.highlight-q1):not(.highlight-q2) {
+  display: none !important;
+}
+/* Force-show label text ONLY for the actual highlighted matching nodes (keep middle nodes hidden) */
+.search-active g.node.match-path text.highlight,
+.search-active g.node.match-path text.highlight-synonym,
+.search-active g.node.match-path text.highlight-q1,
+.search-active g.node.match-path text.highlight-q2 {
   display: block !important;
 }
 /* Hide all links that are not highlighted and not on any match path */

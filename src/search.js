@@ -216,7 +216,7 @@ export function setupSearch({
     ll.classed('highlight', l => A.has(l.source) && A.has(l.target));
     ln.classed('match-path', n => A.has(n));
     labels.classed('highlight-synonym', false);
-    labels.classed('highlight', n => A.has(n));
+    labels.classed('highlight', n => n === d);
     setSearchActive(true);
     setHighlightedPath(d);
     if (info) info.show(d);
@@ -346,12 +346,12 @@ export function setupSearch({
     if (isSynonym) {
       ll.filter(l => A.has(l.source) && A.has(l.target)).classed('highlight-synonym', true).raise();
       ll.classed('highlight', false);
-      labels.classed('highlight-synonym', n => A.has(n));
+      labels.classed('highlight-synonym', n => n === d);
       labels.classed('highlight', false);
     } else {
       ll.filter(l => A.has(l.source) && A.has(l.target)).classed('highlight', true).raise();
       ll.classed('highlight-synonym', false);
-      labels.classed('highlight', n => A.has(n));
+      labels.classed('highlight', n => n === d);
       labels.classed('highlight-synonym', false);
     }
     
@@ -360,8 +360,8 @@ export function setupSearch({
       .sort((a, b) => b.depth - a.depth)
       .raise();
     
-    // Fallback inline styling to guarantee text halo
-    labels.filter(n => A.has(n))
+    // Fallback inline styling to guarantee text halo only on focused leaf
+    labels.filter(n => n === d)
           .style('paint-order', 'stroke fill')
           .style('stroke', 'white')
           .style('stroke-width', '3.5px')

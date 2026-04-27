@@ -355,6 +355,9 @@
             // (replaces the default 4-level cutoff so anchor-equivalent nodes appear)
             BRY: { rootId: -2001, rootName: 'Bryophytes', sliceAfterName: 'Embryophyta', overviewDepth: 6 },
             PLA: { rootId: -2002, rootName: 'Plants undiff.', sliceAfterName: 'Plantae', overviewDepth: 4 },
+            // VPL is massive and has a long unbranched stem from Eukaryota -> Plantae -> Viridiplantae -> Streptophyta -> Embryophyta.
+            // Slicing after Embryophyta replaces all these intermediate layers with a clean "Vascular plants" synthetic root directly connected to Tracheophyta.
+            VPL: { rootId: -2003, rootName: 'Vascular plants', sliceAfterName: 'Embryophyta', overviewDepth: 6 },
         };
 
         const GROUP_OVERVIEW_CONFIG = {

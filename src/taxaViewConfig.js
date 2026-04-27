@@ -21,10 +21,12 @@ export const EXPAND_ALL_RADIAL = new Set([
 
 // Large groups for radial view where we show only the top/anchor level and orders/classes,
 // immediately collapsing deeper nodes.
-export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA']);
+// VPL added to prevent rendering 18k+ nodes simultaneously
+export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA', 'VPL']);
 
 // Groups that trigger the focus view mode or unique search optimizations.
-export const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA']);
+// VPL added because its large dataset benefits from focus-mode table searches
+export const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA', 'VPL']);
 
 // Define layout spacing overrides for linear tree views. 
 // Narrow horizontal spans (e.g., dy=130) prevent visually disconnected layouts 

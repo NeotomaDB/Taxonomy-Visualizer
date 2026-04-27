@@ -765,34 +765,48 @@ export function setupSearch({
     const lcaDepth = lca ? lca.depth : -1;
     const div1 = lcaDepth >= 0 ? path1.slice(lcaDepth + 1) : path1;
     const div2 = lcaDepth >= 0 ? path2.slice(lcaDepth + 1) : path2;
+    const lcaPath = lca ? lca.ancestors().reverse().map(n => n.data.name) : [];
+    const lcaHtml = lcaPath.map((n, i) => i === lcaPath.length - 1
+      ? `<strong class="cmp-ancestor-lca">${n}</strong>`
+      : n).join('<span class="cmp-arrow">→</span>');
+
     panel.innerHTML = `
-      <div style="font-weight:700;font-size:14px;margin-bottom:10px;color:#1f2937;">Comparing Two Taxa</div>
-      ${lca ? `
-        <div style="margin-bottom:10px;padding:8px 12px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:4px;">
-          <div style="font-size:11px;color:#4b7c59;font-weight:700;margin-bottom:3px;">SHARED ANCESTOR</div>
-          <div style="font-weight:700;font-size:14px;color:#15803d;">${lca.data.name}</div>
+      <div class="cmp-wrapper">
+        <div class="cmp-heading">Comparing Two Taxa</div>
+        ${lca ? `
+        <div class="cmp-ancestor">
+          <div class="cmp-ancestor-badge">SHARED ANCESTOR</div>
+          <div class="cmp-ancestor-path">${lcaHtml}</div>
           ${div1.length > 0
-          ? `<div style="font-size:11px;color:#6b7280;margin-top:4px;">Diverges at: <strong>${div1[0]}</strong> / <strong>${div2[0] || '?'}</strong></div>`
-          : '<div style="font-size:11px;color:#6b7280;margin-top:4px;">Paths are identical</div>'}
+            ? `<div class="cmp-diverge">Diverges at: <strong>${div1[0]}</strong> / <strong>${div2[0] || '?'}</strong></div>`
+            : '<div class="cmp-diverge">Paths are identical</div>'}
         </div>` : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div style="padding:8px 10px;background:#eff6ff;border-left:3px solid #1d4ed8;border-radius:4px;">
-          <div style="font-size:11px;color:#1d4ed8;font-weight:700;margin-bottom:5px;">🔵 ${q1Label}</div>
-          ${div1.length > 0
-        ? div1.map(n => `<div style="font-size:12px;color:#1e3a8a;padding:1px 0 1px 8px;">${n}</div>`).join('')
-        : '<div style="font-size:12px;color:#6b7280;font-style:italic;">(same as shared ancestor)</div>'}
-          ${q1Matches.length > 1 ? `<div style="font-size:10px;color:#6b7280;margin-top:4px;">+${q1Matches.length - 1} more</div>` : ''}
+        <div class="cmp-grid">
+          <div class="cmp-col cmp-col-q1">
+            <div class="cmp-col-header">
+              <span class="cmp-dot cmp-dot-q1"></span>
+              <span class="cmp-col-label">${q1Label}</span>
+            </div>
+            ${div1.length > 0
+              ? div1.map(n => `<div class="cmp-item">${n}</div>`).join('')
+              : '<div class="cmp-item cmp-item-empty">(same as shared ancestor)</div>'}
+            ${q1Matches.length > 1 ? `<div class="cmp-more">+${q1Matches.length - 1} more</div>` : ''}
+          </div>
+          <div class="cmp-col cmp-col-q2">
+            <div class="cmp-col-header">
+              <span class="cmp-dot cmp-dot-q2"></span>
+              <span class="cmp-col-label">${q2Label}</span>
+            </div>
+            ${div2.length > 0
+              ? div2.map(n => `<div class="cmp-item">${n}</div>`).join('')
+              : '<div class="cmp-item cmp-item-empty">(same as shared ancestor)</div>'}
+            ${q2Matches.length > 1 ? `<div class="cmp-more">+${q2Matches.length - 1} more</div>` : ''}
+          </div>
         </div>
-        <div style="padding:8px 10px;background:#fff7ed;border-left:3px solid #c2410c;border-radius:4px;">
-          <div style="font-size:11px;color:#c2410c;font-weight:700;margin-bottom:5px;">🟠 ${q2Label}</div>
-          ${div2.length > 0
-        ? div2.map(n => `<div style="font-size:12px;color:#7c2d12;padding:1px 0 1px 8px;">${n}</div>`).join('')
-        : '<div style="font-size:12px;color:#6b7280;font-style:italic;">(same as shared ancestor)</div>'}
-          ${q2Matches.length > 1 ? `<div style="font-size:10px;color:#6b7280;margin-top:4px;">+${q2Matches.length - 1} more</div>` : ''}
+        <div class="cmp-footer">
+          <span class="cmp-match-badge cmp-match-q1">${q1Matches.length} match(es)</span>
+          <span class="cmp-match-badge cmp-match-q2">${q2Matches.length} match(es)</span>
         </div>
-      </div>
-      <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
-        🔵 ${q1Matches.length} match(es) · 🟠 ${q2Matches.length} match(es)
       </div>
     `;
     panel.style.display = 'block';

@@ -124,19 +124,14 @@ async function renderMammalTree({
   const maxDepth = d3.max(root.descendants(), d => d.depth);
 
   function getToggleRule(d) {
-    if (d.depth === 0) return 'NONE'; // Never show toggle for the root node
+    if (d.depth === 0) return 'NONE'; // 隐藏规则：根节点
 
     const kids = d.children || d._children;
-    if (!kids || kids.length === 0) return 'NONE'; // Leaf nodes
+    if (!kids || kids.length === 0) return 'NONE'; // 隐藏规则：没有子节点的叶子节点
 
-    const combinedLength = (d.children ? d.children.length : 0) + (d._children ? d._children.length : 0);
-    if (combinedLength < 3) return 'NONE'; // Internal nodes with < 3 children
+    if (d.depth === 1) return 'ALWAYS'; // 深度规则：靠近当前界面根节点的child node（第一层）全部固定 + button
 
-    if (d.depth >= maxDepth - 1) return 'NONE'; // Near max depth
-
-    if (d.depth === 1) return 'ALWAYS'; // Rule 1
-
-    return 'HOVER'; // Rule 3
+    return 'HOVER'; // 悬浮（Hover）规则：从第二层开始，系统采用 'HOVER' 规则
   }
 
   function applyOverviewCollapse(rootNode, visibleDepth, hideSingletonRoots) {
@@ -168,19 +163,40 @@ async function renderMammalTree({
 
   function expandHiddenChildren(node, lazy = false) {
     if (!node || !node._children || node._children.length === 0) return false;
+
+    // Helper to recursively expand everything underneath
+    function expandAll(n) {
+      if (n._children) {
+        n.children = n.children ? [...n.children, ...n._children] : n._children;
+        n._children = null;
+      }
+      if (n.children) {
+        n.children.forEach(expandAll);
+      }
+    }
+
+    const totalNodes = countSubtreeNodes(node);
+
     node.children = node.children ? [...node.children, ...node._children] : node._children;
     node._children = null;
 
-    // Lazy mode (user clicked +): if the subtree is large (>30 nodes total),
-    // only reveal one level at a time — collapse each newly-visible child that
-    // itself has children so the tree doesn't explode all at once.
-    if (lazy && countSubtreeNodes(node) > 30) {
-      node.children.forEach(child => {
-        if (child.children && child.children.length > 0) {
-          child._children = child.children;
-          child.children = null;
+    if (lazy) {
+      if (totalNodes < 10) {
+        // 对于child node 小于10的节点，一口气展示到底
+        if (node.children) {
+          node.children.forEach(expandAll);
         }
-      });
+      } else {
+        // 对于节点较多的情况，点击 + 仅展开一层
+        if (node.children) {
+          node.children.forEach(child => {
+            if (child.children && child.children.length > 0) {
+              child._children = child.children;
+              child.children = null;
+            }
+          });
+        }
+      }
     }
 
     return true;

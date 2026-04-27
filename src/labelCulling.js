@@ -25,7 +25,10 @@ export function applyAngleCulling(root, getNodeSel, minDeg = 0.9) {
       .style('display', d => d.children ? 'none' : (visible.has(d) ? 'block' : 'none'));
   }
 
+  let lastK = null;
   function updateByScale(k) {
+    if (lastK === k) return; // Skip if only panning (k didn't change)
+    lastK = k;
     const base = (minDeg * Math.PI) / 180;
     threshold = base / Math.max(1, Math.sqrt(k));
     recompute();

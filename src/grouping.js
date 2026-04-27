@@ -136,47 +136,22 @@ export function computeLeafOrder(root, groupDepth = 3) {
   return { leafToIndex, leafGroups };
 }
 
-/**
- * Reorder children of nodes to minimize crossings.
- * Uses the leaf order to guide sibling ordering.
- */
-export function reorderTreeForGrouping(root, groupDepth = 3) {
-  const { leafToIndex } = computeLeafOrder(root, groupDepth);
-  
-  // For each internal node, sort its children based on the average leaf index
+export function reorderTreeForGrouping(root) {
+  // For each internal node, sort its children alphabetically
+  // This guarantees zero branch crossings while still naturally grouping identical taxa prefixes
   function sortNodeChildren(node) {
     if (!node.children || node.children.length === 0) return;
     
-    // Compute average leaf index for each child subtree
-    node.children.forEach(child => {
-      sortNodeChildren(child);
-      
-      if (child.children && child.children.length > 0) {
-        // Internal node: use average of its leaves
-        const childLeaves = child.leaves();
-        if (childLeaves.length > 0) {
-          const avgIndex = childLeaves.reduce((sum, leaf) => {
-            return sum + (leafToIndex.get(leaf) || 0);
-          }, 0) / childLeaves.length;
-          child._sortKey = avgIndex;
-        } else {
-          child._sortKey = 0;
-        }
-      } else {
-        // Leaf node: use its direct index
-        child._sortKey = leafToIndex.get(child) || 0;
-      }
+    node.children.sort((a, b) => {
+      const nameA = (a.data.name || '').toLowerCase();
+      const nameB = (b.data.name || '').toLowerCase();
+      return nameA.localeCompare(nameB);
     });
     
-    // Sort children by their sort key
-    node.children.sort((a, b) => (a._sortKey || 0) - (b._sortKey || 0));
+    node.children.forEach(sortNodeChildren);
   }
   
   sortNodeChildren(root);
-  
-  // Clean up temporary sort keys
-  root.each(d => delete d._sortKey);
-  
   return root;
 }
 

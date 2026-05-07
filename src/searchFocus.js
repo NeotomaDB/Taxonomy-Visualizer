@@ -4,17 +4,33 @@
 //   const info = setupFocusInfo(node, getCurrentRotate);
 //   info.show(d); // to display d and its ancestors + label on dendrogram
 //   info.clear(); // to hide
+import { fetchAndRenderExternalLinks } from './externaltaxa.js';
+
 export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
   const panel = document.getElementById('info');
   let currentNode = null; // Store current node for button handler
+  const currentClickIdRef = { value: null }; // Track current click for async fetch
 
   function show(d) {
     if (!panel || !d) return;
 
     currentNode = d; // Store current node
+    currentClickIdRef.value = d.data.taxonid || d.data.id; // Record current ID
 
     // Update info panel
     const names = d.ancestors().reverse().map(n => n.data.name);
+
+    // Build the dynamic path HTML
+    const pathHtml = names.map((n, idx) => {
+      if (idx === names.length - 1) {
+        // The last child element gets the external links placeholder to its right
+        return `<div style="margin-left:12px; display:flex; align-items:center;">
+                  <span style="font-weight:600;">${n}</span>
+                  <div id="ext-links-container" style="display:flex; gap:4px; margin-left:8px; height:20px; align-items:center;"></div>
+                </div>`;
+      }
+      return `<div style="margin-left:12px;">${n}</div>`;
+    }).join('');
 
     // Check if node has children (can have a subtree)
     // A node can have a subtree if:
@@ -74,13 +90,19 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
 
     panel.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${names.length} matches)</div>
-      <div style="margin-bottom:8px;"><strong>Path:</strong> ${names.map(n => `<div style="margin-left:12px;">${n}</div>`).join('')}</div>
+      <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px;">
         ${goToTreeButton}
         ${goToGroupButton}
       </div>
     `;
     panel.style.display = 'block';
+
+    // Fetch and render external links dynamically
+    const extLinksContainer = document.getElementById('ext-links-container');
+    if (extLinksContainer && currentClickIdRef.value) {
+      fetchAndRenderExternalLinks(currentClickIdRef.value, extLinksContainer, currentClickIdRef);
+    }
 
     // Add event listener for "Go to Tree" button
     const goToTreeBtn = document.getElementById('goToTreeFromClick');

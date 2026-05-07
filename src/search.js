@@ -20,6 +20,7 @@ import {
   getInvalidNameInfo,
 } from './synonyms.js';
 import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwitch.js';
+import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 
 export function setupSearch({
   root,
@@ -68,6 +69,8 @@ export function setupSearch({
   let compareQ2Label = '';
   let compareQ1Matches = [];
   let compareQ2Matches = [];
+  
+  const currentSearchDetailIdRef = { value: null }; // Track current detail view ID for async fetch
 
   // Helpers to get fresh selections on every call so expand/collapse changes
   // are reflected (avoids stale D3 selections captured at init time).
@@ -511,6 +514,19 @@ export function setupSearch({
 
     const names = selectedNode.ancestors().reverse().map(n => n.data.name);
     const nodeId = selectedNode.data.id;
+    currentSearchDetailIdRef.value = nodeId; // Set for async fetch race-condition check
+
+    // Build the dynamic path HTML
+    const pathHtml = names.map((n, idx) => {
+      if (idx === names.length - 1) {
+        // The last child element gets the external links placeholder to its right
+        return `<div style="margin-left:12px; display:flex; align-items:center;">
+                  <span style="font-weight:600;">${n}</span>
+                  <div id="ext-links-container" style="display:flex; gap:4px; margin-left:8px; height:20px; align-items:center;"></div>
+                </div>`;
+      }
+      return `<div style="margin-left:12px;">${n}</div>`;
+    }).join('');
 
     const formatDate = (dateStr) => {
       if (!dateStr) return 'N/A';
@@ -716,7 +732,7 @@ export function setupSearch({
 
     panel.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matches)</div>
-      <div style="margin-bottom:8px;"><strong>Path:</strong> ${names.map(n => `<div style="margin-left:12px;">${n}</div>`).join('')}</div>
+      <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
       ${resolutionBanner}
       ${synonymSection}
       ${algaeBaseLink}
@@ -726,6 +742,12 @@ export function setupSearch({
       </div>
     `;
     panel.style.display = 'block';
+
+    // Fetch and render external links dynamically
+    const extLinksContainer = document.getElementById('ext-links-container');
+    if (extLinksContainer && currentSearchDetailIdRef.value) {
+      fetchAndRenderExternalLinks(currentSearchDetailIdRef.value, extLinksContainer, currentSearchDetailIdRef);
+    }
 
     // Add back button handler if it exists
     const backBtn = document.getElementById('backToResults');

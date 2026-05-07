@@ -3,10 +3,15 @@
  * Handles the display of the anomaly status bar and detail panels.
  */
 
-export function updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes) {
+export function updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes, rootName) {
     const bar = document.getElementById('anomaly-bar');
     const detailPanel = document.getElementById('anomaly-detail-panel');
     if (!bar) return;
+
+    // Filter out the root record itself (e.g. "Acritarcha") if present
+    const filteredOrphans = rootName 
+        ? orphanNodes.filter(node => node.taxonname !== rootName)
+        : orphanNodes;
 
     // Always collapse detail panel when switching groups
     if (detailPanel) {
@@ -14,17 +19,17 @@ export function updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes)
         detailPanel.innerHTML = ''; // Clear previous content
     }
 
-    if (orphanNodes.length === 0 && anomalies.length === 0) {
+    if (filteredOrphans.length === 0 && anomalies.length === 0) {
         bar.style.display = 'none';
         return;
     }
 
     const parts = [];
 
-    if (orphanNodes.length > 0) {
+    if (filteredOrphans.length > 0) {
         parts.push(`
             <span style="color:#6b7280; display:flex; align-items:center;">
-                Unplaced Taxa, Orphan Taxa or Taxa Lacking Subordinate Data under the ${groupName} Group: ${orphanNodes.length.toLocaleString()} 
+                Unplaced Taxa, Orphan Taxa or Taxa Lacking Subordinate Data under the ${groupName} Group: ${filteredOrphans.length.toLocaleString()} 
                 <button id="viewOrphansBtn" style="
                     background:none; border:none; color:#0d47a1; cursor:pointer; 
                     font-size:14px; margin-left:4px; padding:0; display:inline-flex; align-items:center;
@@ -80,7 +85,7 @@ export function updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes)
             } else {
                 viewOrphansBtn.textContent = '▼';
             }
-            showOrphanDetail(groupName, orphanNodes);
+            showOrphanDetail(groupName, filteredOrphans, rootName);
         });
     }
 
@@ -94,7 +99,7 @@ export function updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes)
     }
 }
 
-function showOrphanDetail(groupName, orphanNodes) {
+function showOrphanDetail(groupName, orphanNodes, rootName) {
     const panel = document.getElementById('anomaly-detail-panel');
     if (!panel) return;
 
@@ -109,11 +114,13 @@ function showOrphanDetail(groupName, orphanNodes) {
     }
 
     const rows = orphanNodes.map(node => {
+        const pathArray = node.names_root_to_leaf || [];
+
         return `<tr>
             <td style="padding:6px; border-bottom:1px solid #e5e7eb; font-weight:600;">${node.taxonid}</td>
             <td style="padding:6px; border-bottom:1px solid #e5e7eb;">${node.taxonname}</td>
             <td style="padding:6px; border-bottom:1px solid #e5e7eb; color:#4b5563; font-family:monospace; font-size:11px;">
-                ${(node.names_root_to_leaf || []).join(' <span style="color:#9ca3af;">→</span> ')}
+                ${pathArray.join(' <span style="color:#9ca3af;">→</span> ')}
             </td>
         </tr>`;
     }).join('');

@@ -1278,19 +1278,38 @@
             // for counting + UI display — it does not change what the tree renders.
             if (!NON_BIO_GROUPS.has(taxagroupid)) {
                 const { anomalies } = detectAnomalies(allRowsForGroup, taxagroupid);
+                const anomalyIds = new Set(anomalies.map(a => a.taxonid));
 
-                // Get orphan nodes: standalone / shallow relative to the visualization root (path ≤ 2 nodes)
-                const orphanNodes = filteredRows.filter(row => {
-                    const names = row.names_root_to_leaf || [];
-                    return names.length <= 2;
+                // 1. Identify rows that are NOT anomalies but also NOT in filteredRows (didn't reach the anchor)
+                const filteredRowIds = new Set(filteredRows.map(r => r.taxonid));
+                const shortValidRows = allRowsForGroup.filter(row => 
+                    !anomalyIds.has(row.taxonid) && !filteredRowIds.has(row.taxonid)
+                );
+
+                // 2. Identify orphans within the filteredRows (reached the anchor but shallow/no descendants)
+                const allParentIds = new Set();
+                filteredRows.forEach(row => {
+                    const ids = row.ids_root_to_leaf || [];
+                    for (let i = 0; i < ids.length - 1; i++) {
+                        allParentIds.add(ids[i]);
+                    }
                 });
 
-                // Strip unplaced taxa/orphans from the tree rendering to prevent radial hairballs
-                const orphanIds = new Set(orphanNodes.map(n => n.taxonid));
-                filteredRows = filteredRows.filter(row => !orphanIds.has(row.taxonid));
+                const shallowOrphans = filteredRows.filter(row => {
+                    const names = row.names_root_to_leaf || [];
+                    const taxonid = row.taxonid;
+                    return names.length <= 2 && !allParentIds.has(taxonid);
+                });
+
+                // Combine both types of "unplaced" taxa
+                const orphanNodes = [...shortValidRows, ...shallowOrphans];
+
+                // Strip the shallow orphans from the tree rendering to prevent radial hairballs
+                const shallowOrphanIds = new Set(shallowOrphans.map(n => n.taxonid));
+                filteredRows = filteredRows.filter(row => !shallowOrphanIds.has(row.taxonid));
 
                 const groupName = taxagroupNames ? (taxagroupNames[taxagroupid] || taxagroupid) : taxagroupid;
-                updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes);
+                updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes, renderRootName);
             } else {
                 // Non-bio group — hide bar if previously shown
                 const bar = document.getElementById('anomaly-bar');

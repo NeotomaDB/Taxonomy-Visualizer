@@ -141,6 +141,7 @@
     <script src="src/taxon-group-select.js"></script>
     <script type="module" src="taxon_group_viz.js"></script>
     <script type="module">
+        import { updateURLState, getURLState } from './src/urlhash.js';
         import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js';
         import { initViewSwitch, resetViewState, activateFocusView } from './src/viewSwitch.js';
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
@@ -452,15 +453,79 @@
                 allRows = convertTaxonPaths(taxonData);
 
                 allTaxaGroupsList = extractTaxaGroups(allRows);
-
-                populateTaxonGroupDropdown(allTaxaGroupsList);
-
-                // Load initial 4-level view
-                loadInitialView();
-
-                // Wire up the taxon type segmented buttons
+                
+                // Read URL State
+                const urlState = getURLState();
+                window.__initialUrlState = urlState; // Store globally for post-render hooks
+                
+                // Restore Taxon Type
                 const bioBtn = document.getElementById('bioTaxonBtn');
                 const nonBioBtn = document.getElementById('nonBioTaxonBtn');
+                
+                if (urlState.type === 'nonbio') {
+                    currentTaxonType = 'nonbio';
+                    bioBtn.classList.remove('active');
+                    nonBioBtn.classList.add('active');
+                } else if (urlState.type === 'bio') {
+                    currentTaxonType = 'bio';
+                    bioBtn.classList.add('active');
+                    nonBioBtn.classList.remove('active');
+                }
+
+                populateTaxonGroupDropdown(allTaxaGroupsList);
+                
+                // Restore Rotation Slider UI immediately (will be applied by viz)
+                if (urlState.rot) {
+                    const rotInput = document.getElementById('rotate');
+                    if (rotInput) rotInput.value = urlState.rot;
+                }
+                
+                // Restore Search Box UI immediately
+                if (urlState.q) {
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) searchInput.value = urlState.q;
+                }
+
+                // Restore Group View vs Initial View
+                if (urlState.group) {
+                    const select = document.getElementById('taxagroupSelect');
+                    if (select) select.value = urlState.group;
+                    loadTreeForGroup(urlState.group).then(() => {
+                        applyPostRenderState();
+                    });
+                } else {
+                    // Load initial 4-level view
+                    loadInitialView().then(() => {
+                        applyPostRenderState();
+                    });
+                }
+
+                // Helper to apply search, focus, and mode after the tree finishes rendering
+                function applyPostRenderState() {
+                    const state = window.__initialUrlState;
+                    if (!state) return;
+                    
+                    // Fire search if query exists
+                    if (state.q) {
+                        const searchBtn = document.getElementById('searchBtn');
+                        if (searchBtn) searchBtn.click();
+                    }
+                    
+                    // Dispatch focus event for the viz module to pick up
+                    if (state.focus) {
+                        window.dispatchEvent(new CustomEvent('RestoreFocusNode', { detail: { id: state.focus } }));
+                    }
+                    
+                    // Apply Focus View mode
+                    if (state.mode === 'focus') {
+                        setTimeout(() => {
+                            const focusBtn = document.getElementById('focusViewBtn');
+                            if (focusBtn) focusBtn.click();
+                        }, 600); // Wait for animations to settle
+                    }
+                    
+                    window.__initialUrlState = null; // Clear so it only runs once
+                }
 
                 function switchTaxonType(type) {
                     if (type === currentTaxonType) return;
@@ -469,6 +534,9 @@
                     // Update button active states
                     bioBtn.classList.toggle('active', type === 'bio');
                     nonBioBtn.classList.toggle('active', type === 'nonbio');
+
+                    // Update URL hash
+                    updateURLState({ type: type, group: null, focus: null, q: null });
 
                     // Re-populate dropdown and reset view state
                     currentTaxagroupid = null;
@@ -496,6 +564,9 @@
                     }
 
                     const selectedValue = e.target.value;
+                    
+                    // Update URL hash state
+                    updateURLState({ group: selectedValue, focus: null, q: null });
 
                     if (selectedValue === '') {
                         // "Major Groups" selected - show initial view

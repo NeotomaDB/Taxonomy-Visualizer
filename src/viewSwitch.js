@@ -1,6 +1,8 @@
 // View Switch functionality: Switch between Whole View and Focus View
 // Focus View shows only the highlighted path, Whole View shows the full tree
 
+import { updateURLState } from './urlhash.js';
+
 let currentHighlightedPath = null; // The currently highlighted node path
 let currentMatchIds = new Set(); // IDs of the matched search result taxa
 let isFocusView = false; // Current view state
@@ -174,6 +176,7 @@ async function switchToFocusView() {
   isShowingFocusViewWarning = false;
   hideFocusViewWarning();
   updateButtonState();
+  updateURLState({ mode: 'focus' });
   
   let filteredRows = [];
   
@@ -243,6 +246,7 @@ async function switchToWholeView() {
   
   isFocusView = false;
   updateButtonState();
+  updateURLState({ mode: 'whole' });
   
   // Re-render with original data
   await renderFunction(originalRows, originalRootInfo.rootId, originalRootInfo.rootName, allRowsForSynonyms);

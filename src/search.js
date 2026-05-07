@@ -21,6 +21,7 @@ import {
 } from './synonyms.js';
 import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwitch.js';
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
+import { updateURLState } from './urlhash.js';
 
 export function setupSearch({
   root,
@@ -165,6 +166,9 @@ export function setupSearch({
   function resetSearchState() {
     const searchInputEl = document.getElementById('searchInput');
     if (searchInputEl) searchInputEl.value = '';
+    
+    // Update URL hash state
+    updateURLState({ q: null });
 
     currentMatches = [];
     currentMatchIndex = -1;
@@ -840,6 +844,10 @@ export function setupSearch({
   async function runSearch() {
     if (!searchInput) return;
     const q = searchInput.value.trim();
+    
+    // Update URL hash state
+    updateURLState({ q: q || null });
+    
     if (info) info.clear();
     if (!q) { resetSearchState(); return; }
 

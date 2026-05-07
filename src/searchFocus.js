@@ -5,6 +5,7 @@
 //   info.show(d); // to display d and its ancestors + label on dendrogram
 //   info.clear(); // to hide
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
+import { updateURLState } from './urlhash.js';
 
 export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
   const panel = document.getElementById('info');
@@ -15,7 +16,11 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     if (!panel || !d) return;
 
     currentNode = d; // Store current node
-    currentClickIdRef.value = d.data.taxonid || d.data.id; // Record current ID
+    const nodeId = d.data.taxonid || d.data.id;
+    currentClickIdRef.value = nodeId; // Record current ID
+    
+    // Update URL hash state
+    updateURLState({ focus: nodeId });
 
     // Update info panel
     const names = d.ancestors().reverse().map(n => n.data.name);

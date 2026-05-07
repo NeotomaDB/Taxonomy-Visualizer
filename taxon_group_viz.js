@@ -10,6 +10,7 @@ import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
 import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS } from './src/taxaViewConfig.js';
+import { updateURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
 /**
@@ -707,31 +708,67 @@ async function renderMammalTree({
   // 7) Rotation UI hookup (optional)
   const rotateInput = document.getElementById('rotate');
   const rotateValueEl = document.getElementById('rotateValue');
-  function applyRotation(deg) {
+  function applyRotation(deg, skipUrlUpdate = false) {
     currentRotate = deg;
     updateRotate();
     updateLabelOrientation();
     if (rotateValueEl) rotateValueEl.textContent = `${deg}\u00B0`;
+    if (!skipUrlUpdate) {
+      updateURLState({ rot: deg });
+    }
   }
   if (rotateInput) {
-    applyRotation(Number(rotateInput.value || 0));
+    applyRotation(Number(rotateInput.value || 0), true);
     rotateInput.addEventListener('input', (e) => applyRotation(Number(e.target.value)));
   }
 
   // Function to ensure a node's full path is visible (expanded)
   function expandToNode(d) {
-    let current = d;
+    const path = d.ancestors().reverse(); // from root to d
     let anyExpanded = false;
-    while (current.parent) {
-      if (expandHiddenChildren(current.parent)) {
+    // Walk from root down to the target's parent, expanding each step lazily
+    for (let i = 0; i < path.length - 1; i++) {
+      const node = path[i];
+      if (expandHiddenChildren(node, true)) { // lazy=true mimics a manual click
         anyExpanded = true;
       }
-      current = current.parent;
     }
     if (anyExpanded) {
-      update();
+      update(0); // 0 duration for immediate URL-based redraw
+      bindNodeInteractions();
+      updateLabelOrientation();
+      if (cull) setTimeout(() => cull.refresh(), 50);
     }
   }
+
+  // Restore focus node from URL state if requested
+  window.addEventListener('RestoreFocusNode', (e) => {
+    const focusId = Number(e.detail.id);
+    
+    // Custom recursive finder that checks both visible (children) and hidden (_children) nodes
+    function findNodeInAll(node, targetId) {
+      if (Number(node.data.id) === targetId || Number(node.data.taxonid) === targetId) return node;
+      const kids = node.children || node._children;
+      if (kids) {
+        for (let child of kids) {
+          const found = findNodeInAll(child, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    
+    const targetNode = findNodeInAll(root, focusId);
+    
+    if (targetNode) {
+      expandToNode(targetNode);
+      setTimeout(() => {
+        highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), targetNode);
+        setHighlightedPath(targetNode);
+        if (info) info.show(targetNode);
+      }, 300);
+    }
+  }, { once: true });
 
   // 7.5) Search + focus
   const searchControls = setupSearch({

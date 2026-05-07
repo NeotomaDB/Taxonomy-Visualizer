@@ -334,5 +334,48 @@ export async function renderCollapsibleTree({
         taxagroupid: taxagroupid || rows?.[0]?.taxagroupid || null,
         onSearchClear: () => { },
     });
+
+    // Restore focus node from URL state if requested
+    window.addEventListener('RestoreFocusNode', (e) => {
+        const focusId = Number(e.detail.id);
+        
+        // Custom recursive finder that checks both visible (children) and hidden (_children) nodes
+        function findNodeInAll(node, targetId) {
+            if (Number(node.data.id) === targetId || Number(node.data.taxonid) === targetId) return node;
+            const kids = node.children || node._children;
+            if (kids) {
+                for (let child of kids) {
+                    const found = findNodeInAll(child, targetId);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+        
+        const targetNode = findNodeInAll(hierarchyRoot, focusId);
+        
+        if (targetNode) {
+            // Expand path to node
+            let current = targetNode;
+            let neededUpdate = false;
+            while (current.parent) {
+                if (current.parent._children) {
+                    current.parent.children = current.parent._children;
+                    current.parent._children = null;
+                    neededUpdate = true;
+                }
+                current = current.parent;
+            }
+            if (neededUpdate) {
+                update(targetNode);
+            }
+            
+            setTimeout(() => {
+                highlightPath(gLink.selectAll('path'), gNode.selectAll('g.node'), targetNode);
+                setHighlightedPath(targetNode);
+                if (info) info.show(targetNode);
+            }, 300);
+        }
+    }, { once: true });
 }
 

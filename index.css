@@ -21,14 +21,17 @@ text.highlight {
   opacity: 0;
   pointer-events: none;
 }
+
 /* Force-hide label text for non-match nodes (overrides culling display:block) */
 .search-active g.node:not(.match-path) text {
   display: none !important;
 }
+
 /* Force-hide middle nodes unconditionally */
 .search-active g.node.match-path text:not(.highlight):not(.highlight-synonym):not(.highlight-q1):not(.highlight-q2) {
   display: none !important;
 }
+
 /* Force-show label text ONLY for the actual highlighted matching nodes (keep middle nodes hidden) */
 .search-active g.node.match-path text.highlight,
 .search-active g.node.match-path text.highlight-synonym,
@@ -36,10 +39,12 @@ text.highlight {
 .search-active g.node.match-path text.highlight-q2 {
   display: block !important;
 }
+
 /* Hide all links that are not highlighted and not on any match path */
 .search-active path:not(.highlight):not(.highlight-synonym):not(.highlight-q1):not(.highlight-q2):not(.match-path-link) {
   opacity: 0;
 }
+
 /* Match-path links between shared ancestors: keep visible as gray structure */
 .search-active path.match-path-link:not(.highlight):not(.highlight-synonym) {
   opacity: 0.5;
@@ -74,7 +79,7 @@ body {
 
 #title-section h1 {
   color: #43a047;
-  font-size: 40px;
+  font-size: 34px;
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.5px;
@@ -585,8 +590,13 @@ body {
   flex-shrink: 0;
 }
 
-.cmp-dot-q1 { background: #1d4ed8; }
-.cmp-dot-q2 { background: #6b21a8; }
+.cmp-dot-q1 {
+  background: #1d4ed8;
+}
+
+.cmp-dot-q2 {
+  background: #6b21a8;
+}
 
 .cmp-col-label {
   font-size: 12px;
@@ -597,8 +607,13 @@ body {
   min-width: 0;
 }
 
-.cmp-col-q1 .cmp-col-label { color: #1d4ed8; }
-.cmp-col-q2 .cmp-col-label { color: #6b21a8; }
+.cmp-col-q1 .cmp-col-label {
+  color: #1d4ed8;
+}
+
+.cmp-col-q2 .cmp-col-label {
+  color: #6b21a8;
+}
 
 .cmp-item {
   font-size: 12px;
@@ -606,8 +621,13 @@ body {
   line-height: 1.5;
 }
 
-.cmp-col-q1 .cmp-item { color: #1e3a8a; }
-.cmp-col-q2 .cmp-item { color: #3b0764; }
+.cmp-col-q1 .cmp-item {
+  color: #1e3a8a;
+}
+
+.cmp-col-q2 .cmp-item {
+  color: #3b0764;
+}
 
 .cmp-item-empty {
   font-style: italic;
@@ -633,8 +653,15 @@ body {
   border-radius: 999px;
 }
 
-.cmp-match-q1 { background: #dbeafe; color: #1d4ed8; }
-.cmp-match-q2 { background: #ede9fe; color: #6b21a8; }
+.cmp-match-q1 {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.cmp-match-q2 {
+  background: #ede9fe;
+  color: #6b21a8;
+}
 
 /* SVG aesthetics */
 svg path {
@@ -676,11 +703,13 @@ svg path.highlight-q1 {
   stroke: #1d4ed8 !important;
   stroke-width: 2.5px;
 }
+
 svg path.highlight-q2 {
   fill: none !important;
   stroke: #6b21a8 !important;
   stroke-width: 2.5px;
 }
+
 svg text.highlight-q1 {
   fill: #1d4ed8 !important;
   font-weight: 700 !important;
@@ -689,6 +718,7 @@ svg text.highlight-q1 {
   stroke-width: 3px !important;
   stroke-linejoin: round !important;
 }
+
 svg text.highlight-q2 {
   fill: #6b21a8 !important;
   font-weight: 700 !important;

@@ -134,6 +134,9 @@
                 <div id="anomaly-detail-panel"
                     style="display:none; margin-top:8px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; max-height:420px; overflow-y:auto;">
                 </div>
+                <div id="summary-panel"
+                    style="display:none; margin-top:12px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;">
+                </div>
             </div>
         </div>
     </div>
@@ -146,6 +149,7 @@
         import { initViewSwitch, resetViewState, activateFocusView } from './src/viewSwitch.js';
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js';
+        import { updateSummaryPanel } from './src/summaryPanel.js';
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree
         function convertTaxonPaths(data) {
             // data is an object with a SQL query string as key and array as value
@@ -347,6 +351,7 @@
         let taxagroupNames = {}; // Store taxagroupid to full name mapping
         let anchorDataMap = new Map(); // Store taxagroupid to anchor info mapping
         let anchorIds = new Set(); // Store all anchor node IDs for styling
+        let taxonomyChangeSummary = null; // Steward-facing summary data
 
         // Groups with no unique real taxonomic anchor — use a synthetic root node.
         // sliceAfterName: find this name in the path; keep everything AFTER it.
@@ -428,10 +433,12 @@
         Promise.all([
             fetch("data/taxonpaths.json").then(r => r.json()),
             fetch("data/taxagroup_names.json").then(r => r.json()).catch(() => ({})),
-            fetch("data/anchor_analysis.json").then(r => r.json()).catch(() => ([]))
+            fetch("data/anchor_analysis.json").then(r => r.json()).catch(() => ([])),
+            fetch("data/taxa_changes.json").then(r => r.json()).catch(() => null)
         ])
-            .then(([taxonData, namesMap, anchors]) => {
+            .then(([taxonData, namesMap, anchors, changeSummary]) => {
                 taxagroupNames = namesMap;
+                taxonomyChangeSummary = changeSummary;
                 // Convert list of anchors to a map for easy lookup
                 anchorDataMap = new Map(anchors.map(a => [a.taxagroupid, a]));
                 // Extract all anchor IDs into a set for styling
@@ -451,6 +458,7 @@
                     }
                 });
                 allRows = convertTaxonPaths(taxonData);
+                updateSummaryPanel(taxonomyChangeSummary, currentTaxagroupid, taxagroupNames);
 
                 allTaxaGroupsList = extractTaxaGroups(allRows);
                 
@@ -876,6 +884,7 @@
             updateBackButton();
             syncDropdownValue();
             currentTreeType = treeType;
+            updateSummaryPanel(taxonomyChangeSummary, currentTaxagroupid, taxagroupNames);
 
             // Anomaly bar is per-group; hide it in the all-groups overview
             const _anomBar = document.getElementById('anomaly-bar');
@@ -1302,6 +1311,7 @@
             currentTaxagroupid = taxagroupid;
             isInitialView = false;
             syncDropdownValue();
+            updateSummaryPanel(taxonomyChangeSummary, currentTaxagroupid, taxagroupNames);
 
             // Hide tree toggle when loading a specific group
             const toggleDiv = document.getElementById('treeViewToggle');

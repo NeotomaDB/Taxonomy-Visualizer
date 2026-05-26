@@ -434,7 +434,7 @@
             fetch("data/taxonpaths.json").then(r => r.json()),
             fetch("data/taxagroup_names.json").then(r => r.json()).catch(() => ({})),
             fetch("data/anchor_analysis.json").then(r => r.json()).catch(() => ([])),
-            fetch("data/taxa_changes.json").then(r => r.json()).catch(() => null)
+            fetch("data/taxa_changes.json", { cache: "no-store" }).then(r => r.json()).catch(() => null)
         ])
             .then(([taxonData, namesMap, anchors, changeSummary]) => {
                 taxagroupNames = namesMap;

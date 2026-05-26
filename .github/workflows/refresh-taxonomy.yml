@@ -26,7 +26,7 @@ jobs:
             --output-dir data \
             --changes-file data/taxa_changes.json \
             --snapshot-file data/taxa_snapshot.json \
-            --lookback-days 90
+            --lookback-days 30
 
       - name: Commit refreshed files
         shell: bash

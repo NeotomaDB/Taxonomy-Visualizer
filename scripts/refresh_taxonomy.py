@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--page-size", type=int, default=DEFAULT_PAGE_SIZE)
     parser.add_argument("--changes-file", default="data/taxa_changes.json")
     parser.add_argument("--snapshot-file", default="data/taxa_snapshot.json")
-    parser.add_argument("--lookback-days", type=int, default=90)
+    parser.add_argument("--lookback-days", type=int, default=30)
     parser.add_argument("--summary-since", default=None, help="YYYY-MM-DD lower bound for steward summary items")
     return parser.parse_args()
 
@@ -328,7 +328,7 @@ def build_changes(
     current_snapshot: dict[str, dict[str, Any]],
     path_lookup: dict[int, dict[str, Any]],
     summary_since: datetime | None = None,
-    lookback_days: int = 90,
+    lookback_days: int = 30,
 ) -> dict[str, Any]:
     new_items: list[dict[str, Any]] = []
     modified_items: list[dict[str, Any]] = []

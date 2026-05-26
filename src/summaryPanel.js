@@ -56,11 +56,12 @@ async function navigateToSummaryItem(item) {
   searchBtn.click();
 }
 
+const MAX_RANGE_DAYS = 30;
+
 const RANGE_OPTIONS = [
   { days: 7, label: 'Last 7 days' },
   { days: 14, label: 'Last 14 days' },
   { days: 30, label: 'Last Month' },
-  { days: 90, label: 'Last 3 Months' },
 ];
 
 function getRangeLabel(days) {
@@ -95,6 +96,10 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
     return;
   }
 
+  if (currentRangeDays > MAX_RANGE_DAYS) {
+    currentRangeDays = 14;
+  }
+
   const allEntries = flattenSummary(dataToRender);
   
   const referenceDate = dataToRender.generated_at ? new Date(dataToRender.generated_at) : new Date();
@@ -110,7 +115,8 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
   const filteredEntries = currentSummaryTaxagroupid
     ? timeFilteredEntries.filter(item => item.taxagroupid === currentSummaryTaxagroupid)
     : timeFilteredEntries;
-  const visibleEntries = filteredEntries.slice(0, 12);
+  const visibleLimit = currentRangeDays <= 14 ? 12 : 20;
+  const visibleEntries = filteredEntries.slice(0, visibleLimit);
 
   const currentGroupName = currentSummaryTaxagroupid
     ? (currentTaxagroupNames[currentSummaryTaxagroupid] || currentSummaryTaxagroupid)
@@ -190,7 +196,10 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
         ${modifiedCount} modified
       </span>
     </div>
-    <div style="margin-top:8px;max-height:360px;overflow-y:auto;">${rowsHtml}</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
+      Showing ${visibleEntries.length} of ${filteredEntries.length} in ${getRangeLabel(currentRangeDays)}
+    </div>
+    <div style="margin-top:4px;max-height:360px;overflow-y:auto;">${rowsHtml}</div>
   `;
   panel.style.display = 'block';
 

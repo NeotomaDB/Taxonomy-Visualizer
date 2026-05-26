@@ -56,24 +56,45 @@ async function navigateToSummaryItem(item) {
   searchBtn.click();
 }
 
-export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNames = {}) {
+let currentSummaryData = null;
+let currentSummaryTaxagroupid = null;
+let currentTaxagroupNames = {};
+let currentRangeDays = 14;
+
+export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNames) {
+  if (summaryData !== undefined) currentSummaryData = summaryData;
+  if (currentTaxagroupid !== undefined) currentSummaryTaxagroupid = currentTaxagroupid;
+  if (taxagroupNames !== undefined) currentTaxagroupNames = taxagroupNames;
+
+  const dataToRender = currentSummaryData;
   const panel = document.getElementById('summary-panel');
   if (!panel) return;
 
-  if (!summaryData) {
+  if (!dataToRender) {
     panel.style.display = 'none';
     panel.innerHTML = '';
     return;
   }
 
-  const allEntries = flattenSummary(summaryData);
-  const filteredEntries = currentTaxagroupid
-    ? allEntries.filter(item => item.taxagroupid === currentTaxagroupid)
-    : allEntries;
+  const allEntries = flattenSummary(dataToRender);
+  
+  const referenceDate = dataToRender.generated_at ? new Date(dataToRender.generated_at) : new Date();
+  const cutoffTime = referenceDate.getTime() - (currentRangeDays * 24 * 60 * 60 * 1000);
+  
+  const timeFilteredEntries = allEntries.filter(item => {
+    const itemDateStr = item.recdatemodified || item.recdatecreated;
+    if (!itemDateStr) return false;
+    const itemTime = new Date(itemDateStr).getTime();
+    return itemTime >= cutoffTime;
+  });
+
+  const filteredEntries = currentSummaryTaxagroupid
+    ? timeFilteredEntries.filter(item => item.taxagroupid === currentSummaryTaxagroupid)
+    : timeFilteredEntries;
   const visibleEntries = filteredEntries.slice(0, 12);
 
-  const currentGroupName = currentTaxagroupid
-    ? (taxagroupNames[currentTaxagroupid] || currentTaxagroupid)
+  const currentGroupName = currentSummaryTaxagroupid
+    ? (currentTaxagroupNames[currentSummaryTaxagroupid] || currentSummaryTaxagroupid)
     : 'All Groups';
 
   const newCount = filteredEntries.filter(item => item._kind === 'new').length;
@@ -124,9 +145,17 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
     `;
 
   panel.innerHTML = `
-    <div style="font-weight:700;font-size:14px;color:#1f2937;">Taxonomy Summary</div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-weight:700;font-size:14px;color:#1f2937;">Recent Change</div>
+      <select id="summary-range-select" style="font-size:12px; border-radius:4px; border:1px solid #d1d5db; padding:2px 4px; background:#fff; cursor:pointer;">
+        <option value="7" ${currentRangeDays === 7 ? 'selected' : ''}>Recent 7 days</option>
+        <option value="14" ${currentRangeDays === 14 ? 'selected' : ''}>Recent 14 days</option>
+        <option value="30" ${currentRangeDays === 30 ? 'selected' : ''}>Recent 1 months</option>
+        <option value="90" ${currentRangeDays === 90 ? 'selected' : ''}>Recent 3 months</option>
+      </select>
+    </div>
     <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-      Refreshed ${formatDateLabel(summaryData.generated_at)} · Last 14 days · Scope: ${currentGroupName}
+      Refreshed ${formatDateLabel(dataToRender.generated_at)} · Scope: ${currentGroupName}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <span style="padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px;color:#374151;">
@@ -142,6 +171,14 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
     <div style="margin-top:8px;max-height:360px;overflow-y:auto;">${rowsHtml}</div>
   `;
   panel.style.display = 'block';
+
+  const selectEl = panel.querySelector('#summary-range-select');
+  if (selectEl) {
+    selectEl.addEventListener('change', (e) => {
+      currentRangeDays = parseInt(e.target.value, 10);
+      updateSummaryPanel();
+    });
+  }
 
   panel.querySelectorAll('.summary-search-btn').forEach(button => {
     button.addEventListener('click', async () => {

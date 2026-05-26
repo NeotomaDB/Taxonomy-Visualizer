@@ -104,7 +104,7 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
       ? visibleEntries.map(item => {
         const badge = badgeStyles(item._kind);
         const groupLabel = item.taxagroupid
-          ? (taxagroupNames[item.taxagroupid] || item.taxagroupid)
+          ? (currentTaxagroupNames[item.taxagroupid] || item.taxagroupid)
           : 'Unknown group';
         const changedFields = item.changed_fields?.length
           ? `<div style="font-size:11px;color:#6b7280;margin-top:2px;">Changed: ${item.changed_fields.join(', ')}</div>`

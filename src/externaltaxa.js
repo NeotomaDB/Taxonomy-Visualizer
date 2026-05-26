@@ -63,7 +63,7 @@ export async function fetchAndRenderExternalLinks(taxonId, containerElement, cur
     containerElement.innerHTML = ''; // Clear loading
 
     const numericTaxonId = Number(taxonId);
-    const matchedRows = externalTaxaIndex.get(numericTaxonId) || [];
+    const matchedRows = externalTaxaIndex ? externalTaxaIndex.get(numericTaxonId) || [] : [];
     
     if (matchedRows.length === 0) return;
 

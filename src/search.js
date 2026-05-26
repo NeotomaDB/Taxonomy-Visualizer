@@ -21,6 +21,7 @@ import {
 } from './synonyms.js';
 import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwitch.js';
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
+import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { updateURLState } from './urlhash.js';
 
 export function setupSearch({
@@ -737,6 +738,7 @@ export function setupSearch({
     panel.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matches)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
+      <div id="taxon-metadata-container"></div>
       ${resolutionBanner}
       ${synonymSection}
       ${algaeBaseLink}
@@ -746,6 +748,11 @@ export function setupSearch({
       </div>
     `;
     panel.style.display = 'block';
+
+    const metadataContainer = document.getElementById('taxon-metadata-container');
+    if (metadataContainer && currentSearchDetailIdRef.value) {
+      fetchAndRenderTaxonMetadata(currentSearchDetailIdRef.value, metadataContainer, currentSearchDetailIdRef);
+    }
 
     // Fetch and render external links dynamically
     const extLinksContainer = document.getElementById('ext-links-container');

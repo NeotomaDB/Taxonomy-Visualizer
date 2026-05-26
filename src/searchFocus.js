@@ -5,6 +5,7 @@
 //   info.show(d); // to display d and its ancestors + label on dendrogram
 //   info.clear(); // to hide
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
+import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { updateURLState } from './urlhash.js';
 
 export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
@@ -96,12 +97,18 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     panel.innerHTML = `
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${names.length} matches)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
+      <div id="taxon-metadata-container"></div>
       <div style="display:flex; flex-wrap:wrap; gap:8px;">
         ${goToTreeButton}
         ${goToGroupButton}
       </div>
     `;
     panel.style.display = 'block';
+
+    const metadataContainer = document.getElementById('taxon-metadata-container');
+    if (metadataContainer && currentClickIdRef.value) {
+      fetchAndRenderTaxonMetadata(currentClickIdRef.value, metadataContainer, currentClickIdRef);
+    }
 
     // Fetch and render external links dynamically
     const extLinksContainer = document.getElementById('ext-links-container');

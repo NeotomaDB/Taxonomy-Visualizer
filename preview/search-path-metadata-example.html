@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search result metadata — UI preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #f3f4f6;
+      padding: 24px;
+      color: #1f2937;
+    }
+    .panel {
+      max-width: 420px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,.06);
+    }
+    .path-line {
+      margin-left: 12px;
+      font-size: 14px;
+      line-height: 1.55;
+      background: #f3e8ff;
+      padding: 1px 6px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+    .path-target {
+      font-weight: 600;
+      margin-left: 12px;
+      background: #f3e8ff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .meta {
+      margin: 12px 0 0 12px;
+      padding: 10px 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .meta dt {
+      font-weight: 600;
+      color: #6b7280;
+      float: left;
+      clear: left;
+      width: 108px;
+      margin: 0 0 4px 0;
+    }
+    .meta dd {
+      margin: 0 0 6px 108px;
+      color: #374151;
+    }
+    .meta dd.muted { color: #9ca3af; font-style: italic; }
+    .btn {
+      margin-top: 14px;
+      padding: 8px 16px;
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: default;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .note {
+      margin-top: 20px;
+      max-width: 420px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    h2.preview-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #9ca3af;
+      margin: 0 0 8px 0;
+    }
+    .panel + .panel { margin-top: 28px; }
+  </style>
+</head>
+<body>
+  <p class="note" style="margin-top:0;margin-bottom:20px;">
+    Static preview only — metadata block would appear under <strong>Path</strong>, before <strong>Go to Group View</strong>.
+    Data below is from the Neotoma API (<code>/v2.0/data/taxa/{id}</code> + <code>dbtables</code>).
+  </p>
+
+  <h2 class="preview-label">Example A — your screenshot (Echinodermata)</h2>
+  <div class="panel">
+    <div style="font-weight:600;margin-bottom:6px;">Search Results (4 matches)</div>
+    <div style="margin-bottom:8px;"><strong>Path:</strong></div>
+    <div class="path-line">Root</div><br />
+    <div class="path-line" style="margin-left:24px;">Eukaryota</div><br />
+    <div class="path-line" style="margin-left:36px;">Animalia</div><br />
+    <div class="path-target" style="margin-left:48px;">Echinodermata</div>
+
+    <dl class="meta">
+      <dt>Author</dt>
+      <dd>Klein, 1734</dd>
+      <dt>Validator</dt>
+      <dd class="muted">Not recorded</dd>
+      <dt>Validated</dt>
+      <dd class="muted">—</dd>
+      <dt>Publication ID</dt>
+      <dd>3698</dd>
+      <dt>Publication</dt>
+      <dd>Boxshall, G., et al. 2013. World Register of Marine Species (WoRMS).</dd>
+    </dl>
+
+    <button class="btn" type="button"><span>→</span> Go to Group View</button>
+  </div>
+
+  <h2 class="preview-label">Example B — species with full validation fields</h2>
+  <div class="panel">
+    <div style="font-weight:600;margin-bottom:6px;">Search Results (1 match)</div>
+    <div style="margin-bottom:8px;"><strong>Path:</strong></div>
+    <div class="path-line">… Ostracoda › … › <strong>Arctocypris dulcifons</strong></div>
+
+    <dl class="meta">
+      <dt>Author</dt>
+      <dd>(Diebel &amp; Pietrzeniuk, 1969)</dd>
+      <dt>Validator</dt>
+      <dd>Contact #44 <span style="color:#6b7280;">(resolved name from <code>contacts</code> table)</span></dd>
+      <dt>Validated</dt>
+      <dd>October 6, 2014</dd>
+      <dt>Publication ID</dt>
+      <dd>19308</dd>
+      <dt>Publication</dt>
+      <dd>Diebel &amp; Pietrzeniuk. 1969. Ostracoden aus dem Mittelpleistozän von Sussenborn bei Weimar…</dd>
+    </dl>
+
+    <button class="btn" type="button"><span>→</span> Go to Group View</button>
+  </div>
+</body>
+</html>

@@ -80,10 +80,19 @@ let currentSummaryData = null;
 let currentSummaryTaxagroupid = null;
 let currentTaxagroupNames = {};
 let currentRangeDays = 14;
+let currentSummaryPage = 1;
+
+const SUMMARY_PAGE_SIZE = 20;
 
 export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNames) {
-  if (summaryData !== undefined) currentSummaryData = summaryData;
-  if (currentTaxagroupid !== undefined) currentSummaryTaxagroupid = currentTaxagroupid;
+  if (summaryData !== undefined && summaryData !== currentSummaryData) {
+    currentSummaryData = summaryData;
+    currentSummaryPage = 1;
+  }
+  if (currentTaxagroupid !== undefined && currentTaxagroupid !== currentSummaryTaxagroupid) {
+    currentSummaryTaxagroupid = currentTaxagroupid;
+    currentSummaryPage = 1;
+  }
   if (taxagroupNames !== undefined) currentTaxagroupNames = taxagroupNames;
 
   const dataToRender = currentSummaryData;
@@ -115,8 +124,13 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
   const filteredEntries = currentSummaryTaxagroupid
     ? timeFilteredEntries.filter(item => item.taxagroupid === currentSummaryTaxagroupid)
     : timeFilteredEntries;
-  const visibleLimit = currentRangeDays <= 14 ? 12 : 20;
-  const visibleEntries = filteredEntries.slice(0, visibleLimit);
+  const totalPages = Math.max(1, Math.ceil(filteredEntries.length / SUMMARY_PAGE_SIZE));
+  if (currentSummaryPage > totalPages) {
+    currentSummaryPage = totalPages;
+  }
+  const startIndex = (currentSummaryPage - 1) * SUMMARY_PAGE_SIZE;
+  const endIndex = startIndex + SUMMARY_PAGE_SIZE;
+  const visibleEntries = filteredEntries.slice(startIndex, endIndex);
 
   const currentGroupName = currentSummaryTaxagroupid
     ? (currentTaxagroupNames[currentSummaryTaxagroupid] || currentSummaryTaxagroupid)
@@ -196,8 +210,24 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
         ${modifiedCount} modified
       </span>
     </div>
-    <div style="font-size:11px;color:#9ca3af;margin-top:8px;">
-      Showing ${visibleEntries.length} of ${filteredEntries.length} in ${getRangeLabel(currentRangeDays)}
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:#9ca3af;margin-top:8px;">
+      <div>
+        ${filteredEntries.length === 0
+          ? `No items in ${getRangeLabel(currentRangeDays)}`
+          : `Page ${currentSummaryPage} of ${totalPages} · ${filteredEntries.length} items in ${getRangeLabel(currentRangeDays)}`}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button
+          id="summary-prev-page"
+          ${currentSummaryPage <= 1 ? 'disabled' : ''}
+          style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;background:${currentSummaryPage <= 1 ? '#f3f4f6' : '#fff'};color:${currentSummaryPage <= 1 ? '#9ca3af' : '#374151'};font-size:11px;cursor:${currentSummaryPage <= 1 ? 'default' : 'pointer'};"
+        >Previous</button>
+        <button
+          id="summary-next-page"
+          ${currentSummaryPage >= totalPages ? 'disabled' : ''}
+          style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;background:${currentSummaryPage >= totalPages ? '#f3f4f6' : '#fff'};color:${currentSummaryPage >= totalPages ? '#9ca3af' : '#374151'};font-size:11px;cursor:${currentSummaryPage >= totalPages ? 'default' : 'pointer'};"
+        >Next</button>
+      </div>
     </div>
     <div style="margin-top:4px;max-height:360px;overflow-y:auto;">${rowsHtml}</div>
   `;
@@ -207,6 +237,25 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
   if (selectEl) {
     selectEl.addEventListener('change', (e) => {
       currentRangeDays = parseInt(e.target.value, 10);
+      currentSummaryPage = 1;
+      updateSummaryPanel();
+    });
+  }
+
+  const prevBtn = panel.querySelector('#summary-prev-page');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentSummaryPage <= 1) return;
+      currentSummaryPage -= 1;
+      updateSummaryPanel();
+    });
+  }
+
+  const nextBtn = panel.querySelector('#summary-next-page');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      if (currentSummaryPage >= totalPages) return;
+      currentSummaryPage += 1;
       updateSummaryPanel();
     });
   }

@@ -27,10 +27,12 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from http.client import IncompleteRead
 
 
 DEFAULT_API_BASE = "https://api.neotomadb.org/v2.0"
-DEFAULT_PAGE_SIZE = 10000
+DEFAULT_PAGE_SIZE = 5000
+MAX_FETCH_RETRIES = 3
 WATCH_FIELDS = (
     "taxonname",
     "highertaxonid",
@@ -57,20 +59,26 @@ def log(message: str) -> None:
 
 
 def fetch_json(url: str) -> Any:
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "User-Agent": "Neotoma-Visualizer-Refresh/1.0",
-        },
-    )
-    try:
-        with urlopen(request, timeout=60) as response:
-            return json.load(response)
-    except HTTPError as exc:
-        raise RuntimeError(f"HTTP {exc.code} while fetching {url}") from exc
-    except URLError as exc:
-        raise RuntimeError(f"Network error while fetching {url}: {exc}") from exc
+    last_error: Exception | None = None
+    for attempt in range(1, MAX_FETCH_RETRIES + 1):
+        request = Request(
+            url,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "Neotoma-Visualizer-Refresh/1.0",
+            },
+        )
+        try:
+            with urlopen(request, timeout=60) as response:
+                return json.load(response)
+        except HTTPError as exc:
+            raise RuntimeError(f"HTTP {exc.code} while fetching {url}") from exc
+        except (URLError, IncompleteRead, json.JSONDecodeError) as exc:
+            last_error = exc
+            if attempt == MAX_FETCH_RETRIES:
+                break
+            log(f"Retrying fetch ({attempt}/{MAX_FETCH_RETRIES}) for {url} after error: {exc}")
+    raise RuntimeError(f"Network error while fetching {url}: {last_error}") from last_error
 
 
 def extract_rows(payload: Any) -> list[dict[str, Any]]:

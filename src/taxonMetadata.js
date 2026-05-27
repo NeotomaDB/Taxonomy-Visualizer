@@ -1,10 +1,5 @@
-const API_BASE = 'https://api.neotomadb.org/v2.0';
-const PAGE_SIZE = 10000;
-
-let taxaIndex = null;
-let taxaIndexPromise = null;
-let contactsIndex = null;
-let contactsIndexPromise = null;
+let metadataIndex = null;
+let metadataIndexPromise = null;
 
 function escapeHtml(value) {
   if (value == null || value === '') return '';
@@ -26,105 +21,30 @@ function formatDateLabel(value) {
   });
 }
 
-function formatContactName(contact) {
-  if (!contact) return null;
-  if (contact.contactname) return String(contact.contactname).trim();
-  const parts = [contact.givennames, contact.familyname].filter(Boolean);
-  return parts.length ? parts.join(' ').trim() : null;
-}
-
-function extractRows(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (payload?.data && Array.isArray(payload.data)) return payload.data;
-  return [];
-}
-
-async function paginateTable(table, onPage) {
-  let offset = 0;
-  while (true) {
-    const response = await fetch(
-      `${API_BASE}/data/dbtables/${table}?limit=${PAGE_SIZE}&offset=${offset}`,
-      { cache: 'default' }
-    );
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${table} (HTTP ${response.status})`);
-    }
-    const rows = extractRows(await response.json());
-    if (!rows.length) break;
-    onPage(rows);
-    if (rows.length < PAGE_SIZE) break;
-    offset += rows.length;
-  }
-}
-
-async function ensureTaxaIndex() {
-  if (taxaIndex) return taxaIndex;
-  if (!taxaIndexPromise) {
-    taxaIndexPromise = (async () => {
-      const map = new Map();
-      await paginateTable('taxa', (rows) => {
-        rows.forEach((row) => {
-          const taxonId = Number(row.taxonid);
-          if (!Number.isFinite(taxonId)) return;
-          map.set(taxonId, {
-            validatorid: row.validatorid != null ? Number(row.validatorid) : null,
-            validatedate: row.validatedate || null,
-          });
+async function ensureMetadataIndex() {
+  if (metadataIndex) return metadataIndex;
+  if (!metadataIndexPromise) {
+    metadataIndexPromise = fetch('data/taxon_metadata.json', { cache: 'default' })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch local taxon metadata (HTTP ${response.status})`);
+        }
+        const payload = await response.json();
+        const map = new Map();
+        Object.entries(payload || {}).forEach(([taxonId, row]) => {
+          const numericId = Number(taxonId);
+          if (!Number.isFinite(numericId) || !row) return;
+          map.set(numericId, row);
         });
+        metadataIndex = map;
+        return metadataIndex;
+      })
+      .catch((err) => {
+        metadataIndexPromise = null;
+        throw err;
       });
-      taxaIndex = map;
-    })().catch((err) => {
-      taxaIndexPromise = null;
-      throw err;
-    });
   }
-  await taxaIndexPromise;
-  return taxaIndex;
-}
-
-async function ensureContactsIndex() {
-  if (contactsIndex) return contactsIndex;
-  if (!contactsIndexPromise) {
-    contactsIndexPromise = (async () => {
-      const map = new Map();
-      await paginateTable('contacts', (rows) => {
-        rows.forEach((row) => {
-          const contactId = Number(row.contactid);
-          if (!Number.isFinite(contactId)) return;
-          map.set(contactId, row);
-        });
-      });
-      contactsIndex = map;
-    })().catch((err) => {
-      contactsIndexPromise = null;
-      throw err;
-    });
-  }
-  await contactsIndexPromise;
-  return contactsIndex;
-}
-
-async function fetchTaxonFromApi(taxonId) {
-  const numericId = Number(taxonId);
-  let response = await fetch(`${API_BASE}/data/taxa/${numericId}`, { cache: 'no-store' });
-  if (!response.ok) {
-    response = await fetch(`${API_BASE}/data/taxa?taxonid=${numericId}`, { cache: 'no-store' });
-  }
-  if (!response.ok) {
-    throw new Error(`Failed to fetch taxon ${numericId} (HTTP ${response.status})`);
-  }
-  const rows = extractRows(await response.json());
-  const row = rows.find((item) => Number(item.taxonid) === numericId) || rows[0];
-  if (!row) {
-    throw new Error(`Taxon ${numericId} not found`);
-  }
-  return row;
-}
-
-async function resolveValidatorName(validatorId) {
-  if (validatorId == null || !Number.isFinite(validatorId)) return null;
-  const contacts = await ensureContactsIndex();
-  return formatContactName(contacts.get(validatorId));
+  return metadataIndexPromise;
 }
 
 export async function fetchTaxonMetadata(taxonId) {
@@ -133,27 +53,12 @@ export async function fetchTaxonMetadata(taxonId) {
     throw new Error('Invalid taxon id');
   }
 
-  const [taxonRow, taxaMap] = await Promise.all([
-    fetchTaxonFromApi(numericId),
-    ensureTaxaIndex().catch(() => null),
-  ]);
-
-  const indexRow = taxaMap?.get(numericId) || {};
-  const validatorId = indexRow.validatorid ?? null;
-  const validatedate = indexRow.validatedate ?? null;
-  const validatorName = validatorId != null
-    ? await resolveValidatorName(validatorId).catch(() => null)
-    : null;
-
-  return {
-    taxonid: numericId,
-    author: taxonRow.author || null,
-    publicationid: taxonRow.publicationid != null ? Number(taxonRow.publicationid) : null,
-    publication: taxonRow.publication || null,
-    validatorid: validatorId,
-    validatorName,
-    validatedate,
-  };
+  const metadataMap = await ensureMetadataIndex();
+  const metadata = metadataMap.get(numericId);
+  if (!metadata) {
+    throw new Error(`Taxon ${numericId} not found in local metadata index`);
+  }
+  return metadata;
 }
 
 export function renderTaxonMetadataHtml(metadata) {
@@ -217,13 +122,13 @@ export async function fetchAndRenderTaxonMetadata(taxonId, containerElement, cur
     }
     containerElement.innerHTML = renderTaxonMetadataHtml(metadata);
   } catch (err) {
-    console.error('Failed to load taxon metadata:', err);
+    console.error('Failed to load local taxon metadata:', err);
     if (currentClickIdRef && Number(currentClickIdRef.value) !== requestedId) {
       return;
     }
     containerElement.innerHTML = `
       <div style="margin:12px 0 0 12px;font-size:12px;color:#b91c1c;">
-        Could not load taxon metadata from Neotoma API.
+        Could not load local taxon metadata.
       </div>
     `;
   }

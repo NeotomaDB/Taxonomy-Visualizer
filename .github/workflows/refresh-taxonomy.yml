@@ -37,6 +37,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/taxonpaths.json data/taxagroup_names.json data/all_synonyms.json data/taxa_changes.json data/taxa_snapshot.json
+          git add data/taxonpaths.json data/taxagroup_names.json data/all_synonyms.json data/taxon_metadata.json data/taxa_changes.json data/taxa_snapshot.json
           git commit -m "chore: refresh taxonomy data"
           git push

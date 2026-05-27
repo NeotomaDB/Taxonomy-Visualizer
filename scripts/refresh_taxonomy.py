@@ -5,6 +5,7 @@ Outputs:
   - data/taxonpaths.json
   - data/taxagroup_names.json
   - data/all_synonyms.json
+  - data/taxon_metadata.json
   - data/taxa_changes.json
   - data/taxa_snapshot.json
 
@@ -303,6 +304,47 @@ def build_snapshot(taxa_rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]
     return snapshot
 
 
+def format_contact_name(contact: dict[str, Any] | None) -> str | None:
+    if not contact:
+        return None
+    contact_name = first_present(contact, "contactname")
+    if contact_name:
+        return str(contact_name).strip()
+    parts = [first_present(contact, "givennames"), first_present(contact, "familyname")]
+    joined = " ".join(str(part).strip() for part in parts if part)
+    return joined or None
+
+
+def build_taxon_metadata(
+    taxa_rows: list[dict[str, Any]],
+    contacts_rows: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    contacts_by_id: dict[int, dict[str, Any]] = {}
+    for row in contacts_rows:
+        contact_id = to_int(first_present(row, "contactid"))
+        if contact_id is None:
+            continue
+        contacts_by_id[contact_id] = row
+
+    metadata: dict[str, dict[str, Any]] = {}
+    for row in taxa_rows:
+        taxon_id = to_int(first_present(row, "taxonid"))
+        if taxon_id is None:
+            continue
+        validator_id = to_int(first_present(row, "validatorid"))
+        contact = contacts_by_id.get(validator_id) if validator_id is not None else None
+        metadata[str(taxon_id)] = {
+            "taxonid": taxon_id,
+            "author": first_present(row, "author"),
+            "publicationid": to_int(first_present(row, "publicationid")),
+            "publication": first_present(row, "publication"),
+            "validatorid": validator_id,
+            "validatorName": format_contact_name(contact),
+            "validatedate": first_present(row, "validatedate"),
+        }
+    return metadata
+
+
 def load_json_file(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
@@ -390,15 +432,18 @@ def main() -> int:
     output_dir = Path(args.output_dir)
     changes_file = Path(args.changes_file)
     snapshot_file = Path(args.snapshot_file)
+    metadata_file = output_dir / "taxon_metadata.json"
 
     taxa_rows = fetch_table(args.api_base, "taxa", args.page_size)
     taxagroup_rows = fetch_table(args.api_base, "taxagrouptypes", args.page_size)
     synonym_rows = fetch_table(args.api_base, "synonyms", args.page_size)
     synonym_type_rows = fetch_table(args.api_base, "synonymtypes", args.page_size)
+    contacts_rows = fetch_table(args.api_base, "contacts", args.page_size)
 
     normalized_taxonpaths = build_taxonpaths_from_taxa(taxa_rows)
     taxagroup_names = build_taxagroup_names(taxagroup_rows)
     synonyms_payload = build_synonyms(taxa_rows, synonym_rows, synonym_type_rows)
+    taxon_metadata = build_taxon_metadata(taxa_rows, contacts_rows)
 
     previous_snapshot = load_json_file(snapshot_file, default={})
     current_snapshot = build_snapshot(taxa_rows)
@@ -419,12 +464,13 @@ def main() -> int:
     write_json(output_dir / "taxonpaths.json", normalized_taxonpaths)
     write_json(output_dir / "taxagroup_names.json", taxagroup_names)
     write_json(output_dir / "all_synonyms.json", synonyms_payload)
+    write_json(metadata_file, taxon_metadata)
     write_json(changes_file, changes_payload)
     write_json(snapshot_file, snapshot_payload)
 
     log(
         "Wrote taxonpaths.json, taxagroup_names.json, all_synonyms.json, "
-        f"{changes_file.name}, and {snapshot_file.name}"
+        f"{metadata_file.name}, {changes_file.name}, and {snapshot_file.name}"
     )
     return 0
 

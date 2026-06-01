@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-05-27T16:10:15+00:00",
-  "since": "2026-04-27",
+  "generated_at": "2026-06-01T06:50:39+00:00",
+  "since": "2026-05-02",
   "counts": {
-    "new": 31,
+    "new": 33,
     "modified": 3,
-    "total": 34
+    "total": 36
   },
   "new": [
     {
@@ -80,23 +80,65 @@
       ]
     },
     {
-      "taxonid": 69487,
-      "taxonname": "Fungi (2-septate)",
-      "highertaxonid": 30524,
-      "taxagroupid": "FUN",
-      "recdatecreated": "2026-04-28T12:36:00.000Z",
-      "recdatemodified": "2026-04-28T12:36:00.000Z",
+      "taxonid": 69518,
+      "taxonname": "Opephora aff.",
+      "highertaxonid": 24528,
+      "taxagroupid": "DIA",
+      "recdatecreated": "2026-05-28T17:33:25.000Z",
+      "recdatemodified": "2026-05-28T17:33:25.000Z",
       "path_ids": [
-        32182,
-        535,
-        30524,
-        69487
+        2054,
+        5396,
+        24597,
+        24614,
+        24528,
+        69518
       ],
       "path_names": [
-        "Eukaryota",
-        "Fungi",
-        "Fungi incertae sedis",
-        "Fungi (2-septate)"
+        "Algae",
+        "Bacillariophyta",
+        "Pennales",
+        "Fragilariaceae",
+        "Opephora",
+        "Opephora aff."
+      ]
+    },
+    {
+      "taxonid": 69519,
+      "taxonname": "Staurosiraceae",
+      "highertaxonid": 5396,
+      "taxagroupid": "DIA",
+      "recdatecreated": "2026-05-28T18:14:08.000Z",
+      "recdatemodified": "2026-05-28T18:14:08.000Z",
+      "path_ids": [
+        2054,
+        5396,
+        69519
+      ],
+      "path_names": [
+        "Algae",
+        "Bacillariophyta",
+        "Staurosiraceae"
+      ]
+    },
+    {
+      "taxonid": 69520,
+      "taxonname": "Staurosiraceae aff. opephora",
+      "highertaxonid": 69519,
+      "taxagroupid": "DIA",
+      "recdatecreated": "2026-05-28T18:15:11.000Z",
+      "recdatemodified": "2026-05-28T18:15:11.000Z",
+      "path_ids": [
+        2054,
+        5396,
+        69519,
+        69520
+      ],
+      "path_names": [
+        "Algae",
+        "Bacillariophyta",
+        "Staurosiraceae",
+        "Staurosiraceae aff. opephora"
       ]
     },
     {
@@ -826,39 +868,69 @@
       ]
     },
     {
-      "taxonid": 69488,
-      "taxonname": "Tonnacypris stewarti",
-      "highertaxonid": 35799,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-01T11:04:45.000Z",
-      "recdatemodified": "2026-05-01T11:04:45.000Z",
+      "taxonid": 69517,
+      "taxonname": "Median particle size",
+      "highertaxonid": 34969,
+      "taxagroupid": "SED",
+      "recdatecreated": "2026-05-27T23:44:23.000Z",
+      "recdatemodified": "2026-05-27T23:44:23.000Z",
+      "path_ids": [
+        34969,
+        69517
+      ],
+      "path_names": [
+        "physical sedimentology",
+        "Median particle size"
+      ]
+    },
+    {
+      "taxonid": 69521,
+      "taxonname": "Callicarpa",
+      "highertaxonid": 1138,
+      "taxagroupid": "VPL",
+      "recdatecreated": "2026-05-30T03:50:26.000Z",
+      "recdatemodified": "2026-05-30T03:50:26.000Z",
       "path_ids": [
         32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14540,
-        35799,
-        69488
+        9095,
+        33028,
+        33029,
+        33038,
+        9534,
+        5480,
+        2133,
+        9575,
+        2132,
+        9653,
+        9652,
+        9651,
+        9655,
+        9654,
+        9656,
+        9096,
+        1138,
+        69521
       ],
       "path_names": [
         "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Eucypridinae",
-        "Tonnacypris",
-        "Tonnacypris stewarti"
+        "Plantae",
+        "Viridiplantae",
+        "Streptophyta",
+        "Embryophyta",
+        "Tracheophyta",
+        "Spermatophyta",
+        "Angiospermae",
+        "Mesangiospermae",
+        "Eudicotyledoneae",
+        "Gunneridae",
+        "Pentapetalae",
+        "Asteridae",
+        "Gentianidae",
+        "Garryidae",
+        "Lamiidae",
+        "Lamiales",
+        "Verbenaceae",
+        "Callicarpa"
       ]
     },
     {
@@ -909,46 +981,6 @@
         "Euphorbioideae",
         "Euphorbia-type",
         "Euphorbia-type (fine)"
-      ]
-    },
-    {
-      "taxonid": 69486,
-      "taxonname": "Grammitis kerguelenensis",
-      "highertaxonid": 1613,
-      "taxagroupid": "VPL",
-      "recdatecreated": "2026-04-28T12:30:45.000Z",
-      "recdatemodified": "2026-04-28T12:30:45.000Z",
-      "path_ids": [
-        32182,
-        9095,
-        33028,
-        33029,
-        33038,
-        9534,
-        9535,
-        676,
-        9538,
-        9539,
-        234,
-        29319,
-        1613,
-        69486
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Plantae",
-        "Viridiplantae",
-        "Streptophyta",
-        "Embryophyta",
-        "Tracheophyta",
-        "Monilophyta",
-        "Polypodiophyta",
-        "Leptosporangiatae",
-        "Polypodiales",
-        "Polypodiaceae",
-        "Grammitidoideae",
-        "Grammitis",
-        "Grammitis kerguelenensis"
       ]
     },
     {

@@ -109,11 +109,18 @@ export function setupSearch({
     const synonymIds = new Set();
     const resolutions = new Map();
     const reverseMap = window.__invalidIdToCanonicalId || new Map();
-    const lower = qStr.toLowerCase().replace(/^\?+/, '').trim();
+    const raw = qStr.trim();
+    const exactMatch = raw.length >= 2 &&
+      ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'")));
+    const lower = exactMatch
+      ? raw.slice(1, -1).toLowerCase().trim()
+      : raw.toLowerCase().replace(/^\?+/, '').trim();
 
     // Pass 1: direct name match
     getAllNodes(root).forEach(n => {
-      if ((n.data.name || '').toLowerCase().includes(lower)) {
+      const nodeName = (n.data.name || '').toLowerCase();
+      const isMatch = exactMatch ? nodeName === lower : nodeName.includes(lower);
+      if (isMatch) {
         if (!matchedIds.has(n.data.id)) {
           matches.push(n); matchedIds.add(n.data.id); primaryIds.add(n.data.id);
         }
@@ -123,7 +130,10 @@ export function setupSearch({
     getAllNodes(root).forEach(n => {
       const meta = n.data.synonymMetadata;
       if (!meta) return;
-      const matchingSyns = meta.synonyms.filter(s => s.invalid_name.toLowerCase().includes(lower));
+      const matchingSyns = meta.synonyms.filter(s => {
+        const invalidName = s.invalid_name.toLowerCase();
+        return exactMatch ? invalidName === lower : invalidName.includes(lower);
+      });
       if (matchingSyns.length > 0) {
         const cid = n.data.id;
         if (!matchedIds.has(cid)) { matches.push(n); matchedIds.add(cid); synonymIds.add(cid); }
@@ -141,7 +151,8 @@ export function setupSearch({
     // Pass 3: reverseMap by name
     reverseMap.forEach((canonicalId, key) => {
       if (typeof key !== 'string') return;
-      if (!key.includes(lower) || !idToNode.has(canonicalId) || matchedIds.has(canonicalId)) return;
+      const keyMatches = exactMatch ? key === lower : key.includes(lower);
+      if (!keyMatches || !idToNode.has(canonicalId) || matchedIds.has(canonicalId)) return;
       const cn = idToNode.get(canonicalId);
       matches.push(cn); matchedIds.add(canonicalId); synonymIds.add(canonicalId);
       const synDetail = cn.data.synonymMetadata?.synonyms?.find(s => s.invalid_name.toLowerCase() === key);
@@ -539,9 +550,9 @@ export function setupSearch({
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    // ── Case 2: user searched an INVALID synonym name ────────────────────────
-    // Clearly tells the user what they searched is not valid,
-    // why it's invalid, and what the correct accepted name is.
+    // ── Case 2: user searched a name that Neotoma maps to another accepted name ─
+    // Keep the wording scoped to Neotoma's taxonomy records instead of implying
+    // global taxonomic consensus across all authorities.
     let resolutionBanner = '';
     const resolutions = synonymResolutions.get(nodeId);
     if (resolutions && resolutions.length > 0) {
@@ -551,11 +562,11 @@ export function setupSearch({
           background:#fff7ed; border-left:3px solid #f97316; border-radius:4px;
         ">
           <div style="font-weight:700;font-size:13px;color:#c2410c;margin-bottom:6px;">
-            ⚠️ "<span style="font-style:italic;">${r.invalidName}</span>" is not the currently accepted name
+            In Neotoma, "<span style="font-style:italic;">${r.invalidName}</span>" is linked to a different accepted name
           </div>
           ${r.synonymtype ? `
             <div style="font-size:12px;color:#7c3a1e;margin-bottom:4px;">
-              <strong>Reason:</strong> ${r.synonymtype}
+              <strong>Neotoma synonym type:</strong> ${r.synonymtype}
             </div>
           ` : ''}
           ${r.recdatemodified ? `
@@ -564,7 +575,7 @@ export function setupSearch({
             </div>
           ` : ''}
           <div style="font-size:13px;color:#1f2937;margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">
-            The currently accepted name is:
+            Neotoma currently treats this as:
             <strong style="color:#15803d;">${selectedNode.data.name}</strong>
           </div>
         </div>
@@ -585,11 +596,11 @@ export function setupSearch({
             background:#fff7ed; border-left:3px solid #f97316; border-radius:4px;
           ">
             <div style="font-weight:700;font-size:13px;color:#c2410c;margin-bottom:6px;">
-              ⚠️ "<span style="font-style:italic;">${selectedNode.data.name}</span>" is listed as an invalid name in current taxonomy
+              In Neotoma, "<span style="font-style:italic;">${selectedNode.data.name}</span>" is also listed as a synonym / invalid-name record
             </div>
             ${invalidInfo.synonymtype ? `
               <div style="font-size:12px;color:#7c3a1e;margin-bottom:4px;">
-                <strong>Reason:</strong> ${invalidInfo.synonymtype}
+                <strong>Neotoma synonym type:</strong> ${invalidInfo.synonymtype}
               </div>
             ` : ''}
             ${invalidInfo.recdatemodified ? `
@@ -598,19 +609,19 @@ export function setupSearch({
               </div>
             ` : ''}
             <div style="font-size:13px;color:#1f2937;margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">
-              The currently accepted name is:
+              Neotoma currently treats this as:
               <strong style="color:#15803d;">${invalidInfo.validName}</strong>
             </div>
             <div style="font-size:11px;color:#9a3412;margin-top:6px;font-style:italic;">
-              Note: this taxon has occurrence records in Neotoma under this name. The accepted name above reflects current taxonomic consensus.
+              Note: this taxon has occurrence records in Neotoma under this name. Synonym status shown here reflects Neotoma taxonomy records and may differ from other authorities.
             </div>
           </div>
         `;
       }
     }
 
-    // ── Case 1: user searched the VALID name, node has known synonyms ─────────
-    // Confirms the searched name is correct, and shows what it used to be called.
+    // ── Case 1: user searched a Neotoma accepted name with known synonyms ─────
+    // Present synonym status as Neotoma's record state, not a universal judgment.
     let synonymSection = '';
     const meta = selectedNode.data.synonymMetadata;
     if (meta && meta.synonyms && meta.synonyms.length > 0) {
@@ -620,26 +631,26 @@ export function setupSearch({
           background:#f0fdf4; border-left:3px solid #16a34a; border-radius:4px;
         ">
           <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:4px;">
-            ✓ <em>${selectedNode.data.name}</em> is the currently accepted name
+            Neotoma currently treats <em>${selectedNode.data.name}</em> as the accepted name
           </div>
           <div style="font-size:12px;color:#4b7c59;margin-bottom:8px;">
-            This taxon was previously known by the following name${meta.synonyms.length > 1 ? 's' : ''}:
+            This Neotoma taxon record is linked to the following synonym${meta.synonyms.length > 1 ? 's' : ''}:
           </div>
           ${meta.synonyms.map(syn => `
             <div style="padding:6px 0;border-top:1px solid #bbf7d0;margin-top:2px;">
               <div style="font-weight:600;color:#b45309;font-size:13px;">
                 • <em>${syn.invalid_name}</em>
-                <span style="font-size:11px;color:#dc2626;font-weight:400;margin-left:6px;">now invalid</span>
+                <span style="font-size:11px;color:#b45309;font-weight:400;margin-left:6px;">listed in Neotoma as a synonym / invalid name</span>
               </div>
               <div style="font-size:11px;color:#6b7280;margin-left:14px;margin-top:2px;">
-                ${syn.synonymtype ? `Reason: ${syn.synonymtype}` : ''}
+                ${syn.synonymtype ? `Neotoma synonym type: ${syn.synonymtype}` : ''}
                 ${syn.synonymtype && syn.recdatemodified ? ' · ' : ''}
-                ${syn.recdatemodified ? 'Last updated: ' + formatDate(syn.recdatemodified) : ''}
+                ${syn.recdatemodified ? 'Last updated in Neotoma: ' + formatDate(syn.recdatemodified) : ''}
               </div>
             </div>
           `).join('')}
           <div style="font-size:11px;color:#9ca3af;margin-top:8px;font-style:italic;">
-            Synonym data from the Neotoma Paleoecology Database.
+            Synonym status shown here reflects Neotoma taxonomy records and may differ from other taxonomic authorities.
           </div>
         </div>
       `;
@@ -823,7 +834,6 @@ export function setupSearch({
             ${div1.length > 0
               ? div1.map(n => `<div class="cmp-item">${n}</div>`).join('')
               : '<div class="cmp-item cmp-item-empty">(same as shared ancestor)</div>'}
-            ${q1Matches.length > 1 ? `<div class="cmp-more">+${q1Matches.length - 1} more</div>` : ''}
           </div>
           <div class="cmp-col cmp-col-q2">
             <div class="cmp-col-header">
@@ -833,7 +843,6 @@ export function setupSearch({
             ${div2.length > 0
               ? div2.map(n => `<div class="cmp-item">${n}</div>`).join('')
               : '<div class="cmp-item cmp-item-empty">(same as shared ancestor)</div>'}
-            ${q2Matches.length > 1 ? `<div class="cmp-more">+${q2Matches.length - 1} more</div>` : ''}
           </div>
         </div>
         <div class="cmp-footer">
@@ -843,6 +852,89 @@ export function setupSearch({
       </div>
     `;
     panel.style.display = 'block';
+  }
+
+  function showCompareDisambiguationPanel(q1Label, q2Label, q1Matches, q2Matches) {
+    const panel = document.getElementById('info');
+    if (!panel) return;
+
+    function quoteExactTaxonName(name) {
+      return `"${String(name || '').replace(/"/g, '\\"')}"`;
+    }
+
+    function renderSide(label, matches, sideClass) {
+      if (matches.length === 0) {
+        return `
+          <div class="cmp-resolve-card ${sideClass}">
+            <div class="cmp-resolve-label">${label}</div>
+            <div class="cmp-resolve-empty">No matching taxon found. Check spelling or choose a different taxon group.</div>
+          </div>
+        `;
+      }
+
+      if (matches.length === 1) {
+        const only = matches[0];
+        const path = only.ancestors().reverse().map(n => n.data.name).join(' → ');
+        return `
+          <div class="cmp-resolve-card ${sideClass}">
+            <div class="cmp-resolve-label">${label}</div>
+            <div class="cmp-resolve-selected">${only.data.name}</div>
+            <div class="cmp-resolve-path">${path}</div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="cmp-resolve-card ${sideClass}">
+          <div class="cmp-resolve-label">${label}</div>
+          <div class="cmp-resolve-empty">${matches.length} matches found. Choose one exact taxon to compare.</div>
+          <div class="cmp-resolve-list">
+            ${matches.map((match, index) => {
+              const path = match.ancestors().reverse().map(n => n.data.name).join(' → ');
+              return `
+                <button class="cmp-resolve-option" type="button" data-query-side="${label === q1Label ? 'q1' : 'q2'}" data-match-index="${index}">
+                  <span class="cmp-resolve-name">${match.data.name}</span>
+                  <span class="cmp-resolve-path">${path}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    panel.innerHTML = `
+      <div class="cmp-wrapper">
+        <div class="cmp-heading">Choose Exact Taxa to Compare</div>
+        <div class="cmp-resolve-note">
+          Comparison requires one specific taxon on each side. Refine any query with multiple matches before comparing.
+        </div>
+        <div class="cmp-resolve-grid">
+          ${renderSide(q1Label, q1Matches, 'cmp-resolve-q1')}
+          ${renderSide(q2Label, q2Matches, 'cmp-resolve-q2')}
+        </div>
+      </div>
+    `;
+    panel.style.display = 'block';
+
+    panel.querySelectorAll('.cmp-resolve-option').forEach(button => {
+      button.addEventListener('click', () => {
+        const side = button.getAttribute('data-query-side');
+        const matchIndex = Number(button.getAttribute('data-match-index'));
+        const selected = side === 'q1' ? q1Matches[matchIndex] : q2Matches[matchIndex];
+        if (!selected) return;
+        const nextQ1 = side === 'q1'
+          ? quoteExactTaxonName(selected.data.name)
+          : (q1Matches.length === 1 ? quoteExactTaxonName(q1Matches[0].data.name) : q1Label);
+        const nextQ2 = side === 'q2'
+          ? quoteExactTaxonName(selected.data.name)
+          : (q2Matches.length === 1 ? quoteExactTaxonName(q2Matches[0].data.name) : q2Label);
+        if (searchInput) {
+          searchInput.value = `${nextQ1}, ${nextQ2}`;
+        }
+        runSearch();
+      });
+    });
   }
 
   const searchInput = document.getElementById('searchInput');
@@ -863,14 +955,32 @@ export function setupSearch({
     if (parts.length >= 2) {
       const r1 = findMatchesForTerm(parts[0]);
       const r2 = findMatchesForTerm(parts[1]);
-      const allMatches = [...r1.matches, ...r2.matches];
-      const groupIds = new Map();
-      r1.matches.forEach(n => groupIds.set(n.data.id, 1));
-      r2.matches.forEach(n => { if (!groupIds.has(n.data.id)) groupIds.set(n.data.id, 2); });
+
+      if (r1.matches.length !== 1 || r2.matches.length !== 1) {
+        isCompareMode = false;
+        compareMatchGroupIds = new Map();
+        compareQ1Label = parts[0]; compareQ2Label = parts[1];
+        compareQ1Matches = []; compareQ2Matches = [];
+        currentMatches = [];
+        primaryMatchIds = new Set();
+        synonymMatchIds = new Set();
+        synonymResolutions = new Map();
+        currentMatchIndex = -1;
+        setMatchIds(new Set());
+        clearHighlightedPath();
+        highlightAllMatches([]);
+        showCompareDisambiguationPanel(parts[0], parts[1], r1.matches, r2.matches);
+        return;
+      }
+
+      const node1 = r1.matches[0];
+      const node2 = r2.matches[0];
+      const allMatches = [node1, node2];
+      const groupIds = new Map([[node1.data.id, 1], [node2.data.id, 2]]);
       isCompareMode = true;
       compareMatchGroupIds = groupIds;
-      compareQ1Label = parts[0]; compareQ2Label = parts[1];
-      compareQ1Matches = r1.matches; compareQ2Matches = r2.matches;
+      compareQ1Label = node1.data.name; compareQ2Label = node2.data.name;
+      compareQ1Matches = [node1]; compareQ2Matches = [node2];
       currentMatches = allMatches;
       primaryMatchIds = new Set([...r1.primaryMatchIds, ...r2.primaryMatchIds]);
       synonymMatchIds = new Set([...r1.synonymMatchIds, ...r2.synonymMatchIds]);

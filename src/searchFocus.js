@@ -6,6 +6,7 @@
 //   info.clear(); // to hide
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
+import { isMajorGroupDisplayName } from './taxaViewConfig.js';
 import { updateURLState } from './urlhash.js';
 
 export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
@@ -152,12 +153,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
 
         // Check if this is a collapsed group node
         const nodeName = (ancestorNode.data && ancestorNode.data.name) ? String(ancestorNode.data.name).trim().toLowerCase() : '';
-        const isCollapsedGroup = nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
-          nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
-          nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
-          nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
-          nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
-          nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
+        const isCollapsedGroup = isMajorGroupDisplayName(nodeName);
 
         nodeGroup.select('text:not(.toggle):not(.label-halo)')
           .classed('focused-text', true)
@@ -180,5 +176,4 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
   if (panel) panel.style.display = 'none';
   return { show, clear };
 }
-
 

@@ -16,6 +16,25 @@
 <body>
     <div id="layout" style="display:flex; align-items:flex-start; gap:16px;">
         <div id="stage" style="position:relative;">
+            <div id="visualizerControlBox" class="visualizer-control-box" aria-label="Visualizer controls">
+                <div class="control-row rotate-zoom-row">
+                    <div class="rotate-control">
+                        <label for="rotate">Rotate</label>
+                        <input id="rotate" type="range" min="-180" max="180" value="0" step="1">
+                        <span id="rotateValue">0°</span>
+                    </div>
+                    <div class="zoom-control">
+                        <button id="zoomOut">-</button>
+                        <button id="zoomIn">+</button>
+                        <button id="zoomReset">reset</button>
+                        <span id="zoomValue">1.0×</span>
+                        <div id="viewSwitchGroup" class="view-switch-group">
+                            <button id="wholeViewBtn" class="view-switch-btn active">Whole View</button>
+                            <button id="focusViewBtn" class="view-switch-btn">Focus View</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="chart"></div>
             <div id="popup"
                 style="position:absolute; left:-9999px; top:-9999px; background:#fff; border:1px solid #ddd; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:6px; padding:10px 12px; max-width:320px; z-index:1000;">
@@ -23,30 +42,29 @@
         </div>
         <div id="right-panel" style="min-width:360px; display:flex; flex-direction:column; gap:16px;">
             <div id="title-section">
+                <div id="viewNav" class="view-nav">
+                    <button id="viewNavTrigger" class="view-nav-trigger" type="button" aria-haspopup="true"
+                        aria-expanded="false" aria-label="Switch view">
+                        <span class="view-nav-icon" aria-hidden="true"></span>
+                    </button>
+                    <div id="viewNavMenu" class="view-nav-menu" role="menu" aria-label="View modes">
+                        <button class="view-nav-option active" type="button" role="menuitem" data-app-view="explorer">
+                            Explorer
+                        </button>
+                        <button class="view-nav-option is-disabled" type="button" role="menuitem" aria-disabled="true"
+                            title="Coming soon">
+                            Overview
+                        </button>
+                        <button class="view-nav-option" type="button" role="menuitem" data-app-view="steward">
+                            Data Steward
+                        </button>
+                    </div>
+                </div>
                 <h1>Neotoma Hierarchical Taxonomy Visualizer</h1>
             </div>
             <div id="sidebar">
                 <div id="controls">
-                    <!-- First row: Rotate and Zoom -->
-                    <div class="control-row rotate-zoom-row">
-                        <div class="rotate-control">
-                            <label for="rotate">Rotate:</label>
-                            <input id="rotate" type="range" min="-180" max="180" value="0" step="1">
-                            <span id="rotateValue">0°</span>
-                        </div>
-                        <div class="zoom-control">
-                            <button id="zoomOut">-</button>
-                            <button id="zoomIn">+</button>
-                            <button id="zoomReset">reset</button>
-                            <span id="zoomValue">1.0×</span>
-                            <div id="viewSwitchGroup" class="view-switch-group">
-                                <button id="wholeViewBtn" class="view-switch-btn active">Whole View</button>
-                                <button id="focusViewBtn" class="view-switch-btn">Focus View</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Second row: Taxon Type selector -->
+                    <!-- First row: Taxon Type selector -->
                     <div class="control-row taxon-type-row">
                         <label class="taxon-type-label">Taxon Type:</label>
                         <div class="taxon-type-group">
@@ -55,7 +73,7 @@
                         </div>
                     </div>
 
-                    <!-- Third row: Taxon Group and Search -->
+                    <!-- Second row: Taxon Group and Search -->
                     <div class="control-row taxon-group-search-row">
                         <div class="taxon-group-section">
                             <label for="taxagroupSelect">Taxon Group:</label>
@@ -150,6 +168,76 @@
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js';
         import { updateSummaryPanel } from './src/summaryPanel.js';
+
+        const APP_VIEWS = new Set(['explorer', 'steward']);
+        let currentAppView = 'explorer';
+
+        function normalizeAppView(view) {
+            return APP_VIEWS.has(view) ? view : 'explorer';
+        }
+
+        function getInitialAppView() {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            return params.get('view');
+        }
+
+        function setAppView(view, skipUrlUpdate = false) {
+            currentAppView = normalizeAppView(view);
+            document.body.dataset.appView = currentAppView;
+
+            const nav = document.getElementById('viewNav');
+            const trigger = document.getElementById('viewNavTrigger');
+            const options = document.querySelectorAll('.view-nav-option[data-app-view]');
+
+            options.forEach(option => {
+                const isActive = option.dataset.appView === currentAppView;
+                option.classList.toggle('active', isActive);
+                option.setAttribute('aria-current', isActive ? 'page' : 'false');
+            });
+
+            if (trigger) {
+                const label = currentAppView === 'steward' ? 'Data Steward' : 'Explorer';
+                trigger.setAttribute('aria-label', `Current view: ${label}`);
+                trigger.setAttribute('aria-expanded', 'false');
+                trigger.title = `Current view: ${label}`;
+            }
+            if (nav) nav.classList.remove('open');
+
+            if (!skipUrlUpdate) {
+                updateURLState({ view: currentAppView === 'explorer' ? null : currentAppView });
+            }
+        }
+
+        function initViewNav() {
+            const nav = document.getElementById('viewNav');
+            const trigger = document.getElementById('viewNavTrigger');
+            if (!nav || !trigger) return;
+
+            trigger.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const willOpen = !nav.classList.contains('open');
+                nav.classList.toggle('open', willOpen);
+                trigger.setAttribute('aria-expanded', String(willOpen));
+            });
+
+            document.querySelectorAll('.view-nav-option[data-app-view]').forEach(option => {
+                option.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    setAppView(option.dataset.appView);
+                });
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!nav.contains(event.target)) {
+                    nav.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        initViewNav();
+        setAppView(getInitialAppView(), true);
+
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree
         function convertTaxonPaths(data) {
             // data is an object with a SQL query string as key and array as value

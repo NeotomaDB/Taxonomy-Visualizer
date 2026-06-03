@@ -16,8 +16,8 @@ export async function renderCollapsibleTree({
     selector = '#chart',
     rootId,
     rootName,
-    width = 900,
-    height = 900,
+    width = null,
+    height = null,
     anchorIds = new Set(), // Set of anchor IDs to highlight in green
     expandAll = false,     // If true, show the full tree fully expanded at init
     initialQuery = '',
@@ -106,6 +106,18 @@ export async function renderCollapsibleTree({
     // Also sort on the d3 hierarchy object to guarantee alphabetical order
     // even if the pre-sort above was somehow skipped (e.g. module cache).
     hierarchyRoot.sort((a, b) => a.data.name.localeCompare(b.data.name));
+
+    const container = document.querySelector(selector);
+    const stage = container ? container.closest('#stage') || container.parentElement : null;
+    const stageRect = stage ? stage.getBoundingClientRect() : null;
+    const availableWidth = Math.floor((stageRect?.width || 900) - 18);
+    const availableHeight = Math.floor((window.innerHeight || 900) - 54);
+    width = Number.isFinite(width) && width > 0
+        ? width
+        : Math.max(620, Math.min(availableWidth, 1280));
+    height = Number.isFinite(height) && height > 0
+        ? height
+        : Math.max(620, Math.min(availableHeight, 1100));
 
     // Tree layout
     const _dx = dx;
@@ -378,4 +390,3 @@ export async function renderCollapsibleTree({
         }
     }, { once: true });
 }
-

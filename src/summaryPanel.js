@@ -68,6 +68,10 @@ function getRangeLabel(days) {
   return RANGE_OPTIONS.find(option => option.days === days)?.label ?? `Last ${days} days`;
 }
 
+function getSummaryHeaderRangeLabel(days) {
+  return `${getRangeLabel(days)} from the most recent update`;
+}
+
 function getDataCoverageDays(summaryData) {
   if (!summaryData?.since || !summaryData?.generated_at) return null;
   const since = new Date(summaryData.since);
@@ -197,7 +201,7 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
       </select>
     </div>
     <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-      Refreshed ${formatDateLabel(dataToRender.generated_at)} · ${getRangeLabel(currentRangeDays)} · Scope: ${currentGroupName}${coverageNote}
+      Refreshed ${formatDateLabel(dataToRender.generated_at)} · ${getSummaryHeaderRangeLabel(currentRangeDays)} · Scope: ${currentGroupName}${coverageNote}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <span style="padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px;color:#374151;">

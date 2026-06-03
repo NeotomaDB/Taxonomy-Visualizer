@@ -28,6 +28,35 @@ export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA', 'VPL']);
 // VPL added because its large dataset benefits from focus-mode table searches
 export const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA', 'VPL']);
 
+// Major-group nodes use the teal collapsed-group styling and default overview collapse.
+export const MAJOR_GROUP_DISPLAY_NAMES = new Set([
+    'chemical substance',
+    'chemical compound',
+    'fungi',
+    'algae',
+    'plantae undiff.',
+    'prokaryota',
+    'chromista',
+    'cnidaria',
+    'annelida',
+    'plantae',
+    'tracheophyta',
+    'vascular plants',
+    'bryozoa',
+    'arthropoda',
+    'mammalia',
+    'vertebrata',
+    'unknown',
+    'rhizophagidae',
+    'cybocephalidae',
+    'invertebrata',
+    'ostomidae',
+]);
+
+export function isMajorGroupDisplayName(name) {
+    return MAJOR_GROUP_DISPLAY_NAMES.has(String(name || '').trim().toLowerCase());
+}
+
 // Define layout spacing overrides for linear tree views. 
 // Narrow horizontal spans (e.g., dy=130) prevent visually disconnected layouts 
 // when names are longer, giving it a list-like rather than scattered feel.

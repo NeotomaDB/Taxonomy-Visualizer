@@ -9,7 +9,7 @@ import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
-import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS } from './src/taxaViewConfig.js';
+import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, isMajorGroupDisplayName } from './src/taxaViewConfig.js';
 import { updateURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
@@ -31,7 +31,7 @@ async function renderMammalTree({
   selector = '#chart',
   rootId = 6171,
   rootName = 'Mammalia',
-  size = 900,
+  size = null,
   margin = 40,
   groupDepth = 1,  // Depth for grouping (0=root, 3=typically family level)
   groupPadding = 0.1,  // Extra angle (in radians) between groups (~5.7 degrees)
@@ -46,6 +46,25 @@ async function renderMammalTree({
     console.warn('renderMammalTree: rows is empty.');
     return;
   }
+
+  function resolveResponsiveSize(requestedSize) {
+    if (Number.isFinite(requestedSize) && requestedSize > 0) return requestedSize;
+
+    const container = document.querySelector(selector);
+    const stage = container ? container.closest('#stage') || container.parentElement : null;
+    const stageRect = stage ? stage.getBoundingClientRect() : null;
+    const availableWidth = Math.floor((stageRect?.width || 900) - 18);
+    const availableHeight = Math.floor((window.innerHeight || 900) - 54);
+    const rawSize = Math.min(availableWidth, availableHeight);
+
+    if (availableWidth < 560) {
+      return Math.max(320, availableWidth);
+    }
+
+    return Math.max(680, Math.min(rawSize, 1180));
+  }
+
+  size = resolveResponsiveSize(size);
 
   // Initialize synonym data for search functionality
   await initSynonyms();
@@ -260,8 +279,8 @@ async function renderMammalTree({
     .size([2 * Math.PI, radius])
     .separation(customSeparation)(root);
 
-  // 2.5) Default-view decluttering rule for "Chemical Substance" and "Mammalia"
-  // This collapses leaf-level descendants under the subtrees by default,
+  // 2.5) Default-view decluttering rule for major-group overview nodes.
+  // This collapses their descendants by default,
   // and provides + / – toggles for interactive exploration.
   if (isInitialView) {
     collapseChemicalSubstanceLeavesByDefault(root);
@@ -373,11 +392,11 @@ async function renderMammalTree({
   // 5) Nodes
   let node = gNodes.selectAll('g.node');
 
-  // Helper: determine if node is under "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Plantae", "Bryozoa", "Arthropoda", "Rhizophagidae", "Cybocephalidae", "Invertebrata", or "Ostomidae" subtree
+  // Helper: determine if node is under a major-group overview subtree.
   function isUnderChemical(d) {
     return d.ancestors().some(a => {
       const n = (a.data && a.data.name) ? String(a.data.name).trim().toLowerCase() : '';
-      return n === 'chemical substance' || n === 'chemical compound' || n === 'fungi' || n === 'algae' || n === 'plantae undiff.' || n === 'prokaryota' || n === 'chromista' || n === 'cnidaria' || n === 'annelida' || n === 'plantae' || n === 'bryozoa' || n === 'arthropoda' || n === 'mammalia' || n === 'vertebrata' || n === 'unknown' || n === 'rhizophagidae' || n === 'cybocephalidae' || n === 'invertebrata' || n === 'ostomidae';
+      return isMajorGroupDisplayName(n);
     });
   }
 
@@ -447,13 +466,7 @@ async function renderMammalTree({
         if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
 
         const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
-        const isCollapsedGroup = d.data.isSyntheticGroup ||
-          nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
-          nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
-          nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
-          nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
-          nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
-          nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
+        const isCollapsedGroup = d.data.isSyntheticGroup || isMajorGroupDisplayName(nodeName);
         return isCollapsedGroup ? '#7cafae' : '#202124';
       });
 
@@ -465,15 +478,9 @@ async function renderMammalTree({
       .style('fill', d => {
         if (d.data && d.data.isAnchor) return '#2e7d32'; // Anchor green
 
-        // Check if this node is one of the collapsed groups
+        // Check if this node is one of the collapsed major groups.
         const nodeName = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
-        const isCollapsedGroup = d.data.isSyntheticGroup ||
-          nodeName === 'chemical substance' || nodeName === 'chemical compound' ||
-          nodeName === 'fungi' || nodeName === 'algae' || nodeName === 'plantae undiff.' ||
-          nodeName === 'prokaryota' || nodeName === 'chromista' || nodeName === 'cnidaria' ||
-          nodeName === 'annelida' || nodeName === 'plantae' || nodeName === 'bryozoa' || nodeName === 'arthropoda' ||
-          nodeName === 'mammalia' || nodeName === 'vertebrata' || nodeName === 'unknown' ||
-          nodeName === 'rhizophagidae' || nodeName === 'cybocephalidae' || nodeName === 'ostomidae';
+        const isCollapsedGroup = d.data.isSyntheticGroup || isMajorGroupDisplayName(nodeName);
         return isCollapsedGroup ? '#7cafae' : null;
       })
       .text(d => {
@@ -819,15 +826,14 @@ async function renderMammalTree({
 
 /**
    collapseChemicalSubstanceLeavesByDefault
- * Default-view decluttering rule: In initial view, find the node named "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Rhizophagidae", "Cybocephalidae", "Invertebrata", or "Ostomidae"
- * and collapse all of its leaf-level descendants so only higher-level structure shows.
+ * Default-view decluttering rule: In initial view, find major-group overview
+ * nodes and collapse their descendants so only higher-level structure shows.
    Collapsed children are stored on _children to allow restoring via + / – toggles.
  */
 function collapseChemicalSubstanceLeavesByDefault(root) {
-  // Find "Chemical Substance", "Chemical compound", "Fungi", "Algae", "Plantae undiff.", "Prokaryota", "Chromista", "Cnidaria", "Annelida", "Rhizophagidae", "Cybocephalidae", "Invertebrata", or "Ostomidae" node in the current hierarchy
   const chems = root.descendants().filter(d => {
     const n = (d.data && d.data.name) ? String(d.data.name).trim().toLowerCase() : '';
-    return n === 'chemical substance' || n === 'chemical compound' || n === 'fungi' || n === 'algae' || n === 'plantae undiff.' || n === 'prokaryota' || n === 'chromista' || n === 'cnidaria' || n === 'annelida' || n === 'plantae' || n === 'bryozoa' || n === 'arthropoda' || n === 'rhizophagidae' || n === 'cybocephalidae' || n === 'invertebrata' || n === 'ostomidae' || n === 'unknown';
+    return isMajorGroupDisplayName(n);
   });
 
   if (!chems.length) return;

@@ -10,6 +10,7 @@ export function getURLState() {
     group: params.get('group'),
     type: params.get('type'),
     mode: params.get('mode'),
+    view: params.get('view'),
     rot: params.get('rot'),
     focus: params.get('focus'),
     q: params.get('q')

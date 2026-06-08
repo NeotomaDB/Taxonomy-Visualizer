@@ -10,32 +10,69 @@
     <link
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.5/dist/driver.css">
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="src/onboarding/onboarding.css">
 </head>
 
 <body>
     <div id="layout" style="display:flex; align-items:flex-start; gap:16px;">
         <div id="stage" style="position:relative;">
             <div id="visualizerControlBox" class="visualizer-control-box" aria-label="Visualizer controls">
-                <div class="control-row rotate-zoom-row">
-                    <div class="rotate-control">
-                        <label for="rotate">Rotate</label>
-                        <input id="rotate" type="range" min="-180" max="180" value="0" step="1">
-                        <span id="rotateValue">0°</span>
-                    </div>
-                    <div class="zoom-control">
-                        <button id="zoomOut">-</button>
-                        <button id="zoomIn">+</button>
-                        <button id="zoomReset">reset</button>
-                        <span id="zoomValue">1.0×</span>
-                        <div id="viewSwitchGroup" class="view-switch-group">
-                            <button id="wholeViewBtn" class="view-switch-btn active">Whole View</button>
-                            <button id="focusViewBtn" class="view-switch-btn">Focus View</button>
+                <button id="visualizerControlToggle" class="visualizer-control-toggle" type="button"
+                    aria-label="Collapse visualizer controls" aria-expanded="true" data-tooltip="Collapse"
+                    title="Collapse">-</button>
+                <div class="control-content">
+                    <div class="control-row rotate-zoom-row">
+                        <div class="rotate-control">
+                            <label for="rotate">Rotate</label>
+                            <input id="rotate" type="range" min="-180" max="180" value="0" step="1">
+                            <span id="rotateValue">0°</span>
+                        </div>
+                        <div class="zoom-control">
+                            <button id="zoomOut">-</button>
+                            <button id="zoomIn">+</button>
+                            <button id="zoomReset">reset</button>
+                            <span id="zoomValue">1.0×</span>
+                            <div id="viewSwitchGroup" class="view-switch-group">
+                                <button id="wholeViewBtn" class="view-switch-btn active">Whole View</button>
+                                <button id="focusViewBtn" class="view-switch-btn">Focus View</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div id="chart"></div>
+            <div id="color-legend" class="visualizer-legend" aria-label="Visualizer legend">
+                <button id="legendToggle" class="legend-toggle" type="button" aria-label="Collapse legend"
+                    aria-expanded="true" data-tooltip="Collapse" title="Collapse">-</button>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-dot legend-node"></span>
+                        <span>Node</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot legend-collapsible"></span>
+                        <span>Collapsible group</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line legend-search"></span>
+                        <span>Search match</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-line legend-synonym"></span>
+                        <span>Synonym match</span>
+                    </div>
+                </div>
+            </div>
+            <div class="visualizer-layer-note">
+                <button class="layer-note-close" type="button" aria-label="Hide layer note">×</button>
+                <span>
+                    This visualization has two layers: <strong>Major Groups</strong> shows the broad taxonomic
+                    hierarchy down to Class level,<br>while selecting a <strong>Taxon Group</strong> from the dropdown
+                    drills into finer detail down to species.
+                </span>
+            </div>
             <div id="popup"
                 style="position:absolute; left:-9999px; top:-9999px; background:#fff; border:1px solid #ddd; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:6px; padding:10px 12px; max-width:320px; z-index:1000;">
             </div>
@@ -57,6 +94,9 @@
                         </button>
                         <button class="view-nav-option" type="button" role="menuitem" data-app-view="steward">
                             Data Steward
+                        </button>
+                        <button id="takeTourBtn" class="view-nav-option" type="button" role="menuitem">
+                            Take Tour
                         </button>
                     </div>
                 </div>
@@ -95,37 +135,6 @@
                     </div>
                 </div>
                 <div id="info"></div>
-                <div id="color-legend"
-                    style="margin-top:8px; padding:10px 12px; background:#f9fafb; border-radius:8px; font-size:13px;">
-                    <div style="font-weight:600; margin-bottom:6px;">Legend</div>
-                    <div style="display:flex; flex-wrap:wrap; gap:8px 16px;">
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span
-                                style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#202124;"></span>
-                            <span>Node</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span
-                                style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#7cafae;"></span>
-                            <span>Collapsible group</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span
-                                style="display:inline-block;width:14px;height:3px;background:#1976d2;border-radius:1px;"></span>
-                            <span>Search match</span>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <span
-                                style="display:inline-block;width:14px;height:3px;background:#f59e0b;border-radius:1px;"></span>
-                            <span>Synonym match</span>
-                        </div>
-                    </div>
-                    <div style="margin-top:8px; font-size:12px; color:#6b7280; line-height:1.5;">
-                        This visualization has two layers: <strong>Major Groups</strong> shows the broad taxonomic
-                        hierarchy down to Class level, while selecting a <strong>Taxon Group</strong> from the dropdown
-                        drills into finer detail down to species.
-                    </div>
-                </div>
                 <div id="navigation" style="margin-top: 12px; display: none;">
                     <button id="backButton" style="
                         padding: 8px 16px;
@@ -159,6 +168,7 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.5/dist/driver.js.iife.js"></script>
     <script src="src/taxon-group-select.js"></script>
     <script type="module" src="taxon_group_viz.js"></script>
     <script type="module">
@@ -168,6 +178,7 @@
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js';
         import { updateSummaryPanel } from './src/summaryPanel.js';
+        import { initOnboarding } from './src/onboarding/onboarding.js';
 
         const APP_VIEWS = new Set(['explorer', 'steward']);
         let currentAppView = 'explorer';
@@ -235,7 +246,138 @@
             });
         }
 
+        function initDraggableVisualizerControls() {
+            const stage = document.getElementById('stage');
+            const box = document.getElementById('visualizerControlBox');
+            if (!stage || !box) return;
+
+            const interactiveSelector = 'button, input, select, textarea, a, [role="button"]';
+            let dragState = null;
+
+            const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+            const clampBoxToStage = () => {
+                const maxLeft = Math.max(0, stage.clientWidth - box.offsetWidth - 8);
+                const maxTop = Math.max(0, stage.clientHeight - box.offsetHeight - 8);
+                const currentLeft = Number.parseFloat(box.style.left || '16');
+                const currentTop = Number.parseFloat(box.style.top || '16');
+                box.style.left = `${clamp(currentLeft, 8, maxLeft)}px`;
+                box.style.top = `${clamp(currentTop, 8, maxTop)}px`;
+            };
+
+            const moveBox = (clientX, clientY) => {
+                if (!dragState) return;
+                const stageRect = stage.getBoundingClientRect();
+                const nextLeft = clientX - stageRect.left - dragState.offsetX;
+                const nextTop = clientY - stageRect.top - dragState.offsetY;
+                const maxLeft = Math.max(0, stage.clientWidth - box.offsetWidth - 8);
+                const maxTop = Math.max(0, stage.clientHeight - box.offsetHeight - 8);
+
+                box.style.left = `${clamp(nextLeft, 8, maxLeft)}px`;
+                box.style.top = `${clamp(nextTop, 8, maxTop)}px`;
+                box.style.right = 'auto';
+                box.style.bottom = 'auto';
+            };
+
+            box.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0 || event.target.closest(interactiveSelector)) return;
+                const boxRect = box.getBoundingClientRect();
+                dragState = {
+                    offsetX: event.clientX - boxRect.left,
+                    offsetY: event.clientY - boxRect.top,
+                };
+                box.classList.add('is-dragging');
+                box.setPointerCapture(event.pointerId);
+                event.preventDefault();
+            });
+
+            box.addEventListener('pointermove', (event) => {
+                if (!dragState) return;
+                moveBox(event.clientX, event.clientY);
+            });
+
+            const stopDragging = (event) => {
+                if (!dragState) return;
+                dragState = null;
+                box.classList.remove('is-dragging');
+                if (box.hasPointerCapture(event.pointerId)) {
+                    box.releasePointerCapture(event.pointerId);
+                }
+            };
+
+            box.addEventListener('pointerup', stopDragging);
+            box.addEventListener('pointercancel', stopDragging);
+            window.addEventListener('resize', clampBoxToStage);
+        }
+
+        function initCollapsibleLegend() {
+            const legend = document.getElementById('color-legend');
+            const toggle = document.getElementById('legendToggle');
+            if (!legend || !toggle) return;
+
+            toggle.addEventListener('click', () => {
+                const isCollapsed = legend.classList.toggle('is-collapsed');
+                toggle.textContent = isCollapsed ? '+' : '-';
+                toggle.setAttribute('aria-label', isCollapsed ? 'Expand legend' : 'Collapse legend');
+                toggle.setAttribute('aria-expanded', String(!isCollapsed));
+                toggle.dataset.tooltip = isCollapsed ? 'Expand' : 'Collapse';
+                toggle.title = isCollapsed ? 'Expand' : 'Collapse';
+            });
+        }
+
+        function initCollapsibleVisualizerControls() {
+            const box = document.getElementById('visualizerControlBox');
+            const toggle = document.getElementById('visualizerControlToggle');
+            if (!box || !toggle) return;
+
+            const positionToggle = () => {
+                const rotateValue = document.getElementById('rotateValue');
+                if (!rotateValue || box.classList.contains('is-collapsed')) return;
+
+                const boxRect = box.getBoundingClientRect();
+                const valueRect = rotateValue.getBoundingClientRect();
+                const left = valueRect.right - boxRect.left + 14;
+                const top = valueRect.top - boxRect.top + (valueRect.height - toggle.offsetHeight) / 2 - 3;
+
+                toggle.style.left = `${left}px`;
+                toggle.style.top = `${top}px`;
+                toggle.style.right = 'auto';
+            };
+
+            toggle.addEventListener('click', () => {
+                const isCollapsed = box.classList.toggle('is-collapsed');
+                toggle.textContent = isCollapsed ? '+' : '-';
+                toggle.setAttribute(
+                    'aria-label',
+                    isCollapsed ? 'Expand visualizer controls' : 'Collapse visualizer controls'
+                );
+                toggle.setAttribute('aria-expanded', String(!isCollapsed));
+                toggle.dataset.tooltip = isCollapsed ? 'Expand' : 'Collapse';
+                toggle.title = isCollapsed ? 'Expand' : 'Collapse';
+                if (!isCollapsed) requestAnimationFrame(positionToggle);
+            });
+
+            document.getElementById('rotate')?.addEventListener('input', positionToggle);
+            window.addEventListener('resize', positionToggle);
+            requestAnimationFrame(positionToggle);
+        }
+
+        function initLayerNoteClose() {
+            const note = document.querySelector('.visualizer-layer-note');
+            const closeButton = document.querySelector('.layer-note-close');
+            if (!note || !closeButton) return;
+
+            closeButton.addEventListener('click', () => {
+                note.style.display = 'none';
+            });
+        }
+
         initViewNav();
+        initDraggableVisualizerControls();
+        initCollapsibleLegend();
+        initCollapsibleVisualizerControls();
+        initLayerNoteClose();
+        initOnboarding();
         setAppView(getInitialAppView(), true);
 
         // Convert data/taxonpaths.json format to the format expected by renderMammalTree

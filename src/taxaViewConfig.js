@@ -25,8 +25,9 @@ export const EXPAND_ALL_RADIAL = new Set([
 export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA', 'VPL']);
 
 // Groups that trigger the focus view mode or unique search optimizations.
-// VPL added because its large dataset benefits from focus-mode table searches
-export const FOCUS_VIEW_GROUPS = new Set(['INS', 'DIA', 'VPL']);
+// These large groups benefit from filtered Focus View searches instead of
+// expanding every matching path in the radial tree.
+export const FOCUS_VIEW_GROUPS = new Set(['INS', 'MAM', 'AVE', 'DIA', 'VPL']);
 
 // Major-group nodes use the teal collapsed-group styling and default overview collapse.
 export const MAJOR_GROUP_DISPLAY_NAMES = new Set([

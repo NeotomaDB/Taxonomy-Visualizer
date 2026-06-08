@@ -9,7 +9,7 @@ import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
-import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, isMajorGroupDisplayName } from './src/taxaViewConfig.js';
+import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, FOCUS_VIEW_GROUPS, isMajorGroupDisplayName } from './src/taxaViewConfig.js';
 import { updateURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
@@ -320,11 +320,27 @@ async function renderMammalTree({
     });
   }
 
+  // Fungi is still an expand-all radial group, but this incertae sedis branch
+  // is large enough to dominate the first view. Keep only this branch collapsed
+  // by default while leaving the rest of Fungi expanded.
+  if (taxagroupid === 'FUN' && !isInitialView) {
+    root.descendants().forEach(d => {
+      const name = String(d.data?.name || '').trim().toLowerCase();
+      if (name === 'fungi incertae sedis' && d.children && d.children.length > 0) {
+        d._children = d.children;
+        d.children = null;
+      }
+    });
+  }
+
   // 3) SVG scaffold
+  // Keep the SVG footprint unchanged; overflow: visible lets long radial
+  // labels paint beyond the SVG box without shrinking the tree.
   const svg = d3.select(selector).append('svg')
     .attr('viewBox', [-size / 2, -size / 2, size, size])
     .attr('width', size)
-    .attr('height', size);
+    .attr('height', size)
+    .style('overflow', 'visible');
 
   // Wrap content in two groups: viewport (pan+zoom) -> rotator (rotate)
   const gViewport = svg.append('g').attr('class', 'viewport').attr('transform', 'translate(0,0) scale(1)');
@@ -778,6 +794,7 @@ async function renderMammalTree({
   }, { once: true });
 
   // 7.5) Search + focus
+  const usesFocusViewSearch = FOCUS_VIEW_GROUPS.has(taxagroupid);
   const searchControls = setupSearch({
     root,
     link: gLinks.selectAll('path'),       // kept for fallback
@@ -790,9 +807,9 @@ async function renderMammalTree({
     updateRotate,
     updateLabelOrientation,
     expandToNode,
-    searchPathOnly: ['INS', 'DIA'].includes(taxagroupid),
-    deferLocalResultsRendering: ['INS', 'DIA'].includes(taxagroupid),
-    onSearchResults: ['INS', 'DIA'].includes(taxagroupid) && typeof window !== 'undefined' && window.activateFocusView
+    searchPathOnly: usesFocusViewSearch,
+    deferLocalResultsRendering: usesFocusViewSearch,
+    onSearchResults: usesFocusViewSearch && typeof window !== 'undefined' && window.activateFocusView
       ? () => window.activateFocusView()
       : null,
     onSearchClear: () => { if (cull) cull.refresh(); },

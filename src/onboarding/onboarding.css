@@ -1,0 +1,111 @@
+.driver-popover.neotoma-onboarding-popover {
+  border: 1px solid rgba(187, 247, 208, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.18);
+  color: #1f2937;
+  font-family: "DM Sans", sans-serif;
+  max-width: 330px;
+}
+
+.driver-popover.neotoma-onboarding-popover .driver-popover-title {
+  color: #2e7d32;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.driver-popover.neotoma-onboarding-popover .driver-popover-description {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.driver-popover.neotoma-onboarding-popover .driver-popover-progress-text {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.driver-popover.neotoma-onboarding-popover button {
+  border-radius: 999px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.driver-popover.neotoma-onboarding-popover .driver-popover-next-btn {
+  background: #43a047;
+  border-color: #43a047;
+  color: #ffffff;
+}
+
+.driver-popover.neotoma-onboarding-popover .driver-popover-prev-btn {
+  background: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.driver-popover.neotoma-onboarding-popover .driver-popover-close-btn {
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.driver-popover.neotoma-onboarding-popover .onboarding-anchor-text {
+  color: #2e7d32;
+  font-weight: 800;
+}
+
+.driver-popover.neotoma-onboarding-popover .onboarding-action-button {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: #43a047;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+
+.onboarding-secondary-highlight {
+  outline: 2px solid rgba(67, 160, 71, 0.72);
+  outline-offset: 4px;
+}
+
+@media (min-width: 900px) {
+  body.onboarding-click-taxon-step .driver-popover.neotoma-onboarding-popover {
+    translate: 0 -220px;
+  }
+}
+
+body.onboarding-two-level-step .taxon-group-section,
+body.onboarding-two-level-step .custom-select-wrapper,
+body.onboarding-two-level-step .custom-select {
+  position: relative;
+  z-index: 1000002;
+}
+
+body.onboarding-two-level-step .custom-select.open .custom-options {
+  position: fixed;
+  top: var(--tour-dropdown-top);
+  left: var(--tour-dropdown-left);
+  right: auto;
+  width: var(--tour-dropdown-width);
+  max-height: min(320px, calc(100vh - var(--tour-dropdown-top) - 16px));
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  z-index: 1000003;
+}
+
+body.onboarding-two-level-step .custom-select.open .custom-option {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 720px) {
+  .driver-popover.neotoma-onboarding-popover {
+    max-width: calc(100vw - 32px);
+  }
+}

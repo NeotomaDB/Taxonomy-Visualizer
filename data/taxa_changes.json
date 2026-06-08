@@ -1,84 +1,12 @@
 {
-  "generated_at": "2026-06-01T06:50:39+00:00",
-  "since": "2026-05-02",
+  "generated_at": "2026-06-08T09:38:21+00:00",
+  "since": "2026-05-09",
   "counts": {
-    "new": 33,
-    "modified": 3,
-    "total": 36
+    "new": 13,
+    "modified": 22,
+    "total": 35
   },
   "new": [
-    {
-      "taxonid": 69493,
-      "taxonname": "Navicula cf. harderi",
-      "highertaxonid": 22536,
-      "taxagroupid": "DIA",
-      "recdatecreated": "2026-05-03T15:16:35.000Z",
-      "recdatemodified": "2026-05-03T15:16:35.000Z",
-      "path_ids": [
-        2054,
-        5396,
-        24597,
-        22534,
-        22536,
-        69493
-      ],
-      "path_names": [
-        "Algae",
-        "Bacillariophyta",
-        "Pennales",
-        "Naviculaceae",
-        "Navicula",
-        "Navicula cf. harderi"
-      ]
-    },
-    {
-      "taxonid": 69494,
-      "taxonname": "Navicula cf. microcari",
-      "highertaxonid": 22536,
-      "taxagroupid": "DIA",
-      "recdatecreated": "2026-05-03T15:19:44.000Z",
-      "recdatemodified": "2026-05-03T15:19:44.000Z",
-      "path_ids": [
-        2054,
-        5396,
-        24597,
-        22534,
-        22536,
-        69494
-      ],
-      "path_names": [
-        "Algae",
-        "Bacillariophyta",
-        "Pennales",
-        "Naviculaceae",
-        "Navicula",
-        "Navicula cf. microcari"
-      ]
-    },
-    {
-      "taxonid": 69495,
-      "taxonname": "Nitzschia aff. levidensis",
-      "highertaxonid": 24521,
-      "taxagroupid": "DIA",
-      "recdatecreated": "2026-05-03T15:24:46.000Z",
-      "recdatemodified": "2026-05-03T15:24:46.000Z",
-      "path_ids": [
-        2054,
-        5396,
-        24597,
-        24603,
-        24521,
-        69495
-      ],
-      "path_names": [
-        "Algae",
-        "Bacillariophyta",
-        "Pennales",
-        "Bacillariaceae",
-        "Nitzschia",
-        "Nitzschia aff. levidensis"
-      ]
-    },
     {
       "taxonid": 69518,
       "taxonname": "Opephora aff.",
@@ -142,406 +70,6 @@
       ]
     },
     {
-      "taxonid": 69502,
-      "taxonname": "Agonum fuliginosum",
-      "highertaxonid": 13962,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:26:09.000Z",
-      "recdatemodified": "2026-05-07T19:56:50.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38284,
-        38340,
-        13962,
-        69502
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Harpalinae",
-        "Platynini",
-        "Agonum",
-        "Agonum fuliginosum"
-      ]
-    },
-    {
-      "taxonid": 69501,
-      "taxonname": "Agonum micans",
-      "highertaxonid": 13962,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:22:56.000Z",
-      "recdatemodified": "2026-05-05T09:22:56.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38284,
-        38340,
-        13962,
-        69501
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Harpalinae",
-        "Platynini",
-        "Agonum",
-        "Agonum micans"
-      ]
-    },
-    {
-      "taxonid": 69509,
-      "taxonname": "Badister sp.",
-      "highertaxonid": 21667,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T10:11:16.000Z",
-      "recdatemodified": "2026-05-05T10:11:16.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38284,
-        21667,
-        69509
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Harpalinae",
-        "Badister",
-        "Badister sp."
-      ]
-    },
-    {
-      "taxonid": 69506,
-      "taxonname": "Bembidion (Trepanes)",
-      "highertaxonid": 13937,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:42:49.000Z",
-      "recdatemodified": "2026-05-05T09:42:49.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38285,
-        38287,
-        13937,
-        69506
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Trechinae",
-        "Bembidiini",
-        "Bembidion",
-        "Bembidion (Trepanes)"
-      ]
-    },
-    {
-      "taxonid": 69507,
-      "taxonname": "Bembidion octomaculatum",
-      "highertaxonid": 69506,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:48:08.000Z",
-      "recdatemodified": "2026-05-05T09:48:08.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38285,
-        38287,
-        13937,
-        69506,
-        69507
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Trechinae",
-        "Bembidiini",
-        "Bembidion",
-        "Bembidion (Trepanes)",
-        "Bembidion octomaculatum"
-      ]
-    },
-    {
-      "taxonid": 69508,
-      "taxonname": "Dyschirius globosus",
-      "highertaxonid": 13932,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:57:48.000Z",
-      "recdatemodified": "2026-05-05T09:57:48.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38288,
-        13932,
-        69508
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Scaritinae",
-        "Dyschirius",
-        "Dyschirius globosus"
-      ]
-    },
-    {
-      "taxonid": 69499,
-      "taxonname": "Hydroporus palustris",
-      "highertaxonid": 20410,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:12:32.000Z",
-      "recdatemodified": "2026-05-05T09:12:32.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        16785,
-        20410,
-        69499
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Dytiscidae",
-        "Hydroporus",
-        "Hydroporus palustris"
-      ]
-    },
-    {
-      "taxonid": 69497,
-      "taxonname": "Ips typographus",
-      "highertaxonid": 22071,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-04T08:01:39.000Z",
-      "recdatemodified": "2026-05-04T08:01:39.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        14037,
-        23830,
-        22071,
-        69497
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Curculionidae",
-        "Scolytinae",
-        "Ips",
-        "Ips typographus"
-      ]
-    },
-    {
-      "taxonid": 69500,
-      "taxonname": "Noterus clavicornis",
-      "highertaxonid": 22981,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:15:51.000Z",
-      "recdatemodified": "2026-05-05T09:15:51.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        20255,
-        22981,
-        69500
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Noteridae gen. sp.",
-        "Noterus",
-        "Noterus clavicornis"
-      ]
-    },
-    {
-      "taxonid": 69503,
-      "taxonname": "Pterostichus (Lyperosomus) aterrimus",
-      "highertaxonid": 13944,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:31:39.000Z",
-      "recdatemodified": "2026-05-05T09:31:39.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38284,
-        13944,
-        69503
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Harpalinae",
-        "Pterostichus",
-        "Pterostichus (Lyperosomus) aterrimus"
-      ]
-    },
-    {
-      "taxonid": 69504,
-      "taxonname": "Pterostichus (Pseudomaseus)",
-      "highertaxonid": 13944,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:39:14.000Z",
-      "recdatemodified": "2026-05-05T09:39:14.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38284,
-        13944,
-        69504
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Harpalinae",
-        "Pterostichus",
-        "Pterostichus (Pseudomaseus)"
-      ]
-    },
-    {
-      "taxonid": 69505,
-      "taxonname": "Pterostichus nigrita",
-      "highertaxonid": 69504,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:40:25.000Z",
-      "recdatemodified": "2026-05-05T09:40:25.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38284,
-        13944,
-        69504,
-        69505
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Harpalinae",
-        "Pterostichus",
-        "Pterostichus (Pseudomaseus)",
-        "Pterostichus nigrita"
-      ]
-    },
-    {
-      "taxonid": 69498,
-      "taxonname": "Trechus amplicollis",
-      "highertaxonid": 15632,
-      "taxagroupid": "INS",
-      "recdatecreated": "2026-05-05T09:07:09.000Z",
-      "recdatemodified": "2026-05-05T09:07:09.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        13915,
-        13916,
-        13919,
-        38285,
-        38286,
-        15632,
-        69498
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Insecta",
-        "Coleoptera",
-        "Carabidae",
-        "Trechinae",
-        "Trechini",
-        "Trechus",
-        "Trechus amplicollis"
-      ]
-    },
-    {
       "taxonid": 69516,
       "taxonname": "Arctocypris dulcifons",
       "highertaxonid": 49916,
@@ -578,12 +106,12 @@
       ]
     },
     {
-      "taxonid": 69490,
-      "taxonname": "Eucypris minuta",
-      "highertaxonid": 14541,
+      "taxonid": 69524,
+      "taxonname": "Ilyocypris sebeiensis",
+      "highertaxonid": 14515,
       "taxagroupid": "OST",
-      "recdatecreated": "2026-05-03T04:36:39.000Z",
-      "recdatemodified": "2026-05-03T04:36:39.000Z",
+      "recdatecreated": "2026-06-03T07:33:55.000Z",
+      "recdatemodified": "2026-06-03T07:33:55.000Z",
       "path_ids": [
         32182,
         6758,
@@ -593,10 +121,10 @@
         14443,
         14448,
         14449,
-        14522,
-        14540,
-        14541,
-        69490
+        14514,
+        49495,
+        14515,
+        69524
       ],
       "path_names": [
         "Eukaryota",
@@ -607,156 +135,10 @@
         "Podocopida",
         "Cypridocopina",
         "Cypridoidea",
-        "Cyprididae",
-        "Eucypridinae",
-        "Eucypris",
-        "Eucypris minuta"
-      ]
-    },
-    {
-      "taxonid": 69489,
-      "taxonname": "Eucypris tibetana",
-      "highertaxonid": 14541,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-03T04:32:29.000Z",
-      "recdatemodified": "2026-05-03T04:32:29.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14540,
-        14541,
-        69489
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Eucypridinae",
-        "Eucypris",
-        "Eucypris tibetana"
-      ]
-    },
-    {
-      "taxonid": 69491,
-      "taxonname": "Herpetocypris smaragdea",
-      "highertaxonid": 14548,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-03T04:49:17.000Z",
-      "recdatemodified": "2026-05-03T04:49:17.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14547,
-        14548,
-        69491
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Herpetocypridinae",
-        "Herpetocypris",
-        "Herpetocypris smaragdea"
-      ]
-    },
-    {
-      "taxonid": 69496,
-      "taxonname": "Heterocypris exodonta",
-      "highertaxonid": 14552,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-04T00:41:56.000Z",
-      "recdatemodified": "2026-05-04T00:41:56.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14551,
-        14552,
-        69496
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Cyprinotinae",
-        "Heterocypris",
-        "Heterocypris exodonta"
-      ]
-    },
-    {
-      "taxonid": 69510,
-      "taxonname": "Leucocythere dorsotuberosa var. postilirata",
-      "highertaxonid": 50296,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-06T08:48:01.000Z",
-      "recdatemodified": "2026-05-06T08:48:01.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        24059,
-        24060,
-        14595,
-        14596,
-        50295,
-        50296,
-        69510
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cytherocopina",
-        "Cytheroidea",
-        "Limnocytheridae",
-        "Limnocytherinae",
-        "Leucocythere",
-        "Leucocythere dorsotuberosa",
-        "Leucocythere dorsotuberosa var. postilirata"
+        "Ilyocyprididae",
+        "Ilyocypridinae",
+        "Ilyocypris",
+        "Ilyocypris sebeiensis"
       ]
     },
     {
@@ -793,42 +175,6 @@
         "Limnocytherinae",
         "Leucocythere",
         "Leucocythere tropis"
-      ]
-    },
-    {
-      "taxonid": 69492,
-      "taxonname": "Potamocypris stewarti",
-      "highertaxonid": 14587,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-03T04:52:06.000Z",
-      "recdatemodified": "2026-05-03T04:52:06.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14579,
-        14587,
-        69492
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Cypridopsinae",
-        "Potamocypris",
-        "Potamocypris stewarti"
       ]
     },
     {
@@ -934,12 +280,12 @@
       ]
     },
     {
-      "taxonid": 69511,
-      "taxonname": "Euphorbia-type (fine)",
-      "highertaxonid": 1266,
+      "taxonid": 69526,
+      "taxonname": "Callicarpa",
+      "highertaxonid": 460,
       "taxagroupid": "VPL",
-      "recdatecreated": "2026-05-07T14:59:55.000Z",
-      "recdatemodified": "2026-05-07T14:59:55.000Z",
+      "recdatecreated": "2026-06-04T18:07:31.000Z",
+      "recdatemodified": "2026-06-04T18:07:31.000Z",
       "path_ids": [
         32182,
         9095,
@@ -953,13 +299,13 @@
         2132,
         9653,
         9652,
-        9606,
-        9607,
-        9113,
-        694,
-        42556,
-        1266,
-        69511
+        9651,
+        9655,
+        9654,
+        9656,
+        9096,
+        460,
+        69526
       ],
       "path_names": [
         "Eukaryota",
@@ -974,22 +320,72 @@
         "Eudicotyledoneae",
         "Gunneridae",
         "Pentapetalae",
-        "Rosidae",
-        "Fabidae",
-        "Malpighiales",
-        "Euphorbiaceae",
-        "Euphorbioideae",
-        "Euphorbia-type",
-        "Euphorbia-type (fine)"
+        "Asteridae",
+        "Gentianidae",
+        "Garryidae",
+        "Lamiidae",
+        "Lamiales",
+        "Lamiaceae",
+        "Callicarpa"
       ]
     },
     {
-      "taxonid": 69512,
-      "taxonname": "Justicia cf. J. gendarussa",
+      "taxonid": 69523,
+      "taxonname": "Cyperus retrofractus",
+      "highertaxonid": 3517,
+      "taxagroupid": "VPL",
+      "recdatecreated": "2026-06-03T00:01:02.000Z",
+      "recdatemodified": "2026-06-03T00:01:02.000Z",
+      "path_ids": [
+        32182,
+        9095,
+        33028,
+        33029,
+        33038,
+        9534,
+        5480,
+        2133,
+        9575,
+        2131,
+        15532,
+        15531,
+        15533,
+        9108,
+        74,
+        40110,
+        40111,
+        3517,
+        69523
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Plantae",
+        "Viridiplantae",
+        "Streptophyta",
+        "Embryophyta",
+        "Tracheophyta",
+        "Spermatophyta",
+        "Angiospermae",
+        "Mesangiospermae",
+        "Monocotyledoneae",
+        "Nartheciidae",
+        "Petrosaviidae",
+        "Commelinidae",
+        "Poales",
+        "Cyperaceae",
+        "Cyperoideae",
+        "Cypereae",
+        "Cyperus",
+        "Cyperus retrofractus"
+      ]
+    },
+    {
+      "taxonid": 69525,
+      "taxonname": "Justicia diclipteroides-type",
       "highertaxonid": 2013,
       "taxagroupid": "VPL",
-      "recdatecreated": "2026-05-08T02:02:46.000Z",
-      "recdatemodified": "2026-05-08T02:02:46.000Z",
+      "recdatecreated": "2026-06-03T13:18:02.000Z",
+      "recdatemodified": "2026-06-03T13:18:02.000Z",
       "path_ids": [
         32182,
         9095,
@@ -1011,7 +407,7 @@
         1716,
         9925,
         2013,
-        69512
+        69525
       ],
       "path_names": [
         "Eukaryota",
@@ -1034,16 +430,16 @@
         "Acanthaceae",
         "Acanthoideae",
         "Justicia",
-        "Justicia cf. J. gendarussa"
+        "Justicia diclipteroides-type"
       ]
     },
     {
-      "taxonid": 69513,
-      "taxonname": "Selaginella semicordata-type",
-      "highertaxonid": 286,
+      "taxonid": 69522,
+      "taxonname": "Leersia virginica",
+      "highertaxonid": 417,
       "taxagroupid": "VPL",
-      "recdatecreated": "2026-05-08T02:17:45.000Z",
-      "recdatemodified": "2026-05-08T02:17:45.000Z",
+      "recdatecreated": "2026-06-02T01:41:23.000Z",
+      "recdatemodified": "2026-06-02T01:41:23.000Z",
       "path_ids": [
         32182,
         9095,
@@ -1051,12 +447,16 @@
         33029,
         33038,
         9534,
-        9536,
-        9537,
-        33987,
-        33986,
-        286,
-        69513
+        5480,
+        2133,
+        9575,
+        2131,
+        15532,
+        15531,
+        15533,
+        9108,
+        417,
+        69522
       ],
       "path_names": [
         "Eukaryota",
@@ -1065,70 +465,812 @@
         "Streptophyta",
         "Embryophyta",
         "Tracheophyta",
-        "Lycopodiophyta",
-        "Isoëtopsida",
-        "Selaginellales",
-        "Selaginellaceae",
-        "Selaginella",
-        "Selaginella semicordata-type"
+        "Spermatophyta",
+        "Angiospermae",
+        "Mesangiospermae",
+        "Monocotyledoneae",
+        "Nartheciidae",
+        "Petrosaviidae",
+        "Commelinidae",
+        "Poales",
+        "Poaceae",
+        "Leersia virginica"
       ]
     }
   ],
   "modified": [
     {
-      "taxonid": 51601,
-      "taxonname": "Charcoal (block)",
-      "highertaxonid": 1062,
-      "taxagroupid": "CHR",
-      "recdatecreated": "2023-10-29T17:20:20.000Z",
-      "recdatemodified": "2026-05-07T19:41:13.000Z",
+      "taxonid": 49978,
+      "taxonname": "Cladotanytarsus",
+      "highertaxonid": 32222,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T16:36:39.000Z",
+      "recdatemodified": "2026-06-02T14:10:49.000Z",
       "changed_fields": [
         "recdatemodified"
       ],
       "previous": {},
       "path_ids": [
-        1062,
-        51601
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        49978
       ],
       "path_names": [
-        "Charcoal",
-        "Charcoal (block)"
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Cladotanytarsus"
       ]
     },
     {
-      "taxonid": 50264,
-      "taxonname": "Eucypris afghanistanensis",
-      "highertaxonid": null,
-      "taxagroupid": "OST",
-      "recdatecreated": "2022-12-30T04:10:21.000Z",
-      "recdatemodified": "2026-05-06T06:16:18.000Z",
+      "taxonid": 49981,
+      "taxonname": "Constempellina/Thienemanniola",
+      "highertaxonid": 69139,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T16:41:59.000Z",
+      "recdatemodified": "2026-06-02T14:13:19.000Z",
       "changed_fields": [
         "recdatemodified"
       ],
       "previous": {},
       "path_ids": [
-        50264
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        69139,
+        49981
       ],
       "path_names": [
-        "Eucypris afghanistanensis"
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Constempellina",
+        "Constempellina/Thienemanniola"
       ]
     },
     {
-      "taxonid": 50380,
-      "taxonname": "Tonnacypris estonica",
-      "highertaxonid": null,
-      "taxagroupid": "OST",
-      "recdatecreated": "2023-01-02T07:18:05.000Z",
-      "recdatemodified": "2026-05-06T06:13:36.000Z",
+      "taxonid": 69142,
+      "taxonname": "Constempellina/Thienemanniola",
+      "highertaxonid": 69139,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-03-16T17:38:13.000Z",
+      "recdatemodified": "2026-06-02T14:07:55.000Z",
       "changed_fields": [
         "recdatemodified"
       ],
       "previous": {},
       "path_ids": [
-        50380
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        69139,
+        69142
       ],
       "path_names": [
-        "Tonnacypris estonica"
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Constempellina",
+        "Constempellina/Thienemanniola"
+      ]
+    },
+    {
+      "taxonid": 22869,
+      "taxonname": "Corynocera",
+      "highertaxonid": 32222,
+      "taxagroupid": "INS",
+      "recdatecreated": "2014-07-30T15:28:00.000Z",
+      "recdatemodified": "2026-06-02T14:11:13.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        22869
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Corynocera"
+      ]
+    },
+    {
+      "taxonid": 32198,
+      "taxonname": "Corynoneura",
+      "highertaxonid": 32190,
+      "taxagroupid": "INS",
+      "recdatecreated": "2017-09-03T13:38:18.000Z",
+      "recdatemodified": "2026-06-02T13:27:17.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        32198
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Corynoneura"
+      ]
+    },
+    {
+      "taxonid": 49985,
+      "taxonname": "Corynoneura (type A)",
+      "highertaxonid": 32198,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T16:49:37.000Z",
+      "recdatemodified": "2026-06-02T13:30:03.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        32198,
+        49985
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Corynoneura",
+        "Corynoneura (type A)"
+      ]
+    },
+    {
+      "taxonid": 49986,
+      "taxonname": "Corynoneura undiff.",
+      "highertaxonid": 32198,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T16:51:20.000Z",
+      "recdatemodified": "2026-06-02T13:31:53.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        32198,
+        49986
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Corynoneura",
+        "Corynoneura undiff."
+      ]
+    },
+    {
+      "taxonid": 18673,
+      "taxonname": "Corynoneurini gen. sp.",
+      "highertaxonid": 32190,
+      "taxagroupid": "INS",
+      "recdatecreated": "2013-10-25T18:35:44.000Z",
+      "recdatemodified": "2026-06-02T13:28:04.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        18673
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Corynoneurini gen. sp."
+      ]
+    },
+    {
+      "taxonid": 32204,
+      "taxonname": "Cricotopus/Orthocladius",
+      "highertaxonid": 32202,
+      "taxagroupid": "INS",
+      "recdatecreated": "2017-09-03T14:17:01.000Z",
+      "recdatemodified": "2026-06-02T13:39:26.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        32202,
+        32204
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Cricotopus",
+        "Cricotopus/Orthocladius"
+      ]
+    },
+    {
+      "taxonid": 18675,
+      "taxonname": "Cricotopus/Orthocladius sp.",
+      "highertaxonid": 32202,
+      "taxagroupid": "INS",
+      "recdatecreated": "2013-10-25T18:37:36.000Z",
+      "recdatemodified": "2026-06-02T13:37:15.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        32202,
+        18675
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Cricotopus",
+        "Cricotopus/Orthocladius sp."
+      ]
+    },
+    {
+      "taxonid": 49987,
+      "taxonname": "Cricotopus/Orthocladius undiff.",
+      "highertaxonid": 32202,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T16:53:11.000Z",
+      "recdatemodified": "2026-06-02T13:37:34.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        32202,
+        49987
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Cricotopus",
+        "Cricotopus/Orthocladius undiff."
+      ]
+    },
+    {
+      "taxonid": 69064,
+      "taxonname": "Eukiefferiella",
+      "highertaxonid": 52604,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-03-16T17:37:50.000Z",
+      "recdatemodified": "2026-06-02T13:41:14.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        52604,
+        69064
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Eukiefferiella/Tvetenia",
+        "Eukiefferiella"
+      ]
+    },
+    {
+      "taxonid": 22879,
+      "taxonname": "Micropsectra",
+      "highertaxonid": 32222,
+      "taxagroupid": "INS",
+      "recdatecreated": "2014-07-30T15:57:37.000Z",
+      "recdatemodified": "2026-06-02T14:11:26.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        22879
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Micropsectra"
+      ]
+    },
+    {
+      "taxonid": 50000,
+      "taxonname": "Orthocladius (type S)/Paracladius",
+      "highertaxonid": 22883,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T20:39:23.000Z",
+      "recdatemodified": "2026-06-02T13:49:37.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        22883,
+        50000
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Orthocladius",
+        "Orthocladius (type S)/Paracladius"
+      ]
+    },
+    {
+      "taxonid": 22884,
+      "taxonname": "Paratanytarsus",
+      "highertaxonid": 32222,
+      "taxagroupid": "INS",
+      "recdatecreated": "2014-07-30T16:07:25.000Z",
+      "recdatemodified": "2026-06-02T14:11:41.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        22884
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Paratanytarsus"
+      ]
+    },
+    {
+      "taxonid": 32236,
+      "taxonname": "Psectrocladius sordidellus-type",
+      "highertaxonid": 23288,
+      "taxagroupid": "INS",
+      "recdatecreated": "2017-09-04T02:56:21.000Z",
+      "recdatemodified": "2026-06-02T13:53:57.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        23288,
+        32236
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Psectrocladius",
+        "Psectrocladius sordidellus-type"
+      ]
+    },
+    {
+      "taxonid": 50005,
+      "taxonname": "Psectrocladius sordidellus/P.psilopterus-type",
+      "highertaxonid": 23288,
+      "taxagroupid": "INS",
+      "recdatecreated": "2022-11-09T20:51:04.000Z",
+      "recdatemodified": "2026-06-02T13:53:43.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        23288,
+        50005
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Psectrocladius",
+        "Psectrocladius sordidellus/P.psilopterus-type"
+      ]
+    },
+    {
+      "taxonid": 69099,
+      "taxonname": "Pseudosmittia / Allocladius",
+      "highertaxonid": 50007,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-03-16T17:38:00.000Z",
+      "recdatemodified": "2026-06-02T13:55:51.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        50007,
+        69099
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Pseudosmittia",
+        "Pseudosmittia / Allocladius"
+      ]
+    },
+    {
+      "taxonid": 69069,
+      "taxonname": "Smittia/Parasmittia",
+      "highertaxonid": 69090,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-03-16T17:37:51.000Z",
+      "recdatemodified": "2026-06-02T13:56:39.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        69090,
+        69069
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Smittia",
+        "Smittia/Parasmittia"
+      ]
+    },
+    {
+      "taxonid": 69145,
+      "taxonname": "Stempellinella/Zavrelia",
+      "highertaxonid": 32240,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-03-16T17:38:13.000Z",
+      "recdatemodified": "2026-06-02T14:08:46.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        32240,
+        69145
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Stempellinina",
+        "Stempellinella/Zavrelia"
+      ]
+    },
+    {
+      "taxonid": 52607,
+      "taxonname": "Synorthocladius/Orthocladiinae",
+      "highertaxonid": 69092,
+      "taxagroupid": "INS",
+      "recdatecreated": "2024-06-28T23:49:50.000Z",
+      "recdatemodified": "2026-06-02T13:56:51.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        32190,
+        69092,
+        52607
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Orthocladiinae",
+        "Synorthocladius",
+        "Synorthocladius/Orthocladiinae"
+      ]
+    },
+    {
+      "taxonid": 22886,
+      "taxonname": "Tanytarsus",
+      "highertaxonid": 32222,
+      "taxagroupid": "INS",
+      "recdatecreated": "2014-07-30T16:11:37.000Z",
+      "recdatemodified": "2026-06-02T14:11:52.000Z",
+      "changed_fields": [
+        "recdatemodified"
+      ],
+      "previous": {},
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        14062,
+        33141,
+        18678,
+        27837,
+        32222,
+        22886
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Diptera",
+        "Nematocera",
+        "Chironomidae",
+        "Chironominae",
+        "Tanytarsini",
+        "Tanytarsus"
       ]
     }
   ]

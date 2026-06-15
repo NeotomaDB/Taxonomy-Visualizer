@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-08T09:38:21+00:00",
-  "since": "2026-05-09",
+  "generated_at": "2026-06-15T07:13:28+00:00",
+  "since": "2026-05-16",
   "counts": {
-    "new": 13,
+    "new": 96,
     "modified": 22,
-    "total": 35
+    "total": 118
   },
   "new": [
     {
@@ -67,6 +67,2334 @@
         "Bacillariophyta",
         "Staurosiraceae",
         "Staurosiraceae aff. opephora"
+      ]
+    },
+    {
+      "taxonid": 69527,
+      "taxonname": "Acidota cruentata",
+      "highertaxonid": 13981,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:29:16.000Z",
+      "recdatemodified": "2026-06-09T13:29:16.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        13981,
+        69527
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Acidota",
+        "Acidota cruentata"
+      ]
+    },
+    {
+      "taxonid": 69528,
+      "taxonname": "Agabus sturmii",
+      "highertaxonid": 21952,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:36:44.000Z",
+      "recdatemodified": "2026-06-09T13:36:44.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        16785,
+        27808,
+        21952,
+        69528
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Dytiscidae",
+        "Agabini",
+        "Agabus",
+        "Agabus sturmii"
+      ]
+    },
+    {
+      "taxonid": 69583,
+      "taxonname": "Agathidium nigripenne",
+      "highertaxonid": 22362,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:49:49.000Z",
+      "recdatemodified": "2026-06-10T12:49:49.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14000,
+        22362,
+        69583
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Leiodidae",
+        "Agathidium",
+        "Agathidium nigripenne"
+      ]
+    },
+    {
+      "taxonid": 69539,
+      "taxonname": "Amara eurynota",
+      "highertaxonid": 13959,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:02:05.000Z",
+      "recdatemodified": "2026-06-09T14:02:05.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38284,
+        13959,
+        69539
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Harpalinae",
+        "Amara",
+        "Amara eurynota"
+      ]
+    },
+    {
+      "taxonid": 69584,
+      "taxonname": "Anacaena sp.",
+      "highertaxonid": 50187,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:50:56.000Z",
+      "recdatemodified": "2026-06-10T12:50:56.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13969,
+        50187,
+        69584
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Hydrophilidae",
+        "Anacaena",
+        "Anacaena sp."
+      ]
+    },
+    {
+      "taxonid": 69572,
+      "taxonname": "Anisosticta novemdecimpunctata",
+      "highertaxonid": 14031,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:32:50.000Z",
+      "recdatemodified": "2026-06-10T12:32:50.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14030,
+        14031,
+        69572
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Coccinellidae",
+        "Anisosticta",
+        "Anisosticta novemdecimpunctata"
+      ]
+    },
+    {
+      "taxonid": 69540,
+      "taxonname": "Anoplus plantaris",
+      "highertaxonid": 22978,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:07:34.000Z",
+      "recdatemodified": "2026-06-09T14:07:34.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        38114,
+        22978,
+        69540
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Curculioninae",
+        "Anoplus",
+        "Anoplus plantaris"
+      ]
+    },
+    {
+      "taxonid": 69541,
+      "taxonname": "Anotylus maritimus",
+      "highertaxonid": 22459,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:08:51.000Z",
+      "recdatemodified": "2026-06-09T14:08:51.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22459,
+        69541
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Anotylus",
+        "Anotylus maritimus"
+      ]
+    },
+    {
+      "taxonid": 69574,
+      "taxonname": "Anthicus ater",
+      "highertaxonid": 21549,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:34:47.000Z",
+      "recdatemodified": "2026-06-10T12:34:47.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        18084,
+        21549,
+        69574
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Anthicidae",
+        "Anthicus",
+        "Anthicus ater"
+      ]
+    },
+    {
+      "taxonid": 69581,
+      "taxonname": "Anthonomus phyllocola",
+      "highertaxonid": 21954,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:42:36.000Z",
+      "recdatemodified": "2026-06-10T12:42:36.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        38114,
+        21954,
+        69581
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Curculioninae",
+        "Anthonomus",
+        "Anthonomus phyllocola"
+      ]
+    },
+    {
+      "taxonid": 69585,
+      "taxonname": "Arpedium quadrum",
+      "highertaxonid": 21744,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:52:31.000Z",
+      "recdatemodified": "2026-06-10T12:52:31.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        21744,
+        69585
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Arpedium",
+        "Arpedium quadrum"
+      ]
+    },
+    {
+      "taxonid": 69542,
+      "taxonname": "Bagous glabrirostris",
+      "highertaxonid": 21962,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:10:14.000Z",
+      "recdatemodified": "2026-06-09T14:10:14.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        38119,
+        21962,
+        69542
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Bagoinae",
+        "Bagous",
+        "Bagous glabrirostris"
+      ]
+    },
+    {
+      "taxonid": 69543,
+      "taxonname": "Bembidion (Diplocampa) assimile",
+      "highertaxonid": 13937,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:12:51.000Z",
+      "recdatemodified": "2026-06-09T14:12:51.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38285,
+        38287,
+        13937,
+        69543
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Trechinae",
+        "Bembidiini",
+        "Bembidion",
+        "Bembidion (Diplocampa) assimile"
+      ]
+    },
+    {
+      "taxonid": 69544,
+      "taxonname": "Bledius cf. B. annae",
+      "highertaxonid": 22463,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:14:12.000Z",
+      "recdatemodified": "2026-06-09T14:14:12.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22463,
+        69544
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Bledius",
+        "Bledius cf. B. annae"
+      ]
+    },
+    {
+      "taxonid": 69586,
+      "taxonname": "Bledius cf. B. erraticus",
+      "highertaxonid": 22463,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:54:32.000Z",
+      "recdatemodified": "2026-06-10T12:54:32.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22463,
+        69586
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Bledius",
+        "Bledius cf. B. erraticus"
+      ]
+    },
+    {
+      "taxonid": 69588,
+      "taxonname": "Bledius cf. B. spectabilis",
+      "highertaxonid": 22463,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:57:34.000Z",
+      "recdatemodified": "2026-06-10T12:57:34.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22463,
+        69588
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Bledius",
+        "Bledius cf. B. spectabilis"
+      ]
+    },
+    {
+      "taxonid": 69545,
+      "taxonname": "Bledius cf. B. subniger",
+      "highertaxonid": 22463,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:15:13.000Z",
+      "recdatemodified": "2026-06-09T14:15:13.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22463,
+        69545
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Bledius",
+        "Bledius cf. B. subniger"
+      ]
+    },
+    {
+      "taxonid": 69587,
+      "taxonname": "Bledius gallicus",
+      "highertaxonid": 22463,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:55:46.000Z",
+      "recdatemodified": "2026-06-10T12:55:46.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22463,
+        69587
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Bledius",
+        "Bledius gallicus"
+      ]
+    },
+    {
+      "taxonid": 69546,
+      "taxonname": "Bolitobius castaneus",
+      "highertaxonid": 22464,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:16:37.000Z",
+      "recdatemodified": "2026-06-09T14:16:37.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22464,
+        69546
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Bolitobius",
+        "Bolitobius castaneus"
+      ]
+    },
+    {
+      "taxonid": 69547,
+      "taxonname": "Calathus ambiguus",
+      "highertaxonid": 21679,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:17:36.000Z",
+      "recdatemodified": "2026-06-09T14:17:36.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38284,
+        21679,
+        69547
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Harpalinae",
+        "Calathus",
+        "Calathus ambiguus"
+      ]
+    },
+    {
+      "taxonid": 69548,
+      "taxonname": "Calathus fuscipes",
+      "highertaxonid": 21679,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:18:57.000Z",
+      "recdatemodified": "2026-06-09T14:18:57.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38284,
+        21679,
+        69548
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Harpalinae",
+        "Calathus",
+        "Calathus fuscipes"
+      ]
+    },
+    {
+      "taxonid": 69549,
+      "taxonname": "Carpelimus elongatulus",
+      "highertaxonid": 22468,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:20:04.000Z",
+      "recdatemodified": "2026-06-09T14:20:04.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22468,
+        69549
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Carpelimus",
+        "Carpelimus elongatulus"
+      ]
+    },
+    {
+      "taxonid": 69550,
+      "taxonname": "Cercyon tristis",
+      "highertaxonid": 22334,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:21:14.000Z",
+      "recdatemodified": "2026-06-09T14:21:14.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13969,
+        22334,
+        69550
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Hydrophilidae",
+        "Cercyon",
+        "Cercyon tristis"
+      ]
+    },
+    {
+      "taxonid": 69589,
+      "taxonname": "Cicindela campestris",
+      "highertaxonid": 21878,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:58:43.000Z",
+      "recdatemodified": "2026-06-10T12:58:43.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        18885,
+        21878,
+        69589
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Cicindelidae",
+        "Cicindela",
+        "Cicindela campestris"
+      ]
+    },
+    {
+      "taxonid": 69531,
+      "taxonname": "Coccinella sp.",
+      "highertaxonid": 21884,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:42:20.000Z",
+      "recdatemodified": "2026-06-09T13:42:20.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14030,
+        21884,
+        69531
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Coccinellidae",
+        "Coccinella",
+        "Coccinella sp."
+      ]
+    },
+    {
+      "taxonid": 69577,
+      "taxonname": "Cryptocephalus bipunctatus",
+      "highertaxonid": 21904,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:38:22.000Z",
+      "recdatemodified": "2026-06-10T12:38:22.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14035,
+        21904,
+        69577
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Chrysomelidae",
+        "Cryptocephalus",
+        "Cryptocephalus bipunctatus"
+      ]
+    },
+    {
+      "taxonid": 69578,
+      "taxonname": "Cryptocephalus punctiger",
+      "highertaxonid": 21904,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:39:06.000Z",
+      "recdatemodified": "2026-06-10T12:39:06.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14035,
+        21904,
+        69578
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Chrysomelidae",
+        "Cryptocephalus",
+        "Cryptocephalus punctiger"
+      ]
+    },
+    {
+      "taxonid": 69552,
+      "taxonname": "Curculio salicivorus",
+      "highertaxonid": 21995,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:23:35.000Z",
+      "recdatemodified": "2026-06-09T14:23:35.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        21995,
+        69552
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Curculio",
+        "Curculio salicivorus"
+      ]
+    },
+    {
+      "taxonid": 69551,
+      "taxonname": "Cytilus sericeus",
+      "highertaxonid": 14017,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:22:20.000Z",
+      "recdatemodified": "2026-06-09T14:22:20.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14013,
+        14017,
+        69551
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Byrrhidae",
+        "Cytilus",
+        "Cytilus sericeus"
+      ]
+    },
+    {
+      "taxonid": 69573,
+      "taxonname": "Dermestes murinus",
+      "highertaxonid": 22215,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:33:47.000Z",
+      "recdatemodified": "2026-06-10T12:33:47.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        17036,
+        22215,
+        69573
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Dermestidae",
+        "Dermestes",
+        "Dermestes murinus"
+      ]
+    },
+    {
+      "taxonid": 69534,
+      "taxonname": "Donacia cinerea",
+      "highertaxonid": 21723,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:47:32.000Z",
+      "recdatemodified": "2026-06-09T13:47:32.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14035,
+        21723,
+        69534
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Chrysomelidae",
+        "Donacia",
+        "Donacia cinerea"
+      ]
+    },
+    {
+      "taxonid": 69576,
+      "taxonname": "Donacia obscura",
+      "highertaxonid": 21723,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:37:06.000Z",
+      "recdatemodified": "2026-06-10T12:37:06.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14035,
+        21723,
+        69576
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Chrysomelidae",
+        "Donacia",
+        "Donacia obscura"
+      ]
+    },
+    {
+      "taxonid": 69553,
+      "taxonname": "Gabrius splendidulus",
+      "highertaxonid": 22475,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:24:37.000Z",
+      "recdatemodified": "2026-06-09T14:24:37.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22475,
+        69553
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Gabrius",
+        "Gabrius splendidulus"
+      ]
+    },
+    {
+      "taxonid": 69590,
+      "taxonname": "Geodromicus plagiatus",
+      "highertaxonid": 13983,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:59:41.000Z",
+      "recdatemodified": "2026-06-10T12:59:41.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        13983,
+        69590
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Geodromicus",
+        "Geodromicus plagiatus"
+      ]
+    },
+    {
+      "taxonid": 69554,
+      "taxonname": "Gymnetron sp.",
+      "highertaxonid": 22059,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:26:20.000Z",
+      "recdatemodified": "2026-06-09T14:26:20.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        22059,
+        69554
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Gymnetron",
+        "Gymnetron sp."
+      ]
+    },
+    {
+      "taxonid": 69555,
+      "taxonname": "Gyrinus marinus",
+      "highertaxonid": 22280,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:27:30.000Z",
+      "recdatemodified": "2026-06-09T14:27:30.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        18138,
+        22280,
+        69555
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Gyrinidae",
+        "Gyrinus",
+        "Gyrinus marinus"
+      ]
+    },
+    {
+      "taxonid": 69556,
+      "taxonname": "Gyrinus substriatus",
+      "highertaxonid": 22280,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:28:31.000Z",
+      "recdatemodified": "2026-06-09T14:28:31.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        18138,
+        22280,
+        69556
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Gyrinidae",
+        "Gyrinus",
+        "Gyrinus substriatus"
+      ]
+    },
+    {
+      "taxonid": 69557,
+      "taxonname": "Helophorus minutus",
+      "highertaxonid": 13970,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:29:45.000Z",
+      "recdatemodified": "2026-06-09T14:29:45.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13969,
+        13970,
+        69557
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Hydrophilidae",
+        "Helophorus",
+        "Helophorus minutus"
+      ]
+    },
+    {
+      "taxonid": 69558,
+      "taxonname": "Hygrotus inaequalis",
+      "highertaxonid": 22036,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:30:57.000Z",
+      "recdatemodified": "2026-06-09T14:30:57.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        16785,
+        22036,
+        69558
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Dytiscidae",
+        "Hygrotus",
+        "Hygrotus inaequalis"
+      ]
+    },
+    {
+      "taxonid": 69536,
+      "taxonname": "Hylurgops glabratus",
+      "highertaxonid": 22437,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:50:40.000Z",
+      "recdatemodified": "2026-06-09T13:50:40.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        22437,
+        69536
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Hylurgops",
+        "Hylurgops glabratus"
+      ]
+    },
+    {
+      "taxonid": 69537,
+      "taxonname": "Ips sp.",
+      "highertaxonid": 22071,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:51:56.000Z",
+      "recdatemodified": "2026-06-09T13:51:56.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        23830,
+        22071,
+        69537
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Scolytinae",
+        "Ips",
+        "Ips sp."
+      ]
+    },
+    {
+      "taxonid": 69582,
+      "taxonname": "Isochnus populicola",
+      "highertaxonid": 22072,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:45:44.000Z",
+      "recdatemodified": "2026-06-10T12:45:44.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        22072,
+        69582
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Isochnus",
+        "Isochnus populicola"
+      ]
+    },
+    {
+      "taxonid": 69530,
+      "taxonname": "Laemophloeus muticus",
+      "highertaxonid": 22165,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:40:46.000Z",
+      "recdatemodified": "2026-06-09T13:40:46.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        21916,
+        22165,
+        69530
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Laemophloeidae",
+        "Laemophloeus",
+        "Laemophloeus muticus"
+      ]
+    },
+    {
+      "taxonid": 69559,
+      "taxonname": "Leistus rufomarginatus",
+      "highertaxonid": 23309,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:32:36.000Z",
+      "recdatemodified": "2026-06-09T14:32:36.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38295,
+        23309,
+        69559
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Nebriinae",
+        "Leistus",
+        "Leistus rufomarginatus"
+      ]
+    },
+    {
+      "taxonid": 69591,
+      "taxonname": "Lesteva longoelytrata",
+      "highertaxonid": 22479,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T13:01:13.000Z",
+      "recdatemodified": "2026-06-10T13:01:13.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22479,
+        69591
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Lesteva",
+        "Lesteva longoelytrata"
+      ]
+    },
+    {
+      "taxonid": 69592,
+      "taxonname": "Malthodes sp.",
+      "highertaxonid": 35151,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T13:02:09.000Z",
+      "recdatemodified": "2026-06-10T13:02:09.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        18285,
+        35151,
+        69592
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Cantharidae",
+        "Malthodes",
+        "Malthodes sp."
+      ]
+    },
+    {
+      "taxonid": 69560,
+      "taxonname": "Myllaena sp.",
+      "highertaxonid": 22483,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:33:32.000Z",
+      "recdatemodified": "2026-06-09T14:33:32.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22483,
+        69560
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Myllaena",
+        "Myllaena sp."
+      ]
+    },
+    {
+      "taxonid": 69561,
+      "taxonname": "Ochthebius minimus",
+      "highertaxonid": 22332,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:37:15.000Z",
+      "recdatemodified": "2026-06-09T14:37:15.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        16897,
+        22332,
+        69561
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Hydraenidae",
+        "Ochthebius",
+        "Ochthebius minimus"
+      ]
+    },
+    {
+      "taxonid": 69562,
+      "taxonname": "Olophrum fuscum",
+      "highertaxonid": 13978,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:38:33.000Z",
+      "recdatemodified": "2026-06-09T14:38:33.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        13978,
+        69562
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Olophrum",
+        "Olophrum fuscum"
+      ]
+    },
+    {
+      "taxonid": 69593,
+      "taxonname": "Omalium caesum",
+      "highertaxonid": 22491,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T13:03:12.000Z",
+      "recdatemodified": "2026-06-10T13:03:12.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22491,
+        69593
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Omalium",
+        "Omalium caesum"
+      ]
+    },
+    {
+      "taxonid": 69563,
+      "taxonname": "Orthotomicus suturalis",
+      "highertaxonid": 22088,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:39:41.000Z",
+      "recdatemodified": "2026-06-09T14:39:41.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        23830,
+        22088,
+        69563
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Scolytinae",
+        "Orthotomicus",
+        "Orthotomicus suturalis"
+      ]
+    },
+    {
+      "taxonid": 69564,
+      "taxonname": "Patrobus atrorufus",
+      "highertaxonid": 15635,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:41:14.000Z",
+      "recdatemodified": "2026-06-09T14:41:14.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38294,
+        15635,
+        69564
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Patrobinae",
+        "Patrobus",
+        "Patrobus atrorufus"
+      ]
+    },
+    {
+      "taxonid": 69565,
+      "taxonname": "Philonthus nigrita",
+      "highertaxonid": 13989,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:42:37.000Z",
+      "recdatemodified": "2026-06-09T14:42:37.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        13989,
+        69565
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Philonthus",
+        "Philonthus nigrita"
+      ]
+    },
+    {
+      "taxonid": 69535,
+      "taxonname": "Phratora vitellinae",
+      "highertaxonid": 21870,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:49:12.000Z",
+      "recdatemodified": "2026-06-09T13:49:12.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14035,
+        21870,
+        69535
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Chrysomelidae",
+        "Phratora",
+        "Phratora vitellinae"
+      ]
+    },
+    {
+      "taxonid": 69532,
+      "taxonname": "Psammoporus",
+      "highertaxonid": 14005,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:44:22.000Z",
+      "recdatemodified": "2026-06-09T13:44:22.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14005,
+        69532
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Scarabaeidae",
+        "Psammoporus"
+      ]
+    },
+    {
+      "taxonid": 69533,
+      "taxonname": "Psammoporus sabuleti",
+      "highertaxonid": 69532,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:45:16.000Z",
+      "recdatemodified": "2026-06-09T13:45:16.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14005,
+        69532,
+        69533
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Scarabaeidae",
+        "Psammoporus",
+        "Psammoporus sabuleti"
+      ]
+    },
+    {
+      "taxonid": 69571,
+      "taxonname": "Pterostichus (Phonias) strenuus/ P. diligens ",
+      "highertaxonid": 13944,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:31:43.000Z",
+      "recdatemodified": "2026-06-10T12:31:43.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38284,
+        13944,
+        69571
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Harpalinae",
+        "Pterostichus",
+        "Pterostichus (Phonias) strenuus/ P. diligens"
+      ]
+    },
+    {
+      "taxonid": 69566,
+      "taxonname": "Pterostichus oblongopunctatus",
+      "highertaxonid": 13944,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:45:02.000Z",
+      "recdatemodified": "2026-06-09T14:45:02.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38284,
+        13944,
+        69566
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Harpalinae",
+        "Pterostichus",
+        "Pterostichus oblongopunctatus"
+      ]
+    },
+    {
+      "taxonid": 69567,
+      "taxonname": "Pterostichus strenuus",
+      "highertaxonid": 13944,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:46:21.000Z",
+      "recdatemodified": "2026-06-09T14:46:21.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13919,
+        38284,
+        13944,
+        69567
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Carabidae",
+        "Harpalinae",
+        "Pterostichus",
+        "Pterostichus strenuus"
+      ]
+    },
+    {
+      "taxonid": 69594,
+      "taxonname": "Silpha tristis",
+      "highertaxonid": 22453,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T13:04:09.000Z",
+      "recdatemodified": "2026-06-10T13:04:09.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13997,
+        22453,
+        69594
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Silphidae",
+        "Silpha",
+        "Silpha tristis"
+      ]
+    },
+    {
+      "taxonid": 69529,
+      "taxonname": "Simplocaria semistriata",
+      "highertaxonid": 14014,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:38:57.000Z",
+      "recdatemodified": "2026-06-09T13:38:57.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14013,
+        14014,
+        69529
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Byrrhidae",
+        "Simplocaria",
+        "Simplocaria semistriata"
+      ]
+    },
+    {
+      "taxonid": 69538,
+      "taxonname": "Sitona cf. S. cinerascens",
+      "highertaxonid": 22197,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T13:55:10.000Z",
+      "recdatemodified": "2026-06-09T13:55:10.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        22197,
+        69538
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Sitona",
+        "Sitona cf. S. cinerascens"
+      ]
+    },
+    {
+      "taxonid": 69580,
+      "taxonname": "Sitona cf. S. macularius",
+      "highertaxonid": 22197,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:41:33.000Z",
+      "recdatemodified": "2026-06-10T12:41:33.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        22197,
+        69580
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Sitona",
+        "Sitona cf. S. macularius"
+      ]
+    },
+    {
+      "taxonid": 69575,
+      "taxonname": "Spondylis buprestoides",
+      "highertaxonid": 21782,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:35:56.000Z",
+      "recdatemodified": "2026-06-10T12:35:56.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        16992,
+        21782,
+        69575
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Cerambycidae",
+        "Spondylis",
+        "Spondylis buprestoides"
+      ]
+    },
+    {
+      "taxonid": 69568,
+      "taxonname": "Tachinus corticinus",
+      "highertaxonid": 22502,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:51:28.000Z",
+      "recdatemodified": "2026-06-09T14:51:28.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        22502,
+        69568
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Tachinus",
+        "Tachinus corticinus"
+      ]
+    },
+    {
+      "taxonid": 69579,
+      "taxonname": "Xylechinus pilosus",
+      "highertaxonid": 23217,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-10T12:40:10.000Z",
+      "recdatemodified": "2026-06-10T12:40:10.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        14037,
+        23217,
+        69579
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Curculionidae",
+        "Xylechinus",
+        "Xylechinus pilosus"
+      ]
+    },
+    {
+      "taxonid": 69569,
+      "taxonname": "Xylodromus testaceus",
+      "highertaxonid": 28234,
+      "taxagroupid": "INS",
+      "recdatecreated": "2026-06-09T14:52:51.000Z",
+      "recdatemodified": "2026-06-09T14:52:51.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        9449,
+        13915,
+        13916,
+        13973,
+        19243,
+        28234,
+        69569
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Arthropoda",
+        "Insecta",
+        "Coleoptera",
+        "Staphylinidae",
+        "Omaliini gen. sp.",
+        "Xylodromus",
+        "Xylodromus testaceus"
+      ]
+    },
+    {
+      "taxonid": 69600,
+      "taxonname": "Abalosia castellanosi",
+      "highertaxonid": 6462,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T00:47:40.000Z",
+      "recdatemodified": "2026-06-12T00:47:40.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        69600
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Abalosia castellanosi"
+      ]
+    },
+    {
+      "taxonid": 69595,
+      "taxonname": "Aceratheriinae",
+      "highertaxonid": 13887,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-11T01:03:39.000Z",
+      "recdatemodified": "2026-06-11T01:03:39.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        42039,
+        6358,
+        13887,
+        69595
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Euungulata",
+        "Perissodactyla",
+        "Rhinocerotoidea",
+        "Aceratheriinae"
+      ]
+    },
+    {
+      "taxonid": 69606,
+      "taxonname": "Ailuridae",
+      "highertaxonid": 5897,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-13T04:00:35.000Z",
+      "recdatemodified": "2026-06-13T04:00:35.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        5897,
+        69606
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Carnivora",
+        "Ailuridae"
+      ]
+    },
+    {
+      "taxonid": 69609,
+      "taxonname": "Arctomeles dimolodontus",
+      "highertaxonid": 23811,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-13T04:10:00.000Z",
+      "recdatemodified": "2026-06-13T04:10:00.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        5897,
+        7444,
+        6256,
+        23811,
+        69609
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Carnivora",
+        "Mustelidae/Mephitidae",
+        "Mustelidae",
+        "Arctomeles",
+        "Arctomeles dimolodontus"
+      ]
+    },
+    {
+      "taxonid": 69599,
+      "taxonname": "Cavia",
+      "highertaxonid": 6877,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T00:42:48.000Z",
+      "recdatemodified": "2026-06-12T00:42:48.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        6877,
+        69599
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Caviidae",
+        "Cavia"
+      ]
+    },
+    {
+      "taxonid": 69601,
+      "taxonname": "Ctenomys chapalmalensis",
+      "highertaxonid": 67868,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T00:50:16.000Z",
+      "recdatemodified": "2026-06-12T00:50:16.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        67868,
+        69601
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Ctenomys",
+        "Ctenomys chapalmalensis"
+      ]
+    },
+    {
+      "taxonid": 69603,
+      "taxonname": "Dolichotis salinicola",
+      "highertaxonid": 6877,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T01:23:34.000Z",
+      "recdatemodified": "2026-06-12T01:23:34.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        6877,
+        69603
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Caviidae",
+        "Dolichotis salinicola"
+      ]
+    },
+    {
+      "taxonid": 69605,
+      "taxonname": "Eucelophorus chapalmalensis",
+      "highertaxonid": 6462,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T01:25:48.000Z",
+      "recdatemodified": "2026-06-12T01:25:48.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        69605
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Eucelophorus chapalmalensis"
+      ]
+    },
+    {
+      "taxonid": 69602,
+      "taxonname": "Eumysops",
+      "highertaxonid": 6462,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T00:52:33.000Z",
+      "recdatemodified": "2026-06-12T00:52:33.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        69602
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Eumysops"
+      ]
+    },
+    {
+      "taxonid": 69604,
+      "taxonname": "Pithanotomys",
+      "highertaxonid": 6462,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-12T01:24:27.000Z",
+      "recdatemodified": "2026-06-12T01:24:27.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6462,
+        69604
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Rodentia",
+        "Pithanotomys"
+      ]
+    },
+    {
+      "taxonid": 69597,
+      "taxonname": "Pliometanastes",
+      "highertaxonid": 6192,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-11T01:05:46.000Z",
+      "recdatemodified": "2026-06-11T01:05:46.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        6780,
+        6905,
+        6192,
+        69597
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Xenarthra",
+        "Pilosa",
+        "Megalonychidae",
+        "Pliometanastes"
+      ]
+    },
+    {
+      "taxonid": 69598,
+      "taxonname": "Plionarctos",
+      "highertaxonid": 6686,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-11T01:07:08.000Z",
+      "recdatemodified": "2026-06-11T01:07:08.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        5897,
+        6686,
+        69598
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Carnivora",
+        "Ursidae",
+        "Plionarctos"
+      ]
+    },
+    {
+      "taxonid": 69607,
+      "taxonname": "Pristinailurus",
+      "highertaxonid": 69606,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-13T04:01:17.000Z",
+      "recdatemodified": "2026-06-13T04:01:17.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        5897,
+        69606,
+        69607
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Carnivora",
+        "Ailuridae",
+        "Pristinailurus"
+      ]
+    },
+    {
+      "taxonid": 69608,
+      "taxonname": "Pristinailurus bristoli",
+      "highertaxonid": 69607,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-13T04:01:59.000Z",
+      "recdatemodified": "2026-06-13T04:01:59.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        5897,
+        69606,
+        69607,
+        69608
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Carnivora",
+        "Ailuridae",
+        "Pristinailurus",
+        "Pristinailurus bristoli"
+      ]
+    },
+    {
+      "taxonid": 69596,
+      "taxonname": "Teleoceras",
+      "highertaxonid": 69595,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-11T01:04:21.000Z",
+      "recdatemodified": "2026-06-11T01:04:21.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        42039,
+        6358,
+        13887,
+        69595,
+        69596
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Euungulata",
+        "Perissodactyla",
+        "Rhinocerotoidea",
+        "Aceratheriinae",
+        "Teleoceras"
+      ]
+    },
+    {
+      "taxonid": 69570,
+      "taxonname": "Thuliadanta mayri",
+      "highertaxonid": 6358,
+      "taxagroupid": "MAM",
+      "recdatecreated": "2026-06-09T23:59:21.000Z",
+      "recdatemodified": "2026-06-09T23:59:21.000Z",
+      "path_ids": [
+        32182,
+        6758,
+        6757,
+        6171,
+        42039,
+        6358,
+        69570
+      ],
+      "path_names": [
+        "Eukaryota",
+        "Animalia",
+        "Vertebrata",
+        "Mammalia",
+        "Euungulata",
+        "Perissodactyla",
+        "Thuliadanta mayri"
       ]
     },
     {

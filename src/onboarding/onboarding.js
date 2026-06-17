@@ -11,6 +11,7 @@ const CLICK_TAXON_STEP_INDEX = 1;
 const TWO_LEVEL_STEP_INDEX = 2;
 const SEARCH_STEP_INDEX = 5;
 const COMPARE_STEP_INDEX = 6;
+const COMPLETION_RESET_DELAY_MS = 80;
 
 let activeTour = null;
 let currentStepIndex = -1;
@@ -142,6 +143,18 @@ function setSecondaryTourHighlight(selector, isActive) {
   document.querySelector(selector)?.classList.toggle('onboarding-secondary-highlight', isActive);
 }
 
+function resetToInitialSearchPrompt() {
+  window.setTimeout(() => {
+    if (typeof window.resetToInitialSearchPrompt === 'function') {
+      window.resetToInitialSearchPrompt({ focusSearch: true });
+      return;
+    }
+
+    clearSearchQuery();
+    document.getElementById('searchInput')?.focus({ preventScroll: true });
+  }, COMPLETION_RESET_DELAY_MS);
+}
+
 function syncStepContext(activeIndex) {
   currentStepIndex = activeIndex;
   prepareStepDemoState(activeIndex);
@@ -167,6 +180,7 @@ function createTour() {
   }
 
   let closedByUser = false;
+  let completedByUser = false;
 
   const tour = driverFactory({
     steps: FIRST_TIME_TOUR_STEPS,
@@ -193,14 +207,21 @@ function createTour() {
       syncStepContext(-1);
       options.driver.destroy();
     },
+    onNextClick: (_element, _step, options) => {
+      if (currentStepIndex >= FIRST_TIME_TOUR_STEPS.length - 1) {
+        completedByUser = true;
+      }
+      options.driver.moveNext();
+    },
     onDestroyed: (_element, _step, options) => {
       activeTour = null;
       syncStepContext(-1);
       if (closedByUser) return;
 
-      const activeIndex = options.state?.activeIndex ?? 0;
-      if (activeIndex >= FIRST_TIME_TOUR_STEPS.length - 1) {
+      const activeIndex = options.state?.activeIndex ?? currentStepIndex;
+      if (completedByUser || activeIndex >= FIRST_TIME_TOUR_STEPS.length - 1) {
         markFirstTourCompleted();
+        resetToInitialSearchPrompt();
       } else {
         markFirstTourSkipped();
       }

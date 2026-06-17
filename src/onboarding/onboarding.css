@@ -73,6 +73,26 @@
   outline-offset: 4px;
 }
 
+.onboarding-start-prompt {
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  padding: 12px 14px;
+}
+
+.onboarding-start-prompt__title {
+  color: #166534;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.onboarding-start-prompt__body {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 @media (min-width: 900px) {
   body.onboarding-click-taxon-step .driver-popover.neotoma-onboarding-popover {
     translate: 0 -220px;

@@ -1493,6 +1493,65 @@
             }
         }
 
+        function showFindTaxonPrompt() {
+            const panel = document.getElementById('info');
+            if (!panel) return;
+
+            panel.innerHTML = `
+                <div class="onboarding-start-prompt">
+                    <div class="onboarding-start-prompt__title">Start by finding a taxon</div>
+                    <div class="onboarding-start-prompt__body">
+                        Search for a taxon name or ID, then select a result to inspect its path, metadata, synonyms, and available links.
+                    </div>
+                </div>
+            `;
+            panel.style.display = 'block';
+        }
+
+        async function resetToInitialSearchPrompt({ focusSearch = true } = {}) {
+            currentTaxonType = 'bio';
+            currentTaxagroupid = null;
+            navigationStack = [];
+            isInitialView = true;
+            currentTreeType = 'main';
+            currentRootId = null;
+            currentRootName = null;
+            mainTreeNodes = [];
+            orphanTreeNodes = [];
+            window.__initialUrlState = null;
+
+            const bioBtn = document.getElementById('bioTaxonBtn');
+            const nonBioBtn = document.getElementById('nonBioTaxonBtn');
+            bioBtn?.classList.add('active');
+            nonBioBtn?.classList.remove('active');
+
+            populateTaxonGroupDropdown(allTaxaGroupsList);
+
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            const toggleDiv = document.getElementById('treeViewToggle');
+            if (toggleDiv) {
+                toggleDiv.style.display = 'block';
+                toggleDiv.style.visibility = 'visible';
+            }
+
+            d3.select('#chart').selectAll('*').interrupt();
+            updateBackButton();
+            await loadInitialView('main');
+            updateURLState({ type: null, group: null, mode: null, focus: null, q: null, rot: null });
+            showFindTaxonPrompt();
+
+            if (focusSearch && searchInput) {
+                window.requestAnimationFrame(() => {
+                    searchInput.focus({ preventScroll: true });
+                });
+            }
+        }
+
         // Set up back button (will be called after DOM is ready)
         function setupBackButton() {
             const backBtn = document.getElementById('backButton');
@@ -1720,6 +1779,7 @@
         window.navigateToNode = navigateToNode;
         window.loadTreeForGroup = loadTreeForGroup;
         window.activateFocusView = activateFocusView;
+        window.resetToInitialSearchPrompt = resetToInitialSearchPrompt;
     </script>
 </body>
 

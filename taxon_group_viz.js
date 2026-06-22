@@ -1,4 +1,4 @@
-import { applyAngleCulling, applySemanticZoomLabels } from './src/labelCulling.js?v=20260622-semantic-labels';
+import { applyAngleCulling, applySemanticZoomLabels } from './src/labelCulling.js?v=20260622-node-clearance-3';
 import { setupFocusInfo } from './src/searchFocus.js';
 import { normalizeRows, pathsToTree, attachSynonymMetadata } from './src/data.js';
 import { createPopup } from './src/popup.js';
@@ -9,7 +9,7 @@ import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
-import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, FOCUS_VIEW_GROUPS, getRadialSemanticLabelConfig, isMajorGroupDisplayName } from './src/taxaViewConfig.js?v=20260622-semantic-labels';
+import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, FOCUS_VIEW_GROUPS, getRadialSemanticLabelConfig, isMajorGroupDisplayName } from './src/taxaViewConfig.js?v=20260622-node-clearance-3';
 import { updateURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
@@ -488,7 +488,7 @@ async function renderMammalTree({
       });
 
     nodeEnter.append('text')
-      .attr('class', 'taxon-label')
+      .attr('class', d => d.depth === 0 ? 'taxon-label root-taxon-label' : 'taxon-label')
       .attr('dy', '0.32em')
       .attr('x', 10) // Will be updated by updateLabelOrientation()
       .attr('text-anchor', 'start') // Will be updated by updateLabelOrientation()
@@ -613,6 +613,7 @@ async function renderMammalTree({
           highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), tNode);
           setHighlightedPath(tNode);
           if (typeof info !== 'undefined' && info) info.show(tNode);
+          window.setTimeout(() => cull?.refresh(), 0);
         }, 220);
       });
 
@@ -632,6 +633,7 @@ async function renderMammalTree({
           highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), d);
           setHighlightedPath(d);
           if (info) info.show(d);
+          window.setTimeout(() => cull?.refresh(), 0);
         }, 220);
       })
       .on('dblclick', (event, d) => {
@@ -729,6 +731,8 @@ async function renderMammalTree({
     ? applySemanticZoomLabels(root, () => gNodes.selectAll('g.node'), {
         ...semanticLabelConfig,
         viewportElement: semanticLabelViewport,
+        rootBadgeElement: gRootLabel.node(),
+        getObstacleElements: () => [gRootLabel.select('circle').node()],
       })
     : applyAngleCulling(root, () => gNodes.selectAll('g.node'), 1.1);
   const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate, !isInitialView);
@@ -819,9 +823,12 @@ async function renderMammalTree({
     expandToNode,
     searchPathOnly: usesFocusViewSearch,
     deferLocalResultsRendering: usesFocusViewSearch,
-    onSearchResults: usesFocusViewSearch && typeof window !== 'undefined' && window.activateFocusView
-      ? () => window.activateFocusView()
-      : null,
+    onSearchResults: () => {
+      if (usesFocusViewSearch && typeof window !== 'undefined' && window.activateFocusView) {
+        window.activateFocusView();
+      }
+      window.setTimeout(() => cull?.refresh(), 0);
+    },
     onSearchClear: () => { if (cull) cull.refresh(); },
     taxagroupid,
   });

@@ -57,8 +57,15 @@ export function applySemanticZoomLabels(root, getNodeSel, options = {}) {
   const tiers = (options.tiers || []).slice().sort((a, b) => a.minScale - b.minScale);
   const targetScreenFontPx = options.targetScreenFontPx || 11;
   const collisionPaddingPx = options.collisionPaddingPx ?? 4;
+  const nodeCollisionPaddingPx = options.nodeCollisionPaddingPx ?? 2;
+  const nodeRadius = options.nodeRadius ?? 3.5;
+  const nodeGapScreenPx = options.nodeGapScreenPx ?? 6;
+  const protectedInternalDepth = options.protectedInternalDepth ?? 5;
+  const offsetAttemptsScreenPx = options.offsetAttemptsScreenPx || [0, 8, 16, 24];
   const viewportPaddingPx = options.viewportPaddingPx ?? 8;
   const viewportElement = options.viewportElement || null;
+  const getObstacleElements = options.getObstacleElements || null;
+  const rootBadgeElement = options.rootBadgeElement || null;
   let transform = { k: 1, x: 0, y: 0 };
   let frameId = null;
 
@@ -98,26 +105,42 @@ export function applySemanticZoomLabels(root, getNodeSel, options = {}) {
     const nodeSelection = typeof getNodeSel === 'function' ? getNodeSel() : getNodeSel;
     const labels = nodeSelection.select('text.taxon-label');
     const fontSize = Math.max(1.5, Math.min(36, targetScreenFontPx / k));
-    const labelOffset = Math.max(1.5, 10 / k);
+    const baseLabelOffset = nodeRadius + (nodeGapScreenPx / k);
     const candidates = [];
+    let rootIsHighlighted = false;
 
     labels.each(function (d) {
       const label = d3.select(this);
       const forced = isForcedLabel(this);
+      if (!d || d.depth === 0) {
+        rootIsHighlighted = rootIsHighlighted || forced;
+        this.style.setProperty('display', 'none', 'important');
+        return;
+      }
       const eligible = forced || isTierEligible(d, tier);
       const currentX = Number(this.getAttribute('x')) || 10;
+      const direction = currentX < 0 ? -1 : 1;
 
       label
         .style('font-size', `${fontSize}px`, 'important')
-        .attr('x', currentX < 0 ? -labelOffset : labelOffset)
+        .attr('x', direction * baseLabelOffset)
         .style('display', eligible ? 'block' : 'none')
         .style('visibility', eligible ? 'hidden' : null)
         .style('opacity', eligible ? 0 : null);
 
       if (eligible) {
-        candidates.push({ element: this, data: d, forced, internal: hasDescendants(d) });
+        candidates.push({
+          element: this,
+          data: d,
+          direction,
+          forced,
+          internal: hasDescendants(d),
+          protected: forced || (hasDescendants(d) && d.depth <= protectedInternalDepth),
+        });
       }
     });
+
+    rootBadgeElement?.classList.toggle('is-path-highlighted', rootIsHighlighted);
 
     const viewportRect = viewportElement?.getBoundingClientRect() || {
       left: 0,
@@ -126,9 +149,29 @@ export function applySemanticZoomLabels(root, getNodeSel, options = {}) {
       bottom: window.innerHeight,
     };
 
-    candidates.forEach(candidate => {
-      candidate.rect = candidate.element.getBoundingClientRect();
-      candidate.inViewport = candidate.forced || isInsideViewport(candidate.rect, viewportRect);
+    const obstacleRects = [];
+    nodeSelection.each(function () {
+      const directCircle = Array.from(this.children).find(child => child.tagName?.toLowerCase() === 'circle');
+      const toggleCircle = this.querySelector('.toggle-group circle');
+      [directCircle, toggleCircle].filter(Boolean).forEach(element => {
+        const style = window.getComputedStyle(element);
+        const toggleGroup = element.closest('.toggle-group');
+        const toggleStyle = toggleGroup ? window.getComputedStyle(toggleGroup) : null;
+        const rect = element.getBoundingClientRect();
+        const isVisible = style.display !== 'none' &&
+          Number(style.opacity) > 0 &&
+          (!toggleStyle || (toggleStyle.display !== 'none' && Number(toggleStyle.opacity) > 0));
+        if (isVisible && rect.width > 0 && rect.height > 0) {
+          obstacleRects.push(rect);
+        }
+      });
+    });
+    const extraObstacleElements = typeof getObstacleElements === 'function'
+      ? getObstacleElements()
+      : [];
+    (extraObstacleElements || []).filter(Boolean).forEach(element => {
+      const rect = element.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) obstacleRects.push(rect);
     });
 
     candidates.sort((a, b) => {
@@ -139,20 +182,67 @@ export function applySemanticZoomLabels(root, getNodeSel, options = {}) {
     });
 
     const acceptedRects = [];
+    const protectedVisibleCandidates = [];
     candidates.forEach(candidate => {
-      const collides = !candidate.forced && acceptedRects.some(rect =>
-        rectsOverlap(candidate.rect, rect, collisionPaddingPx)
-      );
-      const visible = candidate.inViewport && !collides;
       const label = d3.select(candidate.element);
+      let bestAttempt = null;
+      let protectedAttempt = null;
+
+      for (const extraScreenPx of offsetAttemptsScreenPx) {
+        const x = candidate.direction * (baseLabelOffset + (extraScreenPx / k));
+        label.attr('x', x);
+        const rect = candidate.element.getBoundingClientRect();
+        const inViewport = candidate.forced || isInsideViewport(rect, viewportRect);
+        const nodeCollisions = obstacleRects.filter(obstacle =>
+          rectsOverlap(rect, obstacle, nodeCollisionPaddingPx)
+        ).length;
+        const labelCollisions = acceptedRects.filter(accepted =>
+          rectsOverlap(rect, accepted, collisionPaddingPx)
+        ).length;
+        const score = nodeCollisions + labelCollisions;
+        const attempt = { x, rect, inViewport, score, nodeCollisions, labelCollisions };
+
+        if (!bestAttempt || score < bestAttempt.score) bestAttempt = attempt;
+        if (candidate.protected && labelCollisions === 0 &&
+            (!protectedAttempt || nodeCollisions < protectedAttempt.nodeCollisions)) {
+          protectedAttempt = attempt;
+        }
+        if (inViewport && score === 0) {
+          bestAttempt = attempt;
+          break;
+        }
+      }
+
+      if (candidate.protected && bestAttempt?.score !== 0 && protectedAttempt) {
+        bestAttempt = protectedAttempt;
+      }
+      const visible = Boolean(bestAttempt?.inViewport) && (
+        bestAttempt.score === 0 ||
+        candidate.forced ||
+        (candidate.protected && bestAttempt.labelCollisions === 0)
+      );
+      if (bestAttempt) label.attr('x', bestAttempt.x);
 
       label
         .style('display', visible ? 'block' : 'none')
         .style('visibility', visible ? 'visible' : null)
-        .style('opacity', visible ? 1 : null);
+        .style('opacity', visible ? 1 : null)
+        .style('paint-order', visible ? 'stroke fill' : null)
+        .style('stroke', visible ? '#fff' : null)
+        .style('stroke-width', visible ? `${2.5 / k}px` : null)
+        .style('stroke-linejoin', visible ? 'round' : null);
 
-      if (visible) acceptedRects.push(candidate.rect);
+      if (visible) {
+        acceptedRects.push(bestAttempt.rect);
+        if (candidate.protected) protectedVisibleCandidates.push(candidate);
+      }
     });
+
+    // Keep selected and shallow hierarchy labels above descendant node circles.
+    // Deepest groups are raised first so the highest-level label wins last.
+    protectedVisibleCandidates
+      .sort((a, b) => b.data.depth - a.data.depth)
+      .forEach(candidate => candidate.element.parentNode?.parentNode?.appendChild(candidate.element.parentNode));
   }
 
   function schedule(nextTransform = transform) {

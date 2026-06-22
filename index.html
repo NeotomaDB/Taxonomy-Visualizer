@@ -660,6 +660,7 @@
 
         // Load both taxonpaths and taxagroup names mapping in parallel
         let allTaxaGroupsList = [];
+        let pendingViewLoad = Promise.resolve();
         Promise.all([
             fetch("data/taxonpaths.json").then(r => r.json()),
             fetch("data/taxagroup_names.json").then(r => r.json()).catch(() => ({})),
@@ -728,12 +729,12 @@
                 if (urlState.group) {
                     const select = document.getElementById('taxagroupSelect');
                     if (select) select.value = urlState.group;
-                    loadTreeForGroup(urlState.group).then(() => {
+                    pendingViewLoad = loadTreeForGroup(urlState.group).then(() => {
                         applyPostRenderState();
                     });
                 } else {
                     // Load initial 4-level view
-                    loadInitialView().then(() => {
+                    pendingViewLoad = loadInitialView().then(() => {
                         applyPostRenderState();
                     });
                 }
@@ -787,7 +788,7 @@
                     populateTaxonGroupDropdown(allTaxaGroupsList);
 
                     updateBackButton();
-                    loadInitialView();
+                    pendingViewLoad = loadInitialView();
                 }
 
                 bioBtn.addEventListener('click', () => switchTaxonType('bio'));
@@ -821,7 +822,7 @@
                         }
 
                         updateBackButton();
-                        loadInitialView();
+                        pendingViewLoad = loadInitialView();
                     } else {
                         // Specific taxon group selected
                         currentTaxagroupid = selectedValue;
@@ -836,7 +837,7 @@
                         }
 
                         updateBackButton();
-                        loadTreeForGroup(currentTaxagroupid, false);
+                        pendingViewLoad = loadTreeForGroup(currentTaxagroupid, false);
                     }
                 });
             })
@@ -1509,6 +1510,8 @@
         }
 
         async function resetToInitialSearchPrompt({ focusSearch = true } = {}) {
+            const tourViewLoad = pendingViewLoad;
+
             currentTaxonType = 'bio';
             currentTaxagroupid = null;
             navigationStack = [];
@@ -1541,7 +1544,14 @@
 
             d3.select('#chart').selectAll('*').interrupt();
             updateBackButton();
-            await loadInitialView('main');
+
+            // Let the tour's Mammalia render finish before the final overview render.
+            await tourViewLoad.catch(error => {
+                console.warn('Previous tour view did not finish cleanly:', error);
+            });
+
+            pendingViewLoad = loadInitialView('main');
+            await pendingViewLoad;
             updateURLState({ type: null, group: null, mode: null, focus: null, q: null, rot: null });
             showFindTaxonPrompt();
 

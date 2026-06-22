@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-15T07:13:28+00:00",
-  "since": "2026-05-16",
+  "generated_at": "2026-06-22T07:18:14+00:00",
+  "since": "2026-05-23",
   "counts": {
-    "new": 96,
+    "new": 93,
     "modified": 22,
-    "total": 118
+    "total": 115
   },
   "new": [
     {
@@ -2398,42 +2398,6 @@
       ]
     },
     {
-      "taxonid": 69516,
-      "taxonname": "Arctocypris dulcifons",
-      "highertaxonid": 49916,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-19T09:37:14.000Z",
-      "recdatemodified": "2026-05-19T09:37:14.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14540,
-        49916,
-        69516
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Eucypridinae",
-        "Arctocypris",
-        "Arctocypris dulcifons"
-      ]
-    },
-    {
       "taxonid": 69524,
       "taxonname": "Ilyocypris sebeiensis",
       "highertaxonid": 14515,
@@ -2467,78 +2431,6 @@
         "Ilyocypridinae",
         "Ilyocypris",
         "Ilyocypris sebeiensis"
-      ]
-    },
-    {
-      "taxonid": 69514,
-      "taxonname": "Leucocythere tropis",
-      "highertaxonid": 50295,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-17T08:56:02.000Z",
-      "recdatemodified": "2026-05-17T08:56:02.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        24059,
-        24060,
-        14595,
-        14596,
-        50295,
-        69514
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cytherocopina",
-        "Cytheroidea",
-        "Limnocytheridae",
-        "Limnocytherinae",
-        "Leucocythere",
-        "Leucocythere tropis"
-      ]
-    },
-    {
-      "taxonid": 69515,
-      "taxonname": "Prionocypris gansenensis",
-      "highertaxonid": 14545,
-      "taxagroupid": "OST",
-      "recdatecreated": "2026-05-18T01:34:39.000Z",
-      "recdatemodified": "2026-05-18T01:34:39.000Z",
-      "path_ids": [
-        32182,
-        6758,
-        9449,
-        9450,
-        13914,
-        14443,
-        14448,
-        14449,
-        14522,
-        14540,
-        14545,
-        69515
-      ],
-      "path_names": [
-        "Eukaryota",
-        "Animalia",
-        "Arthropoda",
-        "Crustacea",
-        "Ostracoda",
-        "Podocopida",
-        "Cypridocopina",
-        "Cypridoidea",
-        "Cyprididae",
-        "Eucypridinae",
-        "Prionocypris",
-        "Prionocypris gansenensis"
       ]
     },
     {

@@ -1,4 +1,4 @@
-import { applyAngleCulling } from './src/labelCulling.js';
+import { applyAngleCulling, applySemanticZoomLabels } from './src/labelCulling.js?v=20260622-semantic-labels';
 import { setupFocusInfo } from './src/searchFocus.js';
 import { normalizeRows, pathsToTree, attachSynonymMetadata } from './src/data.js';
 import { createPopup } from './src/popup.js';
@@ -9,7 +9,7 @@ import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
-import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, FOCUS_VIEW_GROUPS, isMajorGroupDisplayName } from './src/taxaViewConfig.js';
+import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, FOCUS_VIEW_GROUPS, getRadialSemanticLabelConfig, isMajorGroupDisplayName } from './src/taxaViewConfig.js?v=20260622-semantic-labels';
 import { updateURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
@@ -289,6 +289,7 @@ async function renderMammalTree({
   // Tiered summary view for large groups: show anchor + one level of children,
   // collapse everything deeper so the initial view is readable.
   const taxagroupid = rows[0]?.taxagroupid;
+  const semanticLabelConfig = getRadialSemanticLabelConfig(taxagroupid);
 
   if (ONE_LEVEL_RADIAL_GROUPS.has(taxagroupid) && !isInitialView) {
     // Anchor node is root. Its direct children (Orders / Classes) stay visible;
@@ -487,6 +488,7 @@ async function renderMammalTree({
       });
 
     nodeEnter.append('text')
+      .attr('class', 'taxon-label')
       .attr('dy', '0.32em')
       .attr('x', 10) // Will be updated by updateLabelOrientation()
       .attr('text-anchor', 'start') // Will be updated by updateLabelOrientation()
@@ -720,8 +722,15 @@ async function renderMammalTree({
   updateLabelOrientation();
   bindNodeInteractions();
 
-  // Angle-based label culling (avoid overlap at initial scale)
-  const cull = applyAngleCulling(root, () => gNodes.selectAll('g.node'), 1.1);
+  // Dense groups can progressively reveal labels by semantic depth while the
+  // complete node/link topology stays rendered. Other groups keep angle culling.
+  const semanticLabelViewport = document.querySelector(selector)?.closest('#stage') || svg.node();
+  const cull = semanticLabelConfig
+    ? applySemanticZoomLabels(root, () => gNodes.selectAll('g.node'), {
+        ...semanticLabelConfig,
+        viewportElement: semanticLabelViewport,
+      })
+    : applyAngleCulling(root, () => gNodes.selectAll('g.node'), 1.1);
   const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate, !isInitialView);
   const { showAt: showPopupAt } = createPopup('popup');
 
@@ -735,6 +744,7 @@ async function renderMammalTree({
     currentRotate = deg;
     updateRotate();
     updateLabelOrientation();
+    if (cull?.refresh) cull.refresh();
     if (rotateValueEl) rotateValueEl.textContent = `${deg}\u00B0`;
     if (!skipUrlUpdate) {
       updateURLState({ rot: deg });
@@ -824,7 +834,14 @@ async function renderMammalTree({
       currentTranslateX = event.transform.x;
       currentTranslateY = event.transform.y;
       updateViewport();
-      if (cull && cull.updateByScale) cull.updateByScale(event.transform.k);
+      if (semanticLabelConfig) {
+        gRootLabel.attr('transform', `scale(${1 / Math.max(0.01, event.transform.k)})`);
+      }
+      if (cull?.update) {
+        cull.update(event.transform);
+      } else if (cull?.updateByScale) {
+        cull.updateByScale(event.transform.k);
+      }
     });
   svg.call(zoomBehavior).on('dblclick.zoom', null);
 

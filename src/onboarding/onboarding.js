@@ -12,6 +12,7 @@ const TWO_LEVEL_STEP_INDEX = 2;
 const SEARCH_STEP_INDEX = 5;
 const COMPARE_STEP_INDEX = 6;
 const COMPLETION_RESET_DELAY_MS = 80;
+const OVERLAY_GUARD_EVENTS = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'];
 
 let activeTour = null;
 let currentStepIndex = -1;
@@ -143,6 +144,25 @@ function setSecondaryTourHighlight(selector, isActive) {
   document.querySelector(selector)?.classList.toggle('onboarding-secondary-highlight', isActive);
 }
 
+function preventOverlayDismiss(event) {
+  if (!(event.target instanceof Element) || !event.target.closest('.driver-overlay')) return;
+
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
+
+function bindOverlayDismissGuard() {
+  OVERLAY_GUARD_EVENTS.forEach(eventName => {
+    document.addEventListener(eventName, preventOverlayDismiss, true);
+  });
+}
+
+function unbindOverlayDismissGuard() {
+  OVERLAY_GUARD_EVENTS.forEach(eventName => {
+    document.removeEventListener(eventName, preventOverlayDismiss, true);
+  });
+}
+
 function resetToInitialSearchPrompt() {
   window.setTimeout(() => {
     if (typeof window.resetToInitialSearchPrompt === 'function') {
@@ -215,6 +235,7 @@ function createTour() {
     },
     onDestroyed: (_element, _step, options) => {
       activeTour = null;
+      unbindOverlayDismissGuard();
       syncStepContext(-1);
       if (closedByUser) return;
 
@@ -237,8 +258,12 @@ export function startOnboardingTour({ resetState = false } = {}) {
   syncStepContext(-1);
 
   activeTour?.destroy();
+  bindOverlayDismissGuard();
   activeTour = createTour();
-  if (!activeTour) return;
+  if (!activeTour) {
+    unbindOverlayDismissGuard();
+    return;
+  }
 
   activeTour.drive();
 }

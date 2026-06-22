@@ -29,6 +29,26 @@ export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA', 'VPL']);
 // expanding every matching path in the radial tree.
 export const FOCUS_VIEW_GROUPS = new Set(['INS', 'MAM', 'AVE', 'DIA', 'VPL']);
 
+// Group-specific semantic label rules for dense radial trees. Nodes and links
+// remain fully rendered; only label eligibility changes as users zoom.
+export const RADIAL_SEMANTIC_LABEL_CONFIG = {
+    ALG: {
+        targetScreenFontPx: 11,
+        collisionPaddingPx: 4,
+        viewportPaddingPx: 8,
+        tiers: [
+            { minScale: 0, maxInternalDepth: 5, maxLeafDepth: -1 },
+            { minScale: 1.5, maxInternalDepth: 8, maxLeafDepth: -1 },
+            { minScale: 2.5, maxInternalDepth: Infinity, maxLeafDepth: 8 },
+            { minScale: 4, maxInternalDepth: Infinity, maxLeafDepth: Infinity },
+        ],
+    },
+};
+
+export function getRadialSemanticLabelConfig(taxagroupid) {
+    return RADIAL_SEMANTIC_LABEL_CONFIG[taxagroupid] || null;
+}
+
 // Major-group nodes use the teal collapsed-group styling and default overview collapse.
 export const MAJOR_GROUP_DISPLAY_NAMES = new Set([
     'chemical substance',

@@ -170,15 +170,15 @@
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.5/dist/driver.js.iife.js"></script>
     <script src="src/taxon-group-select.js"></script>
-    <script type="module" src="taxon_group_viz.js"></script>
+    <script type="module" src="taxon_group_viz.js?v=20260622-semantic-labels"></script>
     <script type="module">
         import { updateURLState, getURLState } from './src/urlhash.js';
-        import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js';
+        import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260622-semantic-labels';
         import { initViewSwitch, resetViewState, activateFocusView } from './src/viewSwitch.js';
         import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js';
         import { updateSummaryPanel } from './src/summaryPanel.js';
-        import { initOnboarding } from './src/onboarding/onboarding.js';
+        import { initOnboarding } from './src/onboarding/onboarding.js?v=20260622-2';
 
         const APP_VIEWS = new Set(['explorer', 'steward']);
         let currentAppView = 'explorer';

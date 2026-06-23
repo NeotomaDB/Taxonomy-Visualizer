@@ -175,11 +175,22 @@
         import { updateURLState, getURLState } from './src/urlhash.js';
         import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260622-node-clearance-3';
         import { initViewSwitch, resetViewState, activateFocusView } from './src/viewSwitch.js';
-        import { detectAnomalies, getAnomalyMeta } from './src/anomaly.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js';
         import { updateSummaryPanel } from './src/summaryPanel.js';
         import { initOnboarding } from './src/onboarding/onboarding.js?v=20260622-2';
+        import { resolveGroupAnomalyRows } from './src/groupAnomalyRows.js';
         import { expandCompactTaxonPaths } from './src/data.js';
+        import { resolveGroupTreeRows } from './src/groupTreeRows.js';
+        import { buildInitialTrees, initialTreeNodesToRows } from './src/initialView.js';
+        import { buildNavigationRows, sliceRowsFromNode } from './src/navigationRows.js';
+        import {
+            buildTaxonomyIndexes,
+            extractTaxaGroups,
+            filterRowsByGroup as filterRowsByGroupFromIndex,
+            getRootInfo as getRootInfoFromIndex,
+            getRowsContainingNode as getIndexedRowsContainingNode,
+            getRowsForGroup as getIndexedRowsForGroup,
+        } from './src/taxonomyIndex.js';
 
         const APP_VIEWS = new Set(['explorer', 'steward']);
         let currentAppView = 'explorer';
@@ -381,108 +392,26 @@
         initOnboarding();
         setAppView(getInitialAppView(), true);
 
-        // Extract unique taxagroupid values
-        function extractTaxaGroups(rows) {
-            const groups = new Set();
-            rows.forEach(row => {
-                if (row.taxagroupid) {
-                    groups.add(row.taxagroupid);
-                }
-            });
-            return Array.from(groups).sort();
+        function getRowsForGroup(taxagroupid) {
+            return getIndexedRowsForGroup(taxonomyIndexes, taxagroupid);
+        }
+
+        function getRowsContainingNode(nodeId) {
+            return getIndexedRowsContainingNode(taxonomyIndexes, nodeId);
         }
 
         // Filter rows by taxagroupid and find appropriate root
         function filterRowsByGroup(rows, taxagroupid) {
-            if (!taxagroupid) return [];
-            const filtered = rows.filter(row => row.taxagroupid === taxagroupid);
-
-            // 1. Check if we have a known anchor for this group
-            if (anchorDataMap.has(taxagroupid)) {
-                const anchor = anchorDataMap.get(taxagroupid);
-                const anchorName = anchor.anchorName;
-
-                return filtered
-                    .filter(row => row.names_root_to_leaf.includes(anchorName))
-                    .map(row => {
-                        const anchorIndex = row.names_root_to_leaf.indexOf(anchorName);
-                        return {
-                            ...row,
-                            ids_root_to_leaf: row.ids_root_to_leaf.slice(anchorIndex),
-                            names_root_to_leaf: row.names_root_to_leaf.slice(anchorIndex)
-                        };
-                    });
-            }
-            // 3. For other groups, find the most common root node
-            const rootCounts = new Map();
-            filtered.forEach(row => {
-                if (row.ids_root_to_leaf.length > 0) {
-                    const rootId = row.ids_root_to_leaf[0];
-                    rootCounts.set(rootId, (rootCounts.get(rootId) || 0) + 1);
-                }
-            });
-
-            // Find the most common root
-            let mostCommonRoot = 32182; // Default to Eukaryota
-            let maxCount = 0;
-            rootCounts.forEach((count, rootId) => {
-                if (count > maxCount) {
-                    maxCount = count;
-                    mostCommonRoot = rootId;
-                }
-            });
-
-            // Filter to only include paths starting from the most common root
-            return filtered.filter(row =>
-                row.ids_root_to_leaf.length > 0 &&
-                row.ids_root_to_leaf[0] === mostCommonRoot
-            );
+            return filterRowsByGroupFromIndex(taxonomyIndexes, taxagroupid, anchorDataMap);
         }
 
         // Get root info for a taxagroupid
         function getRootInfo(rows, taxagroupid) {
-            // Check if we have a known anchor for this group
-            if (anchorDataMap.has(taxagroupid)) {
-                const anchor = anchorDataMap.get(taxagroupid);
-                return {
-                    rootId: parseInt(anchor.anchorId),
-                    rootName: anchor.anchorName
-                };
-            }
-
-
-            // For other groups, find the most common root
-            const filtered = rows.filter(row => row.taxagroupid === taxagroupid);
-            const rootCounts = new Map();
-            const rootNames = new Map();
-
-            filtered.forEach(row => {
-                if (row.ids_root_to_leaf.length > 0) {
-                    const rootId = row.ids_root_to_leaf[0];
-                    const rootName = row.names_root_to_leaf[0];
-                    rootCounts.set(rootId, (rootCounts.get(rootId) || 0) + 1);
-                    if (!rootNames.has(rootId)) {
-                        rootNames.set(rootId, rootName);
-                    }
-                }
-            });
-
-            let mostCommonRoot = 32182; // Default to Eukaryota
-            let maxCount = 0;
-            rootCounts.forEach((count, rootId) => {
-                if (count > maxCount) {
-                    maxCount = count;
-                    mostCommonRoot = rootId;
-                }
-            });
-
-            return {
-                rootId: mostCommonRoot,
-                rootName: rootNames.get(mostCommonRoot) || 'Root'
-            };
+            return getRootInfoFromIndex(taxonomyIndexes, taxagroupid, anchorDataMap);
         }
 
         let allRows = [];
+        let taxonomyIndexes = buildTaxonomyIndexes([]);
         let currentTaxagroupid = null; // Start with null for initial view
         let navigationStack = []; // Stack to track navigation history
         let isInitialView = true; // Track if we're in the initial 4-level view
@@ -508,33 +437,6 @@
         const GROUP_OVERVIEW_CONFIG = {
             INS: { overviewDepth: 2, rootId: 0, rootName: 'Root', hideSingletonRootChildren: true },
         };
-
-        // Transforms rows for synthetic-root groups: slices each path AFTER
-        // sliceAfterName, then prepends the synthetic root ID/name.
-        // Rows that don't contain sliceAfterName are dropped (become orphans).
-        function buildSyntheticRootRows(allGroupRows, synth) {
-            return allGroupRows
-                .filter(row => (row.names_root_to_leaf || []).includes(synth.sliceAfterName))
-                .map(row => {
-                    const idx = row.names_root_to_leaf.indexOf(synth.sliceAfterName);
-                    return {
-                        ...row,
-                        ids_root_to_leaf: [synth.rootId, ...row.ids_root_to_leaf.slice(idx + 1)],
-                        names_root_to_leaf: [synth.rootName, ...row.names_root_to_leaf.slice(idx + 1)],
-                    };
-                })
-                .filter(row => row.ids_root_to_leaf.length > 1);
-        }
-
-        function buildGroupOverviewRows(groupRows, overview) {
-            return groupRows
-                .filter(row => (row.ids_root_to_leaf || []).length > 0 && (row.names_root_to_leaf || []).length > 0)
-                .map(row => ({
-                    ...row,
-                    ids_root_to_leaf: [overview.rootId, ...(row.ids_root_to_leaf || [])],
-                    names_root_to_leaf: [overview.rootName, ...(row.names_root_to_leaf || [])],
-                }));
-        }
 
         // Current taxon type selection: 'bio' or 'nonbio'
         let currentTaxonType = 'bio';
@@ -599,6 +501,7 @@
                     }
                 });
                 allRows = expandCompactTaxonPaths(taxonData, taxonNames);
+                taxonomyIndexes = buildTaxonomyIndexes(allRows);
                 updateSummaryPanel(taxonomyChangeSummary, currentTaxagroupid, taxagroupNames);
 
                 allTaxaGroupsList = extractTaxaGroups(allRows);
@@ -753,265 +656,6 @@
             })
             .catch(err => console.error('Failed to load data files', err));
 
-        // Build initial 4-level view (Eukaryota, Animalia, Vertebrata, Mammalia)
-        // Returns both main tree and orphan tree
-        function buildInitialView() {
-            // Filter rows to match the currently selected taxon type
-            const rowsForType = allRows.filter(row => {
-                const group = row.taxagroupid || '';
-                if (currentTaxonType === 'nonbio') return NON_BIO_GROUPS.has(group);
-                return !NON_BIO_GROUPS.has(group);
-            });
-
-            // Build first 4 levels for filtered data
-            const levelMap = new Map(); // Map of level -> Map of id -> nodeData
-            const idToTaxagroupid = new Map(); // Track taxagroupid for each node ID
-            const standaloneOrphans = []; // Nodes with only one ID (no hierarchical path)
-
-            rowsForType.forEach(row => {
-                let ids = row.ids_root_to_leaf || [];
-                let names = row.names_root_to_leaf || [];
-                const taxagroupid = row.taxagroupid;
-
-                // Check for standalone orphan nodes (only one ID, no path)
-                if (ids.length === 1 && names.length === 1) {
-                    standaloneOrphans.push({
-                        id: ids[0],
-                        name: names[0],
-                        taxagroupid: taxagroupid || 'MAM',
-                        taxonid: row.taxonid,
-                        taxonname: row.taxonname
-                    });
-                    return; // Skip processing for standalone orphans
-                }
-
-                // ANCHOR TRUNCATION LOGIC
-                // If this group has a known anchor, truncate the path at that anchor.
-                // We ONLY include paths that actually reach the anchor (or independent paths).
-                let pathLimit = 4; // Default level limit for overview
-                if (anchorDataMap.has(taxagroupid)) {
-                    const anchor = anchorDataMap.get(taxagroupid);
-                    const anchorId = parseInt(anchor.anchorId);
-                    const independentIds = (anchor.independentPaths || []).map(p => parseInt(p.id));
-
-                    const anchorIdx = ids.indexOf(anchorId);
-                    if (anchorIdx !== -1) {
-                        pathLimit = anchorIdx + 1;
-                    } else {
-                        // Check independent paths
-                        const indepIdx = ids.findIndex(id => independentIds.includes(id));
-                        if (indepIdx !== -1) {
-                            pathLimit = indepIdx + 1;
-                        } else {
-                            // Path does not contain anchor or independent variants.
-                            // For anchored groups, we skip these extraneous paths in the Major Groups view.
-                            return;
-                        }
-                    }
-                } else if (SYNTHETIC_GROUP_ROOTS[taxagroupid]?.overviewDepth) {
-                    pathLimit = SYNTHETIC_GROUP_ROOTS[taxagroupid].overviewDepth;
-                }
-
-                // Only process rows with enough levels (either 4 or at least anchor depth)
-                if (ids.length >= pathLimit && names.length >= pathLimit) {
-                    // Get up to pathLimit levels
-                    for (let i = 0; i < Math.min(pathLimit, ids.length); i++) {
-                        const id = ids[i];
-                        const name = names[i];
-
-                        if (!levelMap.has(i)) {
-                            levelMap.set(i, new Map());
-                        }
-
-                        const levelData = levelMap.get(i);
-                        if (!levelData.has(id)) {
-                            levelData.set(id, {
-                                id: id,
-                                name: name,
-                                taxagroupids: new Set(), // Track all taxagroupids for this node
-                                isAnchor: anchorIds.has(id),
-                                children: new Set(),
-                                pathCount: 0 // Count how many paths go through this node
-                            });
-                        }
-
-                        // Track taxagroupid
-                        if (taxagroupid) {
-                            levelData.get(id).taxagroupids.add(taxagroupid);
-                            idToTaxagroupid.set(id, taxagroupid); // Store most recent taxagroupid
-                        }
-
-                        // Increment path count
-                        levelData.get(id).pathCount++;
-
-                        // Add child relationship
-                        if (i > 0) {
-                            const parentId = ids[i - 1];
-                            const parentData = levelMap.get(i - 1);
-                            if (parentData && parentData.has(parentId)) {
-                                parentData.get(parentId).children.add(id);
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Convert to tree structure starting from level 0 (Eukaryota)
-            const rootNodes = [];
-            const orphanNodes = []; // Nodes with only one taxonname that aren't linking to anything
-            const rootLevel = levelMap.get(0);
-
-            if (rootLevel) {
-                rootLevel.forEach((nodeData, id) => {
-                    // Use the most common taxagroupid for this node
-                    const taxagroupids = Array.from(nodeData.taxagroupids);
-                    const taxagroupid = taxagroupids[0] || 'MAM'; // Use first one as default
-
-                    // Recursively build children up to level 3 (Mammalia)
-                    function buildChildren(parentNode, level, isOrphan = false) {
-                        // No hardcoded level cap — recursion terminates naturally when
-                        // levelMap has no further entries (beyond the group's pathLimit).
-
-                        const nextLevel = levelMap.get(level + 1);
-                        if (!nextLevel) return;
-
-                        parentNode.children = [];
-                        const parentData = levelMap.get(level).get(parentNode.id);
-                        const childrenSet = parentData?.children || new Set();
-
-                        childrenSet.forEach(childId => {
-                            const childData = nextLevel.get(childId);
-
-                            // Check if this is an orphan node (single taxonname, no children)
-                            // An orphan node: appears in only one path AND has no children
-                            const isOrphanNode = childData &&
-                                childData.pathCount === 1 &&
-                                childData.children.size === 0;
-
-                            // For main tree: include if has children, is level 2, or has multiple paths
-                            // For orphan tree: include only orphan nodes
-                            const shouldInclude = isOrphan
-                                ? isOrphanNode
-                                : (childData &&
-                                    (childData.children.size > 0 || level === 2 || childData.pathCount > 1));
-
-                            if (childData && shouldInclude) {
-                                // Use the most common taxagroupid for this child
-                                const childTaxagroupids = Array.from(childData.taxagroupids);
-                                const childTaxagroupid = childTaxagroupids[0] || idToTaxagroupid.get(childId) || 'MAM';
-
-                                const childNode = {
-                                    id: childId,
-                                    name: childData.name,
-                                    taxagroupid: childTaxagroupid,
-                                    isAnchor: anchorIds.has(childId) || anchorIds.has(parseInt(childId)),
-                                    children: []
-                                };
-                                buildChildren(childNode, level + 1, isOrphan);
-                                parentNode.children.push(childNode);
-                            }
-                        });
-
-                        // Remove children property if empty
-                        if (parentNode.children.length === 0) {
-                            delete parentNode.children;
-                        }
-                    }
-
-                    // Build main tree node
-                    if (nodeData.children.size > 0) {
-                        const node = {
-                            id: id,
-                            name: nodeData.name,
-                            taxagroupid: taxagroupid,
-                            children: []
-                        };
-                        buildChildren(node, 0, false);
-
-                        // Only add if node has children after building
-                        if (node.children && node.children.length > 0) {
-                            rootNodes.push(node);
-                        }
-                    }
-
-                    // Build orphan tree node (nodes with single taxonname, no children)
-                    // Check if this root has orphan descendants at any level
-                    function hasOrphanDescendants(nodeId, level) {
-                        if (level >= 6) return false; // cap to match max pathLimit
-                        const nodeData = levelMap.get(level)?.get(nodeId);
-                        if (!nodeData) return false;
-
-                        // Check if this node itself is an orphan (but only if it's not level 0)
-                        if (level > 0 && nodeData.pathCount === 1 && nodeData.children.size === 0) {
-                            return true;
-                        }
-
-                        // Check descendants
-                        for (const childId of nodeData.children) {
-                            if (hasOrphanDescendants(childId, level + 1)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-
-                    if (hasOrphanDescendants(id, 0)) {
-                        const orphanNode = {
-                            id: id,
-                            name: nodeData.name,
-                            taxagroupid: taxagroupid,
-                            children: []
-                        };
-                        buildChildren(orphanNode, 0, true);
-
-                        // Only add if node has orphan children after building
-                        if (orphanNode.children && orphanNode.children.length > 0) {
-                            orphanNodes.push(orphanNode);
-                        }
-                    }
-                });
-            }
-
-            // Build orphan tree from standalone orphans
-            // Structure: Root -> taxagroupid -> orphan nodes
-            const orphanTreeByGroup = new Map();
-            let orphanGroupIdCounter = -1000000; // Use negative IDs to avoid conflicts
-
-            standaloneOrphans.forEach(orphan => {
-                const group = orphan.taxagroupid || 'MAM';
-                if (!orphanTreeByGroup.has(group)) {
-                    orphanTreeByGroup.set(group, {
-                        id: orphanGroupIdCounter--,
-                        name: group, // Just the taxagroupid as the name
-                        taxagroupid: group,
-                        children: []
-                    });
-                }
-                const groupRoot = orphanTreeByGroup.get(group);
-                groupRoot.children.push({
-                    id: orphan.id,
-                    name: orphan.name,
-                    taxagroupid: orphan.taxagroupid,
-                    children: []
-                });
-            });
-
-            // Add standalone orphans to orphan tree (these will be children of the synthetic root)
-            orphanTreeByGroup.forEach((groupRoot, group) => {
-                if (groupRoot.children.length > 0) {
-                    orphanNodes.push(groupRoot);
-                }
-            });
-
-            console.log('Orphan nodes found:', {
-                standaloneOrphans: standaloneOrphans.length,
-                orphanTreeNodes: orphanNodes.length,
-                sampleOrphans: standaloneOrphans.slice(0, 5)
-            });
-
-            return { mainTree: rootNodes, orphanTree: orphanNodes };
-        }
-
         // Store both trees
         let mainTreeNodes = [];
         let orphanTreeNodes = [];
@@ -1043,7 +687,13 @@
 
             // Build trees if not already built
             if (mainTreeNodes.length === 0 && orphanTreeNodes.length === 0) {
-                const trees = buildInitialView();
+                const trees = buildInitialTrees(allRows, {
+                    currentTaxonType,
+                    nonBioGroups: NON_BIO_GROUPS,
+                    anchorDataMap,
+                    anchorIds,
+                    syntheticGroupRoots: SYNTHETIC_GROUP_ROOTS
+                });
                 mainTreeNodes = trees.mainTree;
                 orphanTreeNodes = trees.orphanTree;
                 console.log('Built trees:', {
@@ -1058,29 +708,7 @@
             const rootNodes = treeType === 'main' ? mainTreeNodes : orphanTreeNodes;
 
             // Convert to rows format for rendering
-            const rows = [];
-            rootNodes.forEach(root => {
-                function traverse(node, pathIds = [], pathNames = []) {
-                    const newPathIds = [...pathIds, node.id];
-                    const newPathNames = [...pathNames, node.name];
-
-                    if (node.children && node.children.length > 0) {
-                        node.children.forEach(child => {
-                            traverse(child, newPathIds, newPathNames);
-                        });
-                    } else {
-                        // Leaf node - create a row
-                        rows.push({
-                            taxonid: node.id,
-                            taxonname: node.name,
-                            ids_root_to_leaf: newPathIds,
-                            names_root_to_leaf: newPathNames,
-                            taxagroupid: node.taxagroupid
-                        });
-                    }
-                }
-                traverse(root);
-            });
+            const rows = initialTreeNodesToRows(rootNodes);
 
             // Clear previous chart
             d3.select('#chart').selectAll('*').remove();
@@ -1163,79 +791,21 @@
             updateBackButton();
             syncDropdownValue();
 
-            // Check if this is a synthetic taxagroupid node in orphan tree (negative ID < -999999)
-            // These nodes represent taxagroupid groupings of standalone orphans
-            const isSyntheticTaxagroupidNode = nodeId < -999999;
-
-            let filteredRows, rootNodesToRender = null, renderRootId, renderRootName;
-
-            if (isSyntheticTaxagroupidNode) {
-                // This is a synthetic taxagroupid node - get all standalone orphans with this taxagroupid
-                const standaloneOrphans = allRows
-                    .filter(row => {
-                        const ids = row.ids_root_to_leaf || [];
-                        const names = row.names_root_to_leaf || [];
-                        const rowTaxagroupid = row.taxagroupid || 'MAM';
-                        // Standalone orphans have only one ID and match the taxagroupid
-                        return ids.length === 1 && names.length === 1 && rowTaxagroupid === taxagroupid;
-                    })
-                    .map(row => ({
-                        id: row.ids_root_to_leaf[0],
-                        name: row.names_root_to_leaf[0],
-                        taxagroupid: row.taxagroupid || 'MAM',
-                        children: []
-                    }));
-
-                // Build a root structure: Root -> taxagroupid -> orphans
-                const syntheticRoot = {
-                    id: -999999,
-                    name: 'Root',
-                    children: [{
-                        id: nodeId,
-                        name: nodeName,
-                        taxagroupid: taxagroupid,
-                        children: standaloneOrphans
-                    }]
-                };
-
-                rootNodesToRender = [syntheticRoot.children[0]]; // The taxagroupid node with its orphan children
-                renderRootId = -999999;
-                renderRootName = 'Root';
-
-                // For rendering, we need rows but they'll be ignored when isInitialView=true and rootNodes is provided
-                filteredRows = allRows.filter(row => {
-                    const rowTaxagroupid = row.taxagroupid || 'MAM';
-                    return rowTaxagroupid === taxagroupid;
-                });
-            } else {
-                // Normal node navigation - filter rows to start from this node
-                filteredRows = allRows
-                    .filter(row => {
-                        const ids = row.ids_root_to_leaf || [];
-                        return ids.includes(nodeId);
-                    })
-                    .map(row => {
-                        const ids = row.ids_root_to_leaf || [];
-                        const names = row.names_root_to_leaf || [];
-                        const index = ids.indexOf(nodeId);
-
-                        if (index >= 0) {
-                            return {
-                                ...row,
-                                ids_root_to_leaf: ids.slice(index),
-                                names_root_to_leaf: names.slice(index)
-                            };
-                        }
-                        return row;
-                    })
-                    .filter(row => row.ids_root_to_leaf.length > 1); // Must have at least the root and one child
-
-                renderRootId = nodeId;
-                renderRootName = nodeName;
-            }
-
             // Get all rows for this taxagroupid for synonyms
-            const allRowsForGroup = allRows.filter(row => row.taxagroupid === taxagroupid);
+            const allRowsForGroup = getRowsForGroup(taxagroupid);
+            const {
+                filteredRows,
+                rootNodesToRender,
+                renderRootId,
+                renderRootName,
+                isSyntheticTaxagroupidNode
+            } = buildNavigationRows({
+                nodeId,
+                nodeName,
+                taxagroupid,
+                groupRows: allRowsForGroup,
+                rowsContainingNode: getRowsContainingNode(nodeId)
+            });
 
             // Clear previous chart
             d3.select('#chart').selectAll('*').remove();
@@ -1309,20 +879,9 @@
                 const rootInfo = getRootInfo(allRows, currentTaxagroupid);
                 if (currentRootId && currentRootId !== rootInfo.rootId) {
                     // Navigate back to the stored intermediate node, not the group root
-                    const filteredRows = allRows
-                        .filter(row => (row.ids_root_to_leaf || []).includes(currentRootId))
-                        .map(row => {
-                            const ids = row.ids_root_to_leaf || [];
-                            const names = row.names_root_to_leaf || [];
-                            const index = ids.indexOf(currentRootId);
-                            if (index >= 0) {
-                                return { ...row, ids_root_to_leaf: ids.slice(index), names_root_to_leaf: names.slice(index) };
-                            }
-                            return row;
-                        })
-                        .filter(row => row.ids_root_to_leaf.length > 1);
+                    const filteredRows = sliceRowsFromNode(getRowsContainingNode(currentRootId), currentRootId);
 
-                    const allRowsForGroup = allRows.filter(row => row.taxagroupid === currentTaxagroupid);
+                    const allRowsForGroup = getRowsForGroup(currentTaxagroupid);
 
                     d3.select('#chart').selectAll('*').remove();
                     resetViewState();
@@ -1530,27 +1089,17 @@
 
             // Get ALL rows for this taxagroupid (including those without full paths)
             // This is needed for anomaly detection and synonym nodes
-            const allRowsForGroup = allRows.filter(row => row.taxagroupid === taxagroupid);
+            const allRowsForGroup = getRowsForGroup(taxagroupid);
 
             // Filter rows for the tree — synthetic-root groups get path-sliced rows
-            let filteredRows, renderRootId, renderRootName;
-            let overviewConfig = null;
-            if (SYNTHETIC_GROUP_ROOTS[taxagroupid]) {
-                const synth = SYNTHETIC_GROUP_ROOTS[taxagroupid];
-                filteredRows = buildSyntheticRootRows(allRowsForGroup, synth);
-                renderRootId = synth.rootId;
-                renderRootName = synth.rootName;
-            } else if (GROUP_OVERVIEW_CONFIG[taxagroupid]) {
-                overviewConfig = GROUP_OVERVIEW_CONFIG[taxagroupid];
-                filteredRows = buildGroupOverviewRows(allRowsForGroup, overviewConfig);
-                renderRootId = overviewConfig.rootId;
-                renderRootName = overviewConfig.rootName;
-            } else {
-                filteredRows = filterRowsByGroup(allRows, taxagroupid);
-                const rootInfo = getRootInfo(allRows, taxagroupid);
-                renderRootId = rootInfo.rootId;
-                renderRootName = rootInfo.rootName;
-            }
+            let { filteredRows, renderRootId, renderRootName, overviewConfig } = resolveGroupTreeRows({
+                taxagroupid,
+                groupRows: allRowsForGroup,
+                syntheticGroupRoots: SYNTHETIC_GROUP_ROOTS,
+                groupOverviewConfig: GROUP_OVERVIEW_CONFIG,
+                getFilteredRows: groupId => filterRowsByGroup(allRows, groupId),
+                getRootInfo: groupId => getRootInfo(allRows, groupId)
+            });
             currentRootId = renderRootId;
             currentRootName = renderRootName;
 
@@ -1567,39 +1116,17 @@
             // absent from filteredRows (they lack the anchor name), so this is purely
             // for counting + UI display — it does not change what the tree renders.
             if (!NON_BIO_GROUPS.has(taxagroupid)) {
-                const { anomalies } = detectAnomalies(allRowsForGroup, taxagroupid);
-                const anomalyIds = new Set(anomalies.map(a => a.taxonid));
-
-                // 1. Identify rows that are NOT anomalies but also NOT in filteredRows (didn't reach the anchor)
-                const filteredRowIds = new Set(filteredRows.map(r => r.taxonid));
-                const shortValidRows = allRowsForGroup.filter(row => 
-                    !anomalyIds.has(row.taxonid) && !filteredRowIds.has(row.taxonid)
-                );
-
-                // 2. Identify orphans within the filteredRows (reached the anchor but shallow/no descendants)
-                const allParentIds = new Set();
-                filteredRows.forEach(row => {
-                    const ids = row.ids_root_to_leaf || [];
-                    for (let i = 0; i < ids.length - 1; i++) {
-                        allParentIds.add(ids[i]);
-                    }
-                });
-
-                const shallowOrphans = filteredRows.filter(row => {
-                    const names = row.names_root_to_leaf || [];
-                    const taxonid = row.taxonid;
-                    return names.length <= 2 && !allParentIds.has(taxonid);
-                });
-
-                // Combine both types of "unplaced" taxa
-                const orphanNodes = [...shortValidRows, ...shallowOrphans];
-
-                // Strip the shallow orphans from the tree rendering to prevent radial hairballs
-                const shallowOrphanIds = new Set(shallowOrphans.map(n => n.taxonid));
-                filteredRows = filteredRows.filter(row => !shallowOrphanIds.has(row.taxonid));
+                const anomalyRows = resolveGroupAnomalyRows(allRowsForGroup, filteredRows, taxagroupid);
+                filteredRows = anomalyRows.filteredRows;
 
                 const groupName = taxagroupNames ? (taxagroupNames[taxagroupid] || taxagroupid) : taxagroupid;
-                updateAnomalyBar(taxagroupid, groupName, anomalies, orphanNodes, renderRootName);
+                updateAnomalyBar(
+                    taxagroupid,
+                    groupName,
+                    anomalyRows.anomalies,
+                    anomalyRows.orphanNodes,
+                    renderRootName
+                );
             } else {
                 // Non-bio group — hide bar if previously shown
                 const bar = document.getElementById('anomaly-bar');

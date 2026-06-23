@@ -205,8 +205,8 @@ def build_taxonpaths_from_taxa(taxa_rows: list[dict[str, Any]]) -> dict[str, lis
             {
                 "taxonid": taxon_id,
                 "taxonname": row["taxonname"],
-                "array_to_string": ", ".join(str(part) for part in path_ids),
-                "taxonnames": ", ".join(path_names),
+                "path_ids": path_ids,
+                "path_names": path_names,
                 "taxagroupid": row["taxagroupid"],
             }
         )
@@ -218,7 +218,7 @@ def build_taxonpaths_from_taxa(taxa_rows: list[dict[str, Any]]) -> dict[str, lis
 def build_split_taxonomy(
     taxonpaths_payload: dict[str, list[dict[str, Any]]],
 ) -> tuple[dict[str, str], dict[str, Any]]:
-    """Build compact, ID-first browser payloads alongside the legacy format."""
+    """Build compact, ID-first browser payloads from structured path data."""
     rows = next(iter(taxonpaths_payload.values()), [])
     names = {
         str(row["taxonid"]): row["taxonname"].strip()
@@ -227,11 +227,7 @@ def build_split_taxonomy(
     paths = [
         [
             row["taxagroupid"],
-            [
-                int(part.strip())
-                for part in row["array_to_string"].split(",")
-                if part.strip()
-            ],
+            [int(part) for part in row.get("path_ids", [])],
         ]
         for row in rows
     ]
@@ -389,8 +385,8 @@ def build_path_lookup(taxonpaths_payload: dict[str, list[dict[str, Any]]]) -> di
     lookup: dict[int, dict[str, Any]] = {}
     for row in rows:
         lookup[int(row["taxonid"])] = {
-            "path_ids": [int(part.strip()) for part in row["array_to_string"].split(",") if part.strip()],
-            "path_names": [part.strip() for part in row["taxonnames"].split(",") if part.strip()],
+            "path_ids": [int(part) for part in row.get("path_ids", [])],
+            "path_names": [str(part).strip() for part in row.get("path_names", [])],
             "taxagroupid": row["taxagroupid"],
             "taxonname": row["taxonname"],
         }

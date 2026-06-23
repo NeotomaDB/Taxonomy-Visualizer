@@ -32,6 +32,11 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_refresh_parity.py' -v
           node --experimental-default-type=module --test tests/test_search_query.mjs
+          node --experimental-default-type=module --test tests/test_group_anomaly_rows.mjs
+          node --experimental-default-type=module --test tests/test_group_tree_rows.mjs
+          node --experimental-default-type=module --test tests/test_initial_view.mjs
+          node --experimental-default-type=module --test tests/test_navigation_rows.mjs
+          node --experimental-default-type=module --test tests/test_taxonomy_index.mjs
           node --experimental-default-type=module --test tests/test_refresh_tree.mjs
 
       - name: Commit refreshed files

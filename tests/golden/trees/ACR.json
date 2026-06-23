@@ -1,0 +1,248 @@
+{
+  "group": "ACR",
+  "records": [
+    {
+      "id": 2814,
+      "name": "Baltisphaeridium",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 5241,
+      "name": "Acritarcha",
+      "child_ids": [
+        2814,
+        5469,
+        33264,
+        33281,
+        36673,
+        36696,
+        37167,
+        38644,
+        39328,
+        44928,
+        44931,
+        44932,
+        44960,
+        47540,
+        47552,
+        47553,
+        47728
+      ],
+      "leaf_count": 21
+    },
+    {
+      "id": 5469,
+      "name": "Pseudoschizaea",
+      "child_ids": [
+        29165,
+        44421
+      ],
+      "leaf_count": 2
+    },
+    {
+      "id": 29165,
+      "name": "Pseudoschizaea circula",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 33264,
+      "name": "Micrhystridium",
+      "child_ids": [
+        38603
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 33281,
+      "name": "Multiplicisphaeridium",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 36673,
+      "name": "Inaperturites",
+      "child_ids": [
+        36674,
+        36675
+      ],
+      "leaf_count": 2
+    },
+    {
+      "id": 36674,
+      "name": "Inaperturites (psilate)",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 36675,
+      "name": "Inaperturites sp.",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 36696,
+      "name": "Leiosphaeridia",
+      "child_ids": [
+        36697,
+        37240
+      ],
+      "leaf_count": 2
+    },
+    {
+      "id": 36697,
+      "name": "Leiosphaeridia spp.",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 37167,
+      "name": "Quadrina",
+      "child_ids": [
+        37168
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 37168,
+      "name": "Quadrina? condita",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 37240,
+      "name": "Leiosphaeridia sp.",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 38603,
+      "name": "Micrhystridium (type 115, HdV)",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 38644,
+      "name": "Mecsekia",
+      "child_ids": [
+        38645
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 38645,
+      "name": "Mecsekia ariakense",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 39328,
+      "name": "Radiosperma",
+      "child_ids": [
+        47539
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 44421,
+      "name": "Pseudoschizaea rubina",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 44928,
+      "name": "Cyclopsiella",
+      "child_ids": [
+        51124
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 44931,
+      "name": "Paralecaniella",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 44932,
+      "name": "Waaslandia",
+      "child_ids": [
+        44933
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 44933,
+      "name": "Waaslandia geminifera",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 44960,
+      "name": "Cobricosphaeridium",
+      "child_ids": [
+        51123
+      ],
+      "leaf_count": 1
+    },
+    {
+      "id": 47539,
+      "name": "Radiosperma corbiferum",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 47540,
+      "name": "Palaeostomocystis",
+      "child_ids": [
+        47541,
+        47542
+      ],
+      "leaf_count": 2
+    },
+    {
+      "id": 47541,
+      "name": "Palaeostomocystis fritilla",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 47542,
+      "name": "Palaeostomocystis subtilitheca",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 47552,
+      "name": "Acritarch sp. A",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 47553,
+      "name": "Acritarch sp. B",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 47728,
+      "name": "cf. Palaeostomocystis fritilla",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 51123,
+      "name": "Cobricosphaeridium spiniferum",
+      "child_ids": [],
+      "leaf_count": 1
+    },
+    {
+      "id": 51124,
+      "name": "Cyclopsiella granosa",
+      "child_ids": [],
+      "leaf_count": 1
+    }
+  ],
+  "maxDepth": 2
+}

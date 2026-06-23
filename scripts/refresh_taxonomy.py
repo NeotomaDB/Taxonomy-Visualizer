@@ -2,7 +2,8 @@
 """Refresh taxonomy JSON assets from the Neotoma API.
 
 Outputs:
-  - data/taxonpaths.json
+  - data/taxon_names.json
+  - data/taxon_paths_ids.json
   - data/taxagroup_names.json
   - data/all_synonyms.json
   - data/taxon_metadata.json
@@ -212,6 +213,29 @@ def build_taxonpaths_from_taxa(taxa_rows: list[dict[str, Any]]) -> dict[str, lis
 
     normalized.sort(key=lambda row: (row["taxagroupid"], row["taxonname"].lower(), row["taxonid"]))
     return {"taxonpaths": normalized}
+
+
+def build_split_taxonomy(
+    taxonpaths_payload: dict[str, list[dict[str, Any]]],
+) -> tuple[dict[str, str], dict[str, Any]]:
+    """Build compact, ID-first browser payloads alongside the legacy format."""
+    rows = next(iter(taxonpaths_payload.values()), [])
+    names = {
+        str(row["taxonid"]): row["taxonname"].strip()
+        for row in sorted(rows, key=lambda item: int(item["taxonid"]))
+    }
+    paths = [
+        [
+            row["taxagroupid"],
+            [
+                int(part.strip())
+                for part in row["array_to_string"].split(",")
+                if part.strip()
+            ],
+        ]
+        for row in rows
+    ]
+    return names, {"schema_version": 1, "paths": paths}
 
 
 def build_taxagroup_names(rows: list[dict[str, Any]]) -> dict[str, str]:
@@ -435,6 +459,13 @@ def write_json(path: Path, payload: Any) -> None:
         handle.write("\n")
 
 
+def write_compact_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
+        handle.write("\n")
+
+
 def main() -> int:
     args = parse_args()
     output_dir = Path(args.output_dir)
@@ -449,6 +480,7 @@ def main() -> int:
     contacts_rows = fetch_table(args.api_base, "contacts", args.page_size)
 
     normalized_taxonpaths = build_taxonpaths_from_taxa(taxa_rows)
+    taxon_names, taxon_paths_ids = build_split_taxonomy(normalized_taxonpaths)
     taxagroup_names = build_taxagroup_names(taxagroup_rows)
     synonyms_payload = build_synonyms(taxa_rows, synonym_rows, synonym_type_rows)
     taxon_metadata = build_taxon_metadata(taxa_rows, contacts_rows)
@@ -469,7 +501,8 @@ def main() -> int:
         "taxa": current_snapshot,
     }
 
-    write_json(output_dir / "taxonpaths.json", normalized_taxonpaths)
+    write_compact_json(output_dir / "taxon_names.json", taxon_names)
+    write_compact_json(output_dir / "taxon_paths_ids.json", taxon_paths_ids)
     write_json(output_dir / "taxagroup_names.json", taxagroup_names)
     write_json(output_dir / "all_synonyms.json", synonyms_payload)
     write_json(metadata_file, taxon_metadata)
@@ -477,7 +510,8 @@ def main() -> int:
     write_json(snapshot_file, snapshot_payload)
 
     log(
-        "Wrote taxonpaths.json, taxagroup_names.json, all_synonyms.json, "
+        "Wrote taxon_names.json, taxon_paths_ids.json, "
+        "taxagroup_names.json, all_synonyms.json, "
         f"{metadata_file.name}, {changes_file.name}, and {snapshot_file.name}"
     )
     return 0

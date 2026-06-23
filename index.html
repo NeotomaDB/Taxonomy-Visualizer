@@ -179,6 +179,7 @@
         import { updateAnomalyBar } from './src/anomaly_bar.js';
         import { updateSummaryPanel } from './src/summaryPanel.js';
         import { initOnboarding } from './src/onboarding/onboarding.js?v=20260622-2';
+        import { expandCompactTaxonPaths } from './src/data.js';
 
         const APP_VIEWS = new Set(['explorer', 'steward']);
         let currentAppView = 'explorer';
@@ -380,98 +381,6 @@
         initOnboarding();
         setAppView(getInitialAppView(), true);
 
-        // Convert data/taxonpaths.json format to the format expected by renderMammalTree
-        function convertTaxonPaths(data) {
-            // data is an object with a SQL query string as key and array as value
-            const rows = Object.values(data)[0] || [];
-
-            // Helper function to parse comma-separated taxon names, respecting commas inside parentheses
-            function parseTaxonNames(taxonnames) {
-                if (!taxonnames || typeof taxonnames !== 'string') return [];
-
-                const names = [];
-                let current = '';
-                let depth = 0; // Track depth of parentheses nesting
-
-                for (let i = 0; i < taxonnames.length; i++) {
-                    const char = taxonnames[i];
-
-                    if (char === '(') {
-                        depth++;
-                        current += char;
-                    } else if (char === ')') {
-                        depth--;
-                        current += char;
-                    } else if (char === ',' && depth === 0) {
-                        // Only split on comma if we're not inside parentheses
-                        if (current.trim()) {
-                            names.push(current.trim());
-                        }
-                        current = '';
-                    } else {
-                        current += char;
-                    }
-                }
-
-                // Add the last name
-                if (current.trim()) {
-                    names.push(current.trim());
-                }
-
-                return names;
-            }
-
-            return rows.map(row => {
-                // Convert array_to_string (comma-separated IDs) to array
-                const ids_root_to_leaf = row.array_to_string
-                    ? row.array_to_string.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
-                    : [];
-                // Convert taxonnames (comma-separated names) to array, respecting commas inside parentheses
-                const names_root_to_leaf = parseTaxonNames(row.taxonnames);
-
-                // Inject synthetic nodes for specific taxagroups
-                if (row.taxagroupid === 'FSH') {
-                    const vertIndex = names_root_to_leaf.indexOf('Vertebrata');
-                    if (vertIndex !== -1 && vertIndex < names_root_to_leaf.length - 1) {
-                        if (names_root_to_leaf[vertIndex + 1] !== 'Fish (Synthetic)') {
-                            names_root_to_leaf.splice(vertIndex + 1, 0, 'Fish (Synthetic)');
-                            ids_root_to_leaf.splice(vertIndex + 1, 0, 999999);
-                        }
-                    }
-                } else if (row.taxagroupid === 'HRP') {
-                    const vertIndex = names_root_to_leaf.indexOf('Vertebrata');
-                    if (vertIndex !== -1 && vertIndex < names_root_to_leaf.length - 1) {
-                        if (names_root_to_leaf[vertIndex + 1] !== 'Reptiles and amphil (Synthetic)') {
-                            names_root_to_leaf.splice(vertIndex + 1, 0, 'Reptiles and amphil (Synthetic)');
-                            ids_root_to_leaf.splice(vertIndex + 1, 0, 999998);
-                        }
-                    }
-                } else if (row.taxagroupid === 'VER') {
-                    const vertIndex = names_root_to_leaf.indexOf('Vertebrata');
-                    if (vertIndex !== -1 && vertIndex < names_root_to_leaf.length - 1) {
-                        if (names_root_to_leaf[vertIndex + 1] !== 'Vertebrates undiff. (Synthetic)') {
-                            names_root_to_leaf.splice(vertIndex + 1, 0, 'Vertebrates undiff. (Synthetic)');
-                            ids_root_to_leaf.splice(vertIndex + 1, 0, 999997);
-                        }
-                    }
-                } else if (row.taxagroupid === 'ALG') {
-                    // Prepend "Algae (Group)" to preserve all disparate root nodes (Eukaryota, Algae, Prokaryota)
-                    if (names_root_to_leaf[0] !== 'Algae (Group)') {
-                        names_root_to_leaf.unshift('Algae (Group)');
-                        ids_root_to_leaf.unshift(999996);
-                    }
-                }
-
-                return {
-                    taxonid: row.taxonid,
-                    taxonname: row.taxonname,
-                    ids_root_to_leaf: ids_root_to_leaf,
-                    names_root_to_leaf: names_root_to_leaf,
-                    taxagroupid: row.taxagroupid
-                };
-            });
-        }
-
         // Extract unique taxagroupid values
         function extractTaxaGroups(rows) {
             const groups = new Set();
@@ -658,16 +567,17 @@
             select.value = '';
         }
 
-        // Load both taxonpaths and taxagroup names mapping in parallel
+        // Load compact ID paths and name dictionaries in parallel.
         let allTaxaGroupsList = [];
         let pendingViewLoad = Promise.resolve();
         Promise.all([
-            fetch("data/taxonpaths.json").then(r => r.json()),
+            fetch("data/taxon_paths_ids.json").then(r => r.json()),
+            fetch("data/taxon_names.json").then(r => r.json()),
             fetch("data/taxagroup_names.json").then(r => r.json()).catch(() => ({})),
             fetch("data/anchor_analysis.json").then(r => r.json()).catch(() => ([])),
             fetch("data/taxa_changes.json", { cache: "no-store" }).then(r => r.json()).catch(() => null)
         ])
-            .then(([taxonData, namesMap, anchors, changeSummary]) => {
+            .then(([taxonData, taxonNames, namesMap, anchors, changeSummary]) => {
                 taxagroupNames = namesMap;
                 taxonomyChangeSummary = changeSummary;
                 // Convert list of anchors to a map for easy lookup
@@ -688,7 +598,7 @@
                         anchorIds.add(entry.anchorId);
                     }
                 });
-                allRows = convertTaxonPaths(taxonData);
+                allRows = expandCompactTaxonPaths(taxonData, taxonNames);
                 updateSummaryPanel(taxonomyChangeSummary, currentTaxagroupid, taxagroupNames);
 
                 allTaxaGroupsList = extractTaxaGroups(allRows);

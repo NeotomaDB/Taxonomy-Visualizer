@@ -1,5 +1,44 @@
 // Data transformations: parse exported paths, normalize rows, and build hierarchy
 
+const SYNTHETIC_PATH_NODES = {
+  FSH: { afterId: 6757, id: 999999, name: 'Fish (Synthetic)' },
+  HRP: { afterId: 6757, id: 999998, name: 'Reptiles and amphil (Synthetic)' },
+  VER: { afterId: 6757, id: 999997, name: 'Vertebrates undiff. (Synthetic)' },
+};
+
+export function expandCompactTaxonPaths(payload, taxonNames) {
+  const rows = Array.isArray(payload?.paths) ? payload.paths : [];
+  const namesById = taxonNames || {};
+
+  return rows.map(([taxagroupid, pathIds]) => {
+    const ids = Array.isArray(pathIds)
+      ? pathIds.map(Number).filter(Number.isFinite)
+      : [];
+    const names = ids.map((id) => namesById[String(id)] ?? String(id));
+    const synthetic = SYNTHETIC_PATH_NODES[taxagroupid];
+
+    if (synthetic) {
+      const index = ids.indexOf(synthetic.afterId);
+      if (index !== -1 && index < ids.length - 1 && ids[index + 1] !== synthetic.id) {
+        ids.splice(index + 1, 0, synthetic.id);
+        names.splice(index + 1, 0, synthetic.name);
+      }
+    } else if (taxagroupid === 'ALG' && ids[0] !== 999996) {
+      ids.unshift(999996);
+      names.unshift('Algae (Group)');
+    }
+
+    const taxonid = ids[ids.length - 1];
+    return {
+      taxonid,
+      taxonname: namesById[String(taxonid)] ?? String(taxonid),
+      ids_root_to_leaf: ids,
+      names_root_to_leaf: names,
+      taxagroupid,
+    };
+  });
+}
+
 function parseIdPath(value) {
   if (Array.isArray(value)) return value.map(Number);
   if (typeof value !== 'string') return [];
@@ -162,5 +201,3 @@ export function attachSynonymMetadata(treeRoot, byId, synonymManager, allRows) {
 // Keep the old name exported as a no-op alias so any callers that haven't been
 // updated yet don't throw a ReferenceError. Will be removed in a later cleanup.
 export function addMissingSynonyms() {}
-
-

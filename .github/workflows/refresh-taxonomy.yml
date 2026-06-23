@@ -28,6 +28,12 @@ jobs:
             --snapshot-file data/taxa_snapshot.json \
             --lookback-days 30
 
+      - name: Verify split taxonomy parity
+        run: |
+          python -m unittest discover -s tests -p 'test_refresh_parity.py' -v
+          node --experimental-default-type=module --test tests/test_search_query.mjs
+          node --experimental-default-type=module --test tests/test_refresh_tree.mjs
+
       - name: Commit refreshed files
         shell: bash
         run: |
@@ -37,6 +43,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/taxonpaths.json data/taxagroup_names.json data/all_synonyms.json data/taxon_metadata.json data/taxa_changes.json data/taxa_snapshot.json
+          git add data/taxon_names.json data/taxon_paths_ids.json data/taxagroup_names.json data/all_synonyms.json data/taxon_metadata.json data/taxa_changes.json data/taxa_snapshot.json
           git commit -m "chore: refresh taxonomy data"
           git push

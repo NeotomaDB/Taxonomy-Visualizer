@@ -7,13 +7,12 @@ This document outlines the core architecture of the Neotoma Taxonomy Visualizer,
 ## 1. Data Structure
 
 ### 1.1 Source Data Formats
-The core taxonomic data is ingested from Neotoma database exports, formatted as JSON (e.g., `taxonpaths.json`). Each record represents a lineage path from the root down to a specific taxon leaf node, this can not be modified in any circumstances.
-Key fields include:
-*   `taxonid`: The unique numerical identifier for the leaf taxon.
-*   `taxonname`: The string name of the leaf taxon.
-*   `ids_root_to_leaf`: Comma-separated string or array of IDs representing the taxonomic hierarchy from the root to the leaf.
-*   `names_root_to_leaf`: Comma-separated string or array of names corresponding to the IDs.
-*   `taxagroupid`: A 3-letter code defining the broad taxonomic category (e.g., `MAM` for Mammals, `DIA` for Diatoms).
+The core taxonomy is refreshed from Neotoma database exports and written as two compact JSON assets:
+
+*   `taxon_names.json`: Maps each numeric TaxonID to its normalized TaxonName.
+*   `taxon_paths_ids.json`: Stores each lineage as `[taxagroupid, [rootId, ..., leafId]]`. The leaf TaxonID is the final ID in the path.
+
+The browser loads both files in parallel and `expandCompactTaxonPaths()` resolves names by ID into the row shape used by the existing renderers. Keeping names out of every repeated path reduces payload size and removes comma-delimited name parsing ambiguity. The structural ID paths remain authoritative and must not be modified by display-only transformations.
 
 ### 1.2 Synonym Metadata
 this can not be modified in any circumstances.
@@ -60,10 +59,12 @@ The tool adapts its visualization strategy depending on the scale and nature of 
 ## 3. Visualization Functions & Pipeline
 
 ### 3.1 Data Preparation (`src/data.js` & `index.html`)
-1.  **`convertTaxonPaths(data)`**: Validates arrays and injects the necessary synthetic routing nodes for loose taxonomic groups.
+1.  **`expandCompactTaxonPaths(paths, names)`**: Resolves TaxonIDs to names, validates numeric paths and injects the necessary synthetic routing nodes for loose taxonomic groups.
 2.  **`filterRowsByGroup(rows, taxagroupid)`**: Uses the anchor map to identify the most sensible root for a given group, filtering and truncating the dataset to extract the sub-hierarchy perfectly.
 3.  **`pathsToTree(rows)`**: Recursively transforms the filtered flat path lists into nested Javascript tree objects (`id`, `name`, `children`).
 4.  **`attachSynonymMetadata(tree, map)`**: Applies synonym data arrays onto the valid canonical nodes mapping references.
+
+The scheduled refresh workflow regenerates both compact assets, runs data/search/all-group tree integrity tests, and commits the refreshed files only when every check passes.
 
 ### 3.2 View Control (`index.html`)
 *   **`loadTreeForGroup(taxagroupid)`**: The master controller function. It evaluates the selected dataset size, checks for forcing arrays (`FORCE_LIST_TREE_GROUPS` / `EXPAND_ALL`), executes `detectAnomalies()`, and mounts either the Radial or Collapsible renderer.

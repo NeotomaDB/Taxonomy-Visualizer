@@ -23,6 +23,7 @@ import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwi
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { updateURLState } from './urlhash.js';
+import { splitSearchQuery, unwrapQuotedSearchTerm } from './searchQuery.js';
 
 export function setupSearch({
   root,
@@ -951,7 +952,7 @@ export function setupSearch({
     if (!q) { resetSearchState(); return; }
 
     // ── Comparison mode: comma-separated two queries ────────────────────────
-    const parts = q.split(',').map(s => s.trim()).filter(Boolean);
+    const parts = splitSearchQuery(q);
     if (parts.length >= 2) {
       const r1 = findMatchesForTerm(parts[0]);
       const r2 = findMatchesForTerm(parts[1]);
@@ -1000,6 +1001,7 @@ export function setupSearch({
     compareQ1Label = ''; compareQ2Label = '';
     compareQ1Matches = []; compareQ2Matches = [];
 
+    const singleQuery = unwrapQuotedSearchTerm(parts[0] ?? q);
     let matches = [];
     const matchedIds = new Set();
     primaryMatchIds = new Set();
@@ -1009,8 +1011,8 @@ export function setupSearch({
     // Helper: resolve an invalid ID to its canonical node (if in tree)
     const reverseMap = window.__invalidIdToCanonicalId || new Map();
 
-    const numericId = Number(q);
-    const isIdSearch = !Number.isNaN(numericId) && Number.isInteger(numericId) && q.trim() !== '';
+    const numericId = Number(singleQuery);
+    const isIdSearch = !Number.isNaN(numericId) && Number.isInteger(numericId) && singleQuery !== '';
 
     if (isIdSearch) {
       // ── ID search ──────────────────────────────────────────────────────────
@@ -1031,7 +1033,7 @@ export function setupSearch({
           const synMeta = canonicalNode.data.synonymMetadata;
           const synDetail = synMeta?.synonyms?.find(s => s.invalid_id === numericId);
           synonymResolutions.set(canonicalId, [{
-            searchedTerm: q.trim(),
+            searchedTerm: singleQuery,
             invalidId: numericId,
             invalidName: synDetail?.invalid_name ?? String(numericId),
             synonymtype: synDetail?.synonymtype ?? '',
@@ -1041,7 +1043,7 @@ export function setupSearch({
       }
     } else {
       // ── Name search ────────────────────────────────────────────────────────
-      const lower = q.toLowerCase().replace(/^\?+/, '').trim(); // strip leading ? (uncertain name notation)
+      const lower = singleQuery.toLowerCase().replace(/^\?+/, '').trim(); // strip leading ? (uncertain name notation)
 
       // Pass 1: direct name match against nodes in the tree
       getAllNodes(root).forEach(n => {
@@ -1076,7 +1078,7 @@ export function setupSearch({
           matchingSyns.forEach(syn => {
             if (!existing.some(r => r.invalidId === syn.invalid_id)) {
               existing.push({
-                searchedTerm: q.trim(),
+                searchedTerm: singleQuery,
                 invalidId: syn.invalid_id,
                 invalidName: syn.invalid_name,
                 synonymtype: syn.synonymtype ?? '',
@@ -1106,7 +1108,7 @@ export function setupSearch({
           const synDetail = meta?.synonyms?.find(s => s.invalid_name.toLowerCase() === key);
           const existing = synonymResolutions.get(canonicalId) || [];
           existing.push({
-            searchedTerm: q.trim(),
+            searchedTerm: singleQuery,
             invalidId: synDetail?.invalid_id ?? null,
             invalidName: synDetail?.invalid_name ?? key,
             synonymtype: synDetail?.synonymtype ?? '',

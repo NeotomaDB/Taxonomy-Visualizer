@@ -4,6 +4,7 @@ import { highlightPath } from './highlight.js';
 import { setHighlightedPath } from './viewSwitch.js';
 import { attachSynonymMetadata } from './data.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './synonyms.js';
+import { setupHover } from './hover.js';
 
 /**
  * Render a collapsible tree layout.
@@ -305,6 +306,8 @@ export async function renderCollapsibleTree({
                 const o = { x: source.x, y: source.y };
                 return diagonal({ source: o, target: o });
             });
+
+        setupHover(gNode.selectAll('g.node'), { taxagroupid });
 
         // Stash positions
         hierarchyRoot.eachBefore(d => {

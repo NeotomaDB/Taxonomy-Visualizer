@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "PRK",
+  "taxagroupname": "Prokaryota",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 3,
+    "uniqueTaxa": 3,
+    "internalNodes": 2,
+    "terminalNodes": 1
+  },
+  "terminal_taxonids": [
+    33037
+  ]
+}

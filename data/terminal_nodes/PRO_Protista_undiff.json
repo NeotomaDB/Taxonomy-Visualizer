@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "PRO",
+  "taxagroupname": "Protista undiff.",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 20,
+    "uniqueTaxa": 20,
+    "internalNodes": 22,
+    "terminalNodes": 9
+  },
+  "terminal_taxonids": [
+    31308,
+    31767,
+    31768,
+    31315,
+    2191,
+    34107,
+    31313,
+    27700,
+    27701
+  ]
+}

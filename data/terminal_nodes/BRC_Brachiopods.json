@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "BRC",
+  "taxagroupname": "Brachiopods",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 10,
+    "uniqueTaxa": 10,
+    "internalNodes": 7,
+    "terminalNodes": 5
+  },
+  "terminal_taxonids": [
+    19853,
+    19854,
+    19852,
+    19851,
+    19850
+  ]
+}

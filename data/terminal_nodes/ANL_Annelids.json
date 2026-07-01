@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "ANL",
+  "taxagroupname": "Annelids",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 24,
+    "uniqueTaxa": 24,
+    "internalNodes": 18,
+    "terminalNodes": 8
+  },
+  "terminal_taxonids": [
+    52920,
+    5568,
+    15453,
+    47227,
+    67867,
+    19894,
+    19901,
+    23949
+  ]
+}

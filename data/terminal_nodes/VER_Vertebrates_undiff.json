@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "VER",
+  "taxagroupname": "Vertebrates undiff.",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 14,
+    "uniqueTaxa": 14,
+    "internalNodes": 8,
+    "terminalNodes": 8
+  },
+  "terminal_taxonids": [
+    23428,
+    28538,
+    50018,
+    49395,
+    50020,
+    52804,
+    42041,
+    28547
+  ]
+}

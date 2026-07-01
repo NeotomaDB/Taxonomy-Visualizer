@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "BRZ",
+  "taxagroupname": "Bryozoa",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 51,
+    "uniqueTaxa": 51,
+    "internalNodes": 34,
+    "terminalNodes": 19
+  },
+  "terminal_taxonids": [
+    18607,
+    19816,
+    18686,
+    20543,
+    19809,
+    19808,
+    19820,
+    19826,
+    23615,
+    37605,
+    47151,
+    19813,
+    23627,
+    19823,
+    19832,
+    19829,
+    19834,
+    19818,
+    19915
+  ]
+}

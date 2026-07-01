@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "ACR",
+  "taxagroupname": "Acritarchs",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 39,
+    "uniqueTaxa": 39,
+    "internalNodes": 23,
+    "terminalNodes": 27
+  },
+  "terminal_taxonids": [
+    47552,
+    47553,
+    2814,
+    47728,
+    51123,
+    5468,
+    51124,
+    51125,
+    47538,
+    51126,
+    47093,
+    36674,
+    36675,
+    37240,
+    36697,
+    38645,
+    38603,
+    33265,
+    33281,
+    47541,
+    47542,
+    44931,
+    29165,
+    44421,
+    37168,
+    47539,
+    44933
+  ]
+}

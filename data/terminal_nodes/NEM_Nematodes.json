@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "NEM",
+  "taxagroupname": "Nematodes",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 19,
+    "uniqueTaxa": 19,
+    "internalNodes": 16,
+    "terminalNodes": 5
+  },
+  "terminal_taxonids": [
+    31202,
+    44186,
+    42579,
+    42581,
+    34130
+  ]
+}

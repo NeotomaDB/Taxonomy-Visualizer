@@ -6,6 +6,7 @@
 //   info.clear(); // to hide
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
+import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
 import { isMajorGroupDisplayName } from './taxaViewConfig.js';
 import { updateURLState } from './urlhash.js';
 
@@ -99,6 +100,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${names.length} matches)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
       <div id="taxon-metadata-container"></div>
+      <div id="taxon-summary-container"></div>
       <div style="display:flex; flex-wrap:wrap; gap:8px;">
         ${goToTreeButton}
         ${goToGroupButton}
@@ -109,6 +111,11 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     const metadataContainer = document.getElementById('taxon-metadata-container');
     if (metadataContainer && currentClickIdRef.value) {
       fetchAndRenderTaxonMetadata(currentClickIdRef.value, metadataContainer, currentClickIdRef);
+    }
+
+    const summaryContainer = document.getElementById('taxon-summary-container');
+    if (summaryContainer && currentClickIdRef.value && taxagroupid) {
+      fetchAndRenderTaxonSummary(currentClickIdRef.value, taxagroupid, summaryContainer, currentClickIdRef);
     }
 
     // Fetch and render external links dynamically
@@ -176,4 +183,3 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
   if (panel) panel.style.display = 'none';
   return { show, clear };
 }
-

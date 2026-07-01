@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "ECH",
+  "taxagroupname": "Echinoderms",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 21,
+    "uniqueTaxa": 21,
+    "internalNodes": 12,
+    "terminalNodes": 11
+  },
+  "terminal_taxonids": [
+    19771,
+    9494,
+    9495,
+    9496,
+    19730,
+    9497,
+    9490,
+    9491,
+    9492,
+    9493,
+    9489
+  ]
+}

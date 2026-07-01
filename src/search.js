@@ -22,6 +22,7 @@ import {
 import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwitch.js';
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
+import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
 import { updateURLState } from './urlhash.js';
 import { splitSearchQuery, unwrapQuotedSearchTerm } from './searchQuery.js';
 
@@ -751,6 +752,7 @@ export function setupSearch({
       <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matches)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
       <div id="taxon-metadata-container"></div>
+      <div id="taxon-summary-container"></div>
       ${resolutionBanner}
       ${synonymSection}
       ${algaeBaseLink}
@@ -764,6 +766,11 @@ export function setupSearch({
     const metadataContainer = document.getElementById('taxon-metadata-container');
     if (metadataContainer && currentSearchDetailIdRef.value) {
       fetchAndRenderTaxonMetadata(currentSearchDetailIdRef.value, metadataContainer, currentSearchDetailIdRef);
+    }
+
+    const summaryContainer = document.getElementById('taxon-summary-container');
+    if (summaryContainer && currentSearchDetailIdRef.value && taxagroupid) {
+      fetchAndRenderTaxonSummary(currentSearchDetailIdRef.value, taxagroupid, summaryContainer, currentSearchDetailIdRef);
     }
 
     // Fetch and render external links dynamically

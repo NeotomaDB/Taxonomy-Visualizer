@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "CHO",
+  "taxagroupname": "Chromista",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 55,
+    "uniqueTaxa": 55,
+    "internalNodes": 40,
+    "terminalNodes": 16
+  },
+  "terminal_taxonids": [
+    47712,
+    32181,
+    47718,
+    47726,
+    39566,
+    32700,
+    32701,
+    39242,
+    47711,
+    47190,
+    47702,
+    47714,
+    47717,
+    47713,
+    2746,
+    47545
+  ]
+}

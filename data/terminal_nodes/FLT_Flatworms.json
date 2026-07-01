@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "FLT",
+  "taxagroupname": "Flatworms",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 31,
+    "uniqueTaxa": 31,
+    "internalNodes": 16,
+    "terminalNodes": 17
+  },
+  "terminal_taxonids": [
+    27726,
+    27732,
+    42265,
+    42269,
+    42267,
+    34625,
+    34880,
+    34569,
+    23392,
+    38547,
+    52618,
+    50665,
+    42268,
+    42266,
+    42577,
+    32999,
+    23394
+  ]
+}

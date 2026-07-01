@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "SPO",
+  "taxagroupname": "Sponges",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 17,
+    "uniqueTaxa": 17,
+    "internalNodes": 12,
+    "terminalNodes": 7
+  },
+  "terminal_taxonids": [
+    30731,
+    23629,
+    30755,
+    49203,
+    34054,
+    23632,
+    23630
+  ]
+}

@@ -31,6 +31,10 @@ jobs:
       - name: Verify split taxonomy parity
         run: |
           python -m unittest discover -s tests -p 'test_refresh_parity.py' -v
+          python -m unittest discover -s tests -p 'test_generate_terminal_nodes.py' -v
+          python -m unittest discover -s tests -p 'test_generate_terminal_node_occurrences.py' -v
+          node --experimental-default-type=module --test tests/test_taxon_summary.mjs
+          node --experimental-default-type=module --test tests/test_hover.mjs
           node --experimental-default-type=module --test tests/test_search_query.mjs
           node --experimental-default-type=module --test tests/test_group_anomaly_rows.mjs
           node --experimental-default-type=module --test tests/test_group_tree_rows.mjs

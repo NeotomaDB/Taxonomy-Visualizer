@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "EUK",
+  "taxagroupname": "Eukaryota",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 7,
+    "uniqueTaxa": 7,
+    "internalNodes": 5,
+    "terminalNodes": 3
+  },
+  "terminal_taxonids": [
+    44526,
+    32183,
+    36673
+  ]
+}

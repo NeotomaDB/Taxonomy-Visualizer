@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "FOR",
+  "taxagroupname": "Foraminifera",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 11,
+    "uniqueTaxa": 11,
+    "internalNodes": 13,
+    "terminalNodes": 3
+  },
+  "terminal_taxonids": [
+    42582,
+    34159,
+    50804
+  ]
+}

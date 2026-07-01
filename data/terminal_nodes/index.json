@@ -1,0 +1,356 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "source_files": {
+    "paths": "data/taxon_paths_ids.json",
+    "names": "data/taxon_names.json",
+    "taxagroup_names": "data/taxagroup_names.json"
+  },
+  "excluded_non_bio_groups": [
+    "AQU",
+    "BIM",
+    "CAR",
+    "CHM",
+    "CHR",
+    "DNA",
+    "ISO",
+    "LAB",
+    "LOI",
+    "MAG",
+    "PHT",
+    "PHY",
+    "SED",
+    "UPA",
+    "WCH"
+  ],
+  "counts": {
+    "taxagroups": 36,
+    "terminalNodes": 45326
+  },
+  "groups": [
+    {
+      "taxagroupid": "ACR",
+      "taxagroupname": "Acritarchs",
+      "file": "ACR_Acritarchs.json",
+      "pathRows": 39,
+      "uniqueTaxa": 39,
+      "internalNodes": 23,
+      "terminalNodes": 27
+    },
+    {
+      "taxagroupid": "ALG",
+      "taxagroupname": "Algae",
+      "file": "ALG_Algae.json",
+      "pathRows": 388,
+      "uniqueTaxa": 388,
+      "internalNodes": 102,
+      "terminalNodes": 299
+    },
+    {
+      "taxagroupid": "ANM",
+      "taxagroupname": "Animals undiff.",
+      "file": "ANM_Animals_undiff.json",
+      "pathRows": 72,
+      "uniqueTaxa": 72,
+      "internalNodes": 17,
+      "terminalNodes": 56
+    },
+    {
+      "taxagroupid": "ANL",
+      "taxagroupname": "Annelids",
+      "file": "ANL_Annelids.json",
+      "pathRows": 24,
+      "uniqueTaxa": 24,
+      "internalNodes": 18,
+      "terminalNodes": 8
+    },
+    {
+      "taxagroupid": "ART",
+      "taxagroupname": "Arthropods undiff.",
+      "file": "ART_Arthropods_undiff.json",
+      "pathRows": 223,
+      "uniqueTaxa": 223,
+      "internalNodes": 112,
+      "terminalNodes": 113
+    },
+    {
+      "taxagroupid": "AVE",
+      "taxagroupname": "Birds",
+      "file": "AVE_Birds.json",
+      "pathRows": 1754,
+      "uniqueTaxa": 1754,
+      "internalNodes": 388,
+      "terminalNodes": 1369
+    },
+    {
+      "taxagroupid": "BRC",
+      "taxagroupname": "Brachiopods",
+      "file": "BRC_Brachiopods.json",
+      "pathRows": 10,
+      "uniqueTaxa": 10,
+      "internalNodes": 7,
+      "terminalNodes": 5
+    },
+    {
+      "taxagroupid": "BRY",
+      "taxagroupname": "Bryophytes",
+      "file": "BRY_Bryophytes.json",
+      "pathRows": 482,
+      "uniqueTaxa": 482,
+      "internalNodes": 191,
+      "terminalNodes": 297
+    },
+    {
+      "taxagroupid": "BRZ",
+      "taxagroupname": "Bryozoa",
+      "file": "BRZ_Bryozoa.json",
+      "pathRows": 51,
+      "uniqueTaxa": 51,
+      "internalNodes": 34,
+      "terminalNodes": 19
+    },
+    {
+      "taxagroupid": "CHO",
+      "taxagroupname": "Chromista",
+      "file": "CHO_Chromista.json",
+      "pathRows": 55,
+      "uniqueTaxa": 55,
+      "internalNodes": 40,
+      "terminalNodes": 16
+    },
+    {
+      "taxagroupid": "CNI",
+      "taxagroupname": "Cnidaria",
+      "file": "CNI_Cnidaria.json",
+      "pathRows": 3,
+      "uniqueTaxa": 3,
+      "internalNodes": 4,
+      "terminalNodes": 1
+    },
+    {
+      "taxagroupid": "CRU",
+      "taxagroupname": "Crustaceans undiff.",
+      "file": "CRU_Crustaceans_undiff.json",
+      "pathRows": 171,
+      "uniqueTaxa": 171,
+      "internalNodes": 81,
+      "terminalNodes": 93
+    },
+    {
+      "taxagroupid": "DIA",
+      "taxagroupname": "Diatoms",
+      "file": "DIA_Diatoms.json",
+      "pathRows": 8561,
+      "uniqueTaxa": 8561,
+      "internalNodes": 777,
+      "terminalNodes": 7785
+    },
+    {
+      "taxagroupid": "DIN",
+      "taxagroupname": "Dinoflagellates",
+      "file": "DIN_Dinoflagellates.json",
+      "pathRows": 432,
+      "uniqueTaxa": 432,
+      "internalNodes": 113,
+      "terminalNodes": 329
+    },
+    {
+      "taxagroupid": "ECH",
+      "taxagroupname": "Echinoderms",
+      "file": "ECH_Echinoderms.json",
+      "pathRows": 21,
+      "uniqueTaxa": 21,
+      "internalNodes": 12,
+      "terminalNodes": 11
+    },
+    {
+      "taxagroupid": "EUK",
+      "taxagroupname": "Eukaryota",
+      "file": "EUK_Eukaryota.json",
+      "pathRows": 7,
+      "uniqueTaxa": 7,
+      "internalNodes": 5,
+      "terminalNodes": 3
+    },
+    {
+      "taxagroupid": "FSH",
+      "taxagroupname": "Fish",
+      "file": "FSH_Fish.json",
+      "pathRows": 717,
+      "uniqueTaxa": 717,
+      "internalNodes": 258,
+      "terminalNodes": 462
+    },
+    {
+      "taxagroupid": "FLT",
+      "taxagroupname": "Flatworms",
+      "file": "FLT_Flatworms.json",
+      "pathRows": 31,
+      "uniqueTaxa": 31,
+      "internalNodes": 16,
+      "terminalNodes": 17
+    },
+    {
+      "taxagroupid": "FOR",
+      "taxagroupname": "Foraminifera",
+      "file": "FOR_Foraminifera.json",
+      "pathRows": 11,
+      "uniqueTaxa": 11,
+      "internalNodes": 13,
+      "terminalNodes": 3
+    },
+    {
+      "taxagroupid": "FUN",
+      "taxagroupname": "Fungi",
+      "file": "FUN_Fungi.json",
+      "pathRows": 835,
+      "uniqueTaxa": 835,
+      "internalNodes": 243,
+      "terminalNodes": 593
+    },
+    {
+      "taxagroupid": "INS",
+      "taxagroupname": "Insects",
+      "file": "INS_Insects.json",
+      "pathRows": 15495,
+      "uniqueTaxa": 15495,
+      "internalNodes": 3846,
+      "terminalNodes": 11665
+    },
+    {
+      "taxagroupid": "MAM",
+      "taxagroupname": "Mammals",
+      "file": "MAM_Mammals.json",
+      "pathRows": 3712,
+      "uniqueTaxa": 3712,
+      "internalNodes": 648,
+      "terminalNodes": 3067
+    },
+    {
+      "taxagroupid": "MOL",
+      "taxagroupname": "Molluscs",
+      "file": "MOL_Molluscs.json",
+      "pathRows": 548,
+      "uniqueTaxa": 548,
+      "internalNodes": 241,
+      "terminalNodes": 309
+    },
+    {
+      "taxagroupid": "NEM",
+      "taxagroupname": "Nematodes",
+      "file": "NEM_Nematodes.json",
+      "pathRows": 19,
+      "uniqueTaxa": 19,
+      "internalNodes": 16,
+      "terminalNodes": 5
+    },
+    {
+      "taxagroupid": "OST",
+      "taxagroupname": "Ostracode",
+      "file": "OST_Ostracode.json",
+      "pathRows": 1048,
+      "uniqueTaxa": 1048,
+      "internalNodes": 197,
+      "terminalNodes": 855
+    },
+    {
+      "taxagroupid": "PLA",
+      "taxagroupname": "Plants undiff.",
+      "file": "PLA_Plants_undiff.json",
+      "pathRows": 28,
+      "uniqueTaxa": 28,
+      "internalNodes": 12,
+      "terminalNodes": 21
+    },
+    {
+      "taxagroupid": "PRK",
+      "taxagroupname": "Prokaryota",
+      "file": "PRK_Prokaryota.json",
+      "pathRows": 3,
+      "uniqueTaxa": 3,
+      "internalNodes": 2,
+      "terminalNodes": 1
+    },
+    {
+      "taxagroupid": "PRO",
+      "taxagroupname": "Protista undiff.",
+      "file": "PRO_Protista_undiff.json",
+      "pathRows": 20,
+      "uniqueTaxa": 20,
+      "internalNodes": 22,
+      "terminalNodes": 9
+    },
+    {
+      "taxagroupid": "PRZ",
+      "taxagroupname": "Protozoa",
+      "file": "PRZ_Protozoa.json",
+      "pathRows": 14,
+      "uniqueTaxa": 14,
+      "internalNodes": 11,
+      "terminalNodes": 4
+    },
+    {
+      "taxagroupid": "HRP",
+      "taxagroupname": "Reptiles and amphibians",
+      "file": "HRP_Reptiles_and_amphibians.json",
+      "pathRows": 395,
+      "uniqueTaxa": 395,
+      "internalNodes": 133,
+      "terminalNodes": 265
+    },
+    {
+      "taxagroupid": "ROT",
+      "taxagroupname": "Rotifers",
+      "file": "ROT_Rotifers.json",
+      "pathRows": 72,
+      "uniqueTaxa": 72,
+      "internalNodes": 37,
+      "terminalNodes": 37
+    },
+    {
+      "taxagroupid": "SIL",
+      "taxagroupname": "Silicoflagellates",
+      "file": "SIL_Silicoflagellates.json",
+      "pathRows": 11,
+      "uniqueTaxa": 11,
+      "internalNodes": 11,
+      "terminalNodes": 7
+    },
+    {
+      "taxagroupid": "SPO",
+      "taxagroupname": "Sponges",
+      "file": "SPO_Sponges.json",
+      "pathRows": 17,
+      "uniqueTaxa": 17,
+      "internalNodes": 12,
+      "terminalNodes": 7
+    },
+    {
+      "taxagroupid": "TES",
+      "taxagroupname": "Testate amoebae",
+      "file": "TES_Testate_amoebae.json",
+      "pathRows": 488,
+      "uniqueTaxa": 488,
+      "internalNodes": 132,
+      "terminalNodes": 372
+    },
+    {
+      "taxagroupid": "VPL",
+      "taxagroupname": "Vascular plants",
+      "file": "VPL_Vascular_plants.json",
+      "pathRows": 20930,
+      "uniqueTaxa": 20930,
+      "internalNodes": 3757,
+      "terminalNodes": 17188
+    },
+    {
+      "taxagroupid": "VER",
+      "taxagroupname": "Vertebrates undiff.",
+      "file": "VER_Vertebrates_undiff.json",
+      "pathRows": 14,
+      "uniqueTaxa": 14,
+      "internalNodes": 8,
+      "terminalNodes": 8
+    }
+  ]
+}

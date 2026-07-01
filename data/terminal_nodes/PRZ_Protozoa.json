@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "PRZ",
+  "taxagroupname": "Protozoa",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 14,
+    "uniqueTaxa": 14,
+    "internalNodes": 11,
+    "terminalNodes": 4
+  },
+  "terminal_taxonids": [
+    35545,
+    47721,
+    47719,
+    44071
+  ]
+}

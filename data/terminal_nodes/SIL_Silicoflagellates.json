@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "SIL",
+  "taxagroupname": "Silicoflagellates",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 11,
+    "uniqueTaxa": 11,
+    "internalNodes": 11,
+    "terminalNodes": 7
+  },
+  "terminal_taxonids": [
+    39648,
+    39572,
+    39649,
+    39595,
+    39596,
+    39597,
+    39650
+  ]
+}

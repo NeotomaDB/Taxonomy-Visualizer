@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-29T15:22:44+00:00",
+  "taxagroupid": "PLA",
+  "taxagroupname": "Plants undiff.",
+  "fields": [
+    "taxonid"
+  ],
+  "counts": {
+    "pathRows": 28,
+    "uniqueTaxa": 28,
+    "internalNodes": 12,
+    "terminalNodes": 21
+  },
+  "terminal_taxonids": [
+    29440,
+    42627,
+    37846,
+    1408,
+    33505,
+    47226,
+    34915,
+    47571,
+    50650,
+    67876,
+    15526,
+    34927,
+    67875,
+    67873,
+    67872,
+    34044,
+    50651,
+    1493,
+    67874,
+    33015,
+    38608
+  ]
+}

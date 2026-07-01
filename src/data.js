@@ -124,11 +124,14 @@ export function pathsToTree(rows, rootId = 6171, rootName = 'Mammalia', anchorId
         child = { 
           id, 
           name, 
+          taxagroupid: r.taxagroupid,
           children: [],
           isAnchor: anchorIds.has(id) || anchorIds.has(parseInt(id))
         };
         byId.set(id, child);
         (parent.children || (parent.children = [])).push(child);
+      } else if (!child.taxagroupid && r.taxagroupid) {
+        child.taxagroupid = r.taxagroupid;
       }
       parent = child;
     }

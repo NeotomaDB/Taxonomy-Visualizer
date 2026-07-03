@@ -136,6 +136,12 @@ export async function activateFocusView() {
   await switchToFocusView();
 }
 
+function restoreFocusedNodeAfterRender() {
+  if (typeof window === 'undefined' || !currentHighlightedPath?.pathIds?.length) return;
+  const focusId = currentHighlightedPath.pathIds[currentHighlightedPath.pathIds.length - 1];
+  window.dispatchEvent(new CustomEvent('RestoreFocusNode', { detail: { id: focusId } }));
+}
+
 /**
  * Switch to Focus View - show only the highlighted path
  */
@@ -232,6 +238,7 @@ async function switchToFocusView() {
   // Re-render with filtered data
   console.log('Rendering with filtered data...', filteredRows.length, 'rows');
   await renderFunction(filteredRows, originalRootInfo.rootId, originalRootInfo.rootName, allRowsForSynonyms);
+  restoreFocusedNodeAfterRender();
   console.log('Rendering complete');
 }
 
@@ -250,6 +257,7 @@ async function switchToWholeView() {
   
   // Re-render with original data
   await renderFunction(originalRows, originalRootInfo.rootId, originalRootInfo.rootName, allRowsForSynonyms);
+  restoreFocusedNodeAfterRender();
 }
 
 /**

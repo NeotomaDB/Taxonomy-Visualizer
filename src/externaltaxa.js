@@ -49,7 +49,7 @@ fetchExternalData();
 export async function fetchAndRenderExternalLinks(taxonId, containerElement, currentClickIdRef) {
   if (!containerElement || !taxonId) return;
 
-  containerElement.innerHTML = `<span style="font-size: 11px; color: #888; font-style: italic;">Loading IDs...</span>`;
+  containerElement.innerHTML = `<span style="font-size: 11px; color: #888; font-style: italic;">Loading external links...</span>`;
 
   try {
     // Wait for the tables to load (usually instant if already loaded)

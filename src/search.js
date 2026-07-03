@@ -17,7 +17,6 @@ import {
   isInvalidId,
   getSynonymInfo,
   isSynonymsReady,
-  getInvalidNameInfo,
 } from './synonyms.js';
 import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwitch.js';
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
@@ -448,7 +447,7 @@ export function setupSearch({
     }).join('');
 
     panel.innerHTML = `
-      <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matches)</div>
+      <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matched paths)</div>
       <div style="max-height:300px;overflow-y:auto;">${matchList}</div>
     `;
     panel.style.display = 'block';
@@ -473,7 +472,11 @@ export function setupSearch({
           }
           showSearchResultsList();
         } else {
-          focusNode(selectedNode);
+          if (currentMatches.length > 1) {
+            selectNodeWithinMatches(selectedNode);
+          } else {
+            focusNode(selectedNode);
+          }
           isShowingDetails = true;
           showNodeDetails(selectedNode);
         }
@@ -556,102 +559,60 @@ export function setupSearch({
     // Keep the wording scoped to Neotoma's taxonomy records instead of implying
     // global taxonomic consensus across all authorities.
     let resolutionBanner = '';
+    const matchedDirectly = primaryMatchIds.has(nodeId);
     const resolutions = synonymResolutions.get(nodeId);
-    if (resolutions && resolutions.length > 0) {
+    if (!matchedDirectly && resolutions && resolutions.length > 0) {
       resolutionBanner = resolutions.map(r => `
         <div style="
           margin-top:10px; padding:10px 14px;
-          background:#fff7ed; border-left:3px solid #f97316; border-radius:4px;
+          background:#fff7ed; border-radius:4px;
         ">
-          <div style="font-weight:700;font-size:13px;color:#c2410c;margin-bottom:6px;">
-            In Neotoma, "<span style="font-style:italic;">${r.invalidName}</span>" is linked to a different accepted name
+          <div style="font-size:13px;color:#1f2937;line-height:1.5;">
+            <strong style="color:#9a3412;">Accepted name in Neotoma:</strong> <span style="color:#15803d;font-weight:600;">${selectedNode.data.name}</span>
           </div>
-          ${r.synonymtype ? `
-            <div style="font-size:12px;color:#7c3a1e;margin-bottom:4px;">
-              <strong>Neotoma synonym type:</strong> ${r.synonymtype}
+          <div style="font-size:13px;color:#1f2937;line-height:1.5;margin-top:2px;">
+            <strong style="color:#9a3412;">Synonym:</strong> <span style="color:#b45309;font-style:italic;">${r.invalidName}</span>
+          </div>
+          ${(r.synonymtype || r.recdatemodified) ? `
+            <div style="font-size:12px;color:#7c3a1e;line-height:1.45;margin-top:4px;">
+              ${r.synonymtype ? `<strong>Type:</strong> ${r.synonymtype}` : ''}
+              ${r.synonymtype && r.recdatemodified ? ' · ' : ''}
+              ${r.recdatemodified ? `<strong>Updated:</strong> ${formatDate(r.recdatemodified)}` : ''}
             </div>
           ` : ''}
-          ${r.recdatemodified ? `
-            <div style="font-size:12px;color:#9a3412;margin-bottom:6px;">
-              <strong>Last updated:</strong> ${formatDate(r.recdatemodified)}
-            </div>
-          ` : ''}
-          <div style="font-size:13px;color:#1f2937;margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">
-            Neotoma currently treats this as:
-            <strong style="color:#15803d;">${selectedNode.data.name}</strong>
+          <div style="font-size:11px;color:#9a3412;margin-top:6px;line-height:1.45;">
+            Synonym status shown here reflects Neotoma taxonomy records and may differ from other taxonomic authorities.
           </div>
         </div>
       `).join('');
-    }
-
-    // ── Cross-check: canonical node whose name is ALSO listed as invalid ───────
-    // This catches the case where Neotoma has "Aulacoseira distans var. humilis"
-    // both as a valid taxon (with occurrence records) AND as a synonym of
-    // "Aulacoseira humilis". The user searched the valid Neotoma name but the
-    // taxonomic literature considers it invalid.
-    if (!resolutionBanner) {
-      const invalidInfo = getInvalidNameInfo(selectedNode.data.name);
-      if (invalidInfo) {
-        resolutionBanner = `
-          <div style="
-            margin-top:10px; padding:10px 14px;
-            background:#fff7ed; border-left:3px solid #f97316; border-radius:4px;
-          ">
-            <div style="font-weight:700;font-size:13px;color:#c2410c;margin-bottom:6px;">
-              In Neotoma, "<span style="font-style:italic;">${selectedNode.data.name}</span>" is also listed as a synonym / invalid-name record
-            </div>
-            ${invalidInfo.synonymtype ? `
-              <div style="font-size:12px;color:#7c3a1e;margin-bottom:4px;">
-                <strong>Neotoma synonym type:</strong> ${invalidInfo.synonymtype}
-              </div>
-            ` : ''}
-            ${invalidInfo.recdatemodified ? `
-              <div style="font-size:12px;color:#9a3412;margin-bottom:6px;">
-                <strong>Last updated:</strong> ${formatDate(invalidInfo.recdatemodified)}
-              </div>
-            ` : ''}
-            <div style="font-size:13px;color:#1f2937;margin-top:6px;padding-top:6px;border-top:1px solid #fed7aa;">
-              Neotoma currently treats this as:
-              <strong style="color:#15803d;">${invalidInfo.validName}</strong>
-            </div>
-            <div style="font-size:11px;color:#9a3412;margin-top:6px;font-style:italic;">
-              Note: this taxon has occurrence records in Neotoma under this name. Synonym status shown here reflects Neotoma taxonomy records and may differ from other authorities.
-            </div>
-          </div>
-        `;
-      }
     }
 
     // ── Case 1: user searched a Neotoma accepted name with known synonyms ─────
     // Present synonym status as Neotoma's record state, not a universal judgment.
     let synonymSection = '';
     const meta = selectedNode.data.synonymMetadata;
-    if (meta && meta.synonyms && meta.synonyms.length > 0) {
+    if (!resolutionBanner && meta && meta.synonyms && meta.synonyms.length > 0) {
       synonymSection = `
         <div style="
           margin-top:12px; padding:10px 14px;
-          background:#f0fdf4; border-left:3px solid #16a34a; border-radius:4px;
+          background:#f0fdf4; border-radius:4px;
         ">
-          <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:4px;">
-            Neotoma currently treats <em>${selectedNode.data.name}</em> as the accepted name
+          <div style="font-size:13px;color:#1f2937;line-height:1.5;">
+            <strong style="color:#15803d;">Accepted name in Neotoma:</strong> <span style="color:#15803d;font-weight:600;">${selectedNode.data.name}</span>
           </div>
-          <div style="font-size:12px;color:#4b7c59;margin-bottom:8px;">
-            This Neotoma taxon record is linked to the following synonym${meta.synonyms.length > 1 ? 's' : ''}:
-          </div>
-          ${meta.synonyms.map(syn => `
-            <div style="padding:6px 0;border-top:1px solid #bbf7d0;margin-top:2px;">
-              <div style="font-weight:600;color:#b45309;font-size:13px;">
-                • <em>${syn.invalid_name}</em>
-                <span style="font-size:11px;color:#b45309;font-weight:400;margin-left:6px;">listed in Neotoma as a synonym / invalid name</span>
-              </div>
-              <div style="font-size:11px;color:#6b7280;margin-left:14px;margin-top:2px;">
-                ${syn.synonymtype ? `Neotoma synonym type: ${syn.synonymtype}` : ''}
-                ${syn.synonymtype && syn.recdatemodified ? ' · ' : ''}
-                ${syn.recdatemodified ? 'Last updated in Neotoma: ' + formatDate(syn.recdatemodified) : ''}
-              </div>
+          ${meta.synonyms.map((syn, index) => `
+            <div style="font-size:13px;color:#1f2937;line-height:1.5;${index === 0 ? 'margin-top:2px;' : 'margin-top:4px;'}">
+              <strong style="color:#15803d;">${meta.synonyms.length > 1 ? `Synonym ${index + 1}` : 'Synonym'}:</strong> <span style="color:#b45309;font-style:italic;">${syn.invalid_name}</span>
             </div>
+            ${(syn.synonymtype || syn.recdatemodified) ? `
+              <div style="font-size:12px;color:#4b5563;line-height:1.45;margin-top:2px;">
+                ${syn.synonymtype ? `<strong>Type:</strong> ${syn.synonymtype}` : ''}
+                ${syn.synonymtype && syn.recdatemodified ? ' · ' : ''}
+                ${syn.recdatemodified ? `<strong>Updated:</strong> ${formatDate(syn.recdatemodified)}` : ''}
+              </div>
+            ` : ''}
           `).join('')}
-          <div style="font-size:11px;color:#9ca3af;margin-top:8px;font-style:italic;">
+          <div style="font-size:11px;color:#6b7280;margin-top:6px;line-height:1.45;">
             Synonym status shown here reflects Neotoma taxonomy records and may differ from other taxonomic authorities.
           </div>
         </div>
@@ -748,8 +709,12 @@ export function setupSearch({
       `;
     }
 
+    const detailHeader = currentMatches.length > 1
+      ? `Search Result (1 of ${currentMatches.length} matched paths)`
+      : 'Search Result';
+
     panel.innerHTML = `
-      <div style="font-weight:600;margin-bottom:6px;">Search Results (${currentMatches.length} matches)</div>
+      <div style="font-weight:600;margin-bottom:6px;">${detailHeader}</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
       <div id="taxon-metadata-container"></div>
       <div id="taxon-summary-container"></div>
@@ -1228,14 +1193,20 @@ export function setupSearch({
         e.preventDefault();
         currentMatchIndex = currentMatchIndex < 0 ? 0 : Math.min(currentMatchIndex + 1, currentMatches.length - 1);
         const selectedNode = currentMatches[currentMatchIndex];
-        // Focus on selected node and highlight only its path
-        focusNode(selectedNode);
+        if (currentMatches.length > 1) {
+          selectNodeWithinMatches(selectedNode);
+        } else {
+          focusNode(selectedNode);
+        }
       } else if (e.key === 'ArrowUp' && currentMatches.length > 0) {
         e.preventDefault();
         currentMatchIndex = currentMatchIndex < 0 ? currentMatches.length - 1 : Math.max(currentMatchIndex - 1, 0);
         const selectedNode = currentMatches[currentMatchIndex];
-        // Focus on selected node and highlight only its path
-        focusNode(selectedNode);
+        if (currentMatches.length > 1) {
+          selectNodeWithinMatches(selectedNode);
+        } else {
+          focusNode(selectedNode);
+        }
       }
     });
     // Clear results when input is cleared

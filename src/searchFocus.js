@@ -97,7 +97,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     ` : '';
 
     panel.innerHTML = `
-      <div style="font-weight:600;margin-bottom:6px;">Search Results (${names.length} matches)</div>
+      <div style="font-weight:600;margin-bottom:6px;">Search Result (1 matched path)</div>
       <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
       <div id="taxon-metadata-container"></div>
       <div id="taxon-summary-container"></div>

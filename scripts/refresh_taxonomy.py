@@ -22,6 +22,7 @@ import argparse
 import json
 import sys
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,7 @@ from http.client import IncompleteRead
 DEFAULT_API_BASE = "https://api.neotomadb.org/v2.0"
 DEFAULT_PAGE_SIZE = 5000
 MAX_FETCH_RETRIES = 3
+PUBLICATION_FETCH_WORKERS = 12
 WATCH_FIELDS = (
     "taxonname",
     "highertaxonid",
@@ -111,6 +113,41 @@ def fetch_table(api_base: str, table: str, page_size: int) -> list[dict[str, Any
         offset += len(page)
 
     return rows
+
+
+def fetch_publications_by_id(api_base: str, publication_ids: set[int]) -> dict[int, dict[str, Any]]:
+    if not publication_ids:
+        return {}
+
+    def fetch_one(publication_id: int) -> tuple[int, dict[str, Any] | None]:
+        query = urlencode({"publicationid": publication_id})
+        url = f"{api_base}/data/publications?{query}"
+        payload = fetch_json(url)
+        result_rows = payload.get("data", {}).get("result", []) if isinstance(payload, dict) else []
+        if not result_rows:
+            return publication_id, None
+        publication = first_present(result_rows[0], "publication")
+        if not isinstance(publication, dict):
+            return publication_id, None
+        return publication_id, publication
+
+    publications_by_id: dict[int, dict[str, Any]] = {}
+    total = len(publication_ids)
+    completed = 0
+    with ThreadPoolExecutor(max_workers=PUBLICATION_FETCH_WORKERS) as executor:
+        future_map = {
+            executor.submit(fetch_one, publication_id): publication_id
+            for publication_id in sorted(publication_ids)
+        }
+        for future in as_completed(future_map):
+            publication_id, publication = future.result()
+            completed += 1
+            if publication is not None:
+                publications_by_id[publication_id] = publication
+            if completed == total or completed % 250 == 0:
+                log(f"Fetched {completed}/{total} publication details")
+
+    return publications_by_id
 
 
 def to_int(value: Any) -> int | None:
@@ -346,6 +383,7 @@ def format_contact_name(contact: dict[str, Any] | None) -> str | None:
 def build_taxon_metadata(
     taxa_rows: list[dict[str, Any]],
     contacts_rows: list[dict[str, Any]],
+    publications_by_id: dict[int, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
     contacts_by_id: dict[int, dict[str, Any]] = {}
     for row in contacts_rows:
@@ -361,11 +399,15 @@ def build_taxon_metadata(
             continue
         validator_id = to_int(first_present(row, "validatorid"))
         contact = contacts_by_id.get(validator_id) if validator_id is not None else None
+        publication_id = to_int(first_present(row, "publicationid"))
+        publication = publications_by_id.get(publication_id) if publication_id is not None else None
         metadata[str(taxon_id)] = {
             "taxonid": taxon_id,
             "author": first_present(row, "author"),
-            "publicationid": to_int(first_present(row, "publicationid")),
-            "publication": first_present(row, "publication"),
+            "publicationid": publication_id,
+            "publication": first_present(publication or {}, "citation") or first_present(row, "publication"),
+            "citation": first_present(publication or {}, "citation"),
+            "publicationYear": first_present(publication or {}, "year"),
             "validatorid": validator_id,
             "validatorName": format_contact_name(contact),
             "validatedate": first_present(row, "validatedate"),
@@ -474,12 +516,19 @@ def main() -> int:
     synonym_rows = fetch_table(args.api_base, "synonyms", args.page_size)
     synonym_type_rows = fetch_table(args.api_base, "synonymtypes", args.page_size)
     contacts_rows = fetch_table(args.api_base, "contacts", args.page_size)
+    publication_ids = {
+        publication_id
+        for row in taxa_rows
+        for publication_id in [to_int(first_present(row, "publicationid"))]
+        if publication_id is not None
+    }
+    publications_by_id = fetch_publications_by_id(args.api_base, publication_ids)
 
     normalized_taxonpaths = build_taxonpaths_from_taxa(taxa_rows)
     taxon_names, taxon_paths_ids = build_split_taxonomy(normalized_taxonpaths)
     taxagroup_names = build_taxagroup_names(taxagroup_rows)
     synonyms_payload = build_synonyms(taxa_rows, synonym_rows, synonym_type_rows)
-    taxon_metadata = build_taxon_metadata(taxa_rows, contacts_rows)
+    taxon_metadata = build_taxon_metadata(taxa_rows, contacts_rows, publications_by_id)
 
     previous_snapshot = load_json_file(snapshot_file, default={})
     current_snapshot = build_snapshot(taxa_rows)

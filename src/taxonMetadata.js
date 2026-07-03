@@ -1,5 +1,7 @@
 let metadataIndex = null;
 let metadataIndexPromise = null;
+const publicationDetailsCache = new Map();
+const publicationDetailsPromiseCache = new Map();
 
 function escapeHtml(value) {
   if (value == null || value === '') return '';
@@ -19,6 +21,45 @@ function formatDateLabel(value) {
     month: 'long',
     day: 'numeric',
   });
+}
+
+function hasYear(text, year) {
+  if (!text || !year) return false;
+  return String(text).includes(String(year));
+}
+
+export function buildCitationDisplayValue(metadata) {
+  if (!metadata) return null;
+
+  if (metadata.citation) {
+    return String(metadata.citation).trim() || null;
+  }
+
+  if (metadata.publication) {
+    return String(metadata.publication).trim() || null;
+  }
+
+  const author = metadata.author ? String(metadata.author).trim() : '';
+  const year = metadata.publicationYear ? String(metadata.publicationYear).trim() : '';
+
+  if (author && year) {
+    return hasYear(author, year) ? author : `${author}, ${year}`;
+  }
+  return author || year || null;
+}
+
+function extractPublicationDetails(payload) {
+  const resultRow = payload?.data?.result?.[0];
+  if (resultRow?.publication) {
+    return resultRow.publication;
+  }
+
+  const directRow = payload?.data?.[0];
+  if (directRow?.publication) {
+    return directRow.publication;
+  }
+
+  return null;
 }
 
 async function ensureMetadataIndex() {
@@ -47,6 +88,48 @@ async function ensureMetadataIndex() {
   return metadataIndexPromise;
 }
 
+export async function fetchPublicationDetails(publicationId) {
+  const numericId = Number(publicationId);
+  if (!Number.isFinite(numericId)) {
+    return null;
+  }
+
+  if (publicationDetailsCache.has(numericId)) {
+    return publicationDetailsCache.get(numericId);
+  }
+
+  if (!publicationDetailsPromiseCache.has(numericId)) {
+    const promise = fetch(`https://api.neotomadb.org/v2.0/data/publications/${numericId}`, {
+      cache: 'default',
+      headers: { accept: 'application/json' },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to fetch publication ${numericId} (HTTP ${response.status})`);
+        }
+        const payload = await response.json();
+        const publication = extractPublicationDetails(payload);
+        const details = publication
+          ? {
+              citation: publication.citation || null,
+              publicationYear: publication.year || null,
+            }
+          : null;
+        publicationDetailsCache.set(numericId, details);
+        publicationDetailsPromiseCache.delete(numericId);
+        return details;
+      })
+      .catch((err) => {
+        publicationDetailsPromiseCache.delete(numericId);
+        throw err;
+      });
+
+    publicationDetailsPromiseCache.set(numericId, promise);
+  }
+
+  return publicationDetailsPromiseCache.get(numericId);
+}
+
 export async function fetchTaxonMetadata(taxonId) {
   const numericId = Number(taxonId);
   if (!Number.isFinite(numericId)) {
@@ -58,49 +141,50 @@ export async function fetchTaxonMetadata(taxonId) {
   if (!metadata) {
     throw new Error(`Taxon ${numericId} not found in local metadata index`);
   }
+
+  if (!metadata.citation && metadata.publicationid != null) {
+    try {
+      const publicationDetails = await fetchPublicationDetails(metadata.publicationid);
+      if (publicationDetails) {
+        metadata.citation ??= publicationDetails.citation;
+        metadata.publicationYear ??= publicationDetails.publicationYear;
+      }
+    } catch (err) {
+      console.warn(`Failed to fetch publication details for ${metadata.publicationid}:`, err);
+    }
+  }
+
   return metadata;
 }
 
 export function renderTaxonMetadataHtml(metadata) {
   if (!metadata) return '';
 
-  const author = metadata.author
-    ? escapeHtml(metadata.author)
+  const citationValue = buildCitationDisplayValue(metadata);
+  const citation = citationValue
+    ? escapeHtml(citationValue)
     : '<span style="color:#9ca3af;font-style:italic;">Not recorded</span>';
 
-  const validator = metadata.validatorName
-    ? `${escapeHtml(metadata.validatorName)} <span style="color:#9ca3af;">(ID ${metadata.validatorid})</span>`
-    : metadata.validatorid != null
-      ? `<span style="color:#9ca3af;">Contact ID ${metadata.validatorid}</span>`
-      : '<span style="color:#9ca3af;font-style:italic;">Not recorded</span>';
-
-  const validated = metadata.validatedate
-    ? escapeHtml(formatDateLabel(metadata.validatedate))
-    : '<span style="color:#9ca3af;font-style:italic;">—</span>';
-
-  const publicationId = metadata.publicationid != null
-    ? escapeHtml(metadata.publicationid)
-    : '<span style="color:#9ca3af;font-style:italic;">—</span>';
-
-  const publication = metadata.publication
-    ? escapeHtml(metadata.publication)
+  const validationParts = [];
+  if (metadata.validatorName) {
+    validationParts.push(escapeHtml(metadata.validatorName));
+  }
+  if (metadata.validatedate) {
+    validationParts.push(escapeHtml(formatDateLabel(metadata.validatedate)));
+  }
+  const validation = validationParts.length > 0
+    ? validationParts.join(', ')
     : '<span style="color:#9ca3af;font-style:italic;">Not recorded</span>';
 
   return `
     <dl style="
-      margin:12px 0 0 12px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;
+      margin:12px 0 0 0;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;
       border-radius:8px;font-size:12px;line-height:1.55;
     ">
-      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:108px;margin:0 0 4px 0;">Author</dt>
-      <dd style="margin:0 0 8px 108px;color:#374151;">${author}</dd>
-      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:108px;margin:0 0 4px 0;">Validator</dt>
-      <dd style="margin:0 0 8px 108px;color:#374151;">${validator}</dd>
-      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:108px;margin:0 0 4px 0;">Validated</dt>
-      <dd style="margin:0 0 8px 108px;color:#374151;">${validated}</dd>
-      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:108px;margin:0 0 4px 0;">Publication ID</dt>
-      <dd style="margin:0 0 8px 108px;color:#374151;">${publicationId}</dd>
-      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:108px;margin:0 0 4px 0;">Publication</dt>
-      <dd style="margin:0 0 2px 108px;color:#374151;word-break:break-word;">${publication}</dd>
+      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:72px;margin:0 0 4px 0;">Citation</dt>
+      <dd style="margin:0 0 8px 72px;color:#374151;word-break:break-word;">${citation}</dd>
+      <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:72px;margin:0 0 4px 0;">Validation</dt>
+      <dd style="margin:0 0 2px 72px;color:#374151;">${validation}</dd>
     </dl>
   `;
 }
@@ -110,7 +194,7 @@ export async function fetchAndRenderTaxonMetadata(taxonId, containerElement, cur
 
   const requestedId = Number(taxonId);
   containerElement.innerHTML = `
-    <div style="margin:12px 0 0 12px;font-size:12px;color:#888;font-style:italic;">
+    <div style="margin:12px 0 0 0;font-size:12px;color:#888;font-style:italic;">
       Loading taxon metadata…
     </div>
   `;
@@ -127,7 +211,7 @@ export async function fetchAndRenderTaxonMetadata(taxonId, containerElement, cur
       return;
     }
     containerElement.innerHTML = `
-      <div style="margin:12px 0 0 12px;font-size:12px;color:#b91c1c;">
+      <div style="margin:12px 0 0 0;font-size:12px;color:#b91c1c;">
         Could not load local taxon metadata.
       </div>
     `;

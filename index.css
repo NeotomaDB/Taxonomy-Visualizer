@@ -27,12 +27,12 @@ text.highlight {
   display: none !important;
 }
 
-/* Force-hide middle nodes unconditionally */
-.search-active g.node.match-path text:not(.highlight):not(.highlight-synonym):not(.highlight-q1):not(.highlight-q2) {
-  display: none !important;
+/* Keep labels visible for all nodes that belong to a matched path. */
+.search-active g.node.match-path text:not(.toggle):not(.label-halo) {
+  display: block !important;
 }
 
-/* Force-show label text ONLY for the actual highlighted matching nodes (keep middle nodes hidden) */
+/* Force-show highlighted matching nodes with the same visibility guarantee. */
 .search-active g.node.match-path text.highlight,
 .search-active g.node.match-path text.highlight-synonym,
 .search-active g.node.match-path text.highlight-q1,
@@ -89,23 +89,25 @@ body {
 #title-section {
   position: relative;
   text-align: center;
-  padding: 20px;
+  padding: 0 24px 8px 72px;
   border-radius: 16px;
 }
 
 #title-section h1 {
   color: #43a047;
-  font-size: 34px;
+  font-size: 32px;
   font-weight: 800;
   margin: 0;
+  line-height: 1.1;
   letter-spacing: -0.5px;
+  text-wrap: balance;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .view-nav {
   position: absolute;
   top: 14px;
-  right: 14px;
+  left: 14px;
   z-index: 30;
 }
 
@@ -152,7 +154,7 @@ body {
 .view-nav-menu {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 0;
   min-width: 176px;
   padding: 6px;
   border: 1px solid #dcefe0;
@@ -236,7 +238,7 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 
 #layout {
   display: grid !important;
-  grid-template-columns: minmax(640px, 1fr) clamp(360px, 28vw, 560px);
+  grid-template-columns: clamp(360px, 28vw, 560px) minmax(640px, 1fr);
   gap: 16px;
   align-items: flex-start;
   width: 100%;
@@ -248,6 +250,8 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
   width: 100%;
   max-width: 560px;
   justify-self: stretch;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 #stage {
@@ -258,6 +262,8 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
   padding: 8px;
   width: 100%;
   box-sizing: border-box;
+  grid-column: 2;
+  grid-row: 1;
 }
 
 #chart {
@@ -570,7 +576,7 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 #controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 /* Control Row Styling */
@@ -623,8 +629,9 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
+  padding: 4px 16px;
 }
 
 .taxon-group-section {
@@ -636,7 +643,7 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 }
 
 .taxon-group-section label {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
   white-space: nowrap;
@@ -657,7 +664,7 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
   align-items: center;
   gap: 10px;
   flex-wrap: nowrap;
-  padding: 8px 16px;
+  padding: 4px 16px;
 }
 
 .taxon-type-label {
@@ -728,8 +735,8 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 }
 
 .custom-select-trigger {
-  padding: 10px 16px;
-  font-size: 15px;
+  padding: 7px 16px;
+  font-size: 14px;
   font-family: "DM Sans", sans-serif;
   font-weight: 500;
   color: #374151;
@@ -795,7 +802,7 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 
 .custom-option {
   padding: 12px 16px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   color: #1f2937;
   cursor: pointer;
@@ -905,8 +912,8 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 }
 
 #searchBtn {
-  font-size: 16px;
-  padding: 10px 20px;
+  font-size: 14px;
+  padding: 9px 18px;
   flex-shrink: 0;
 }
 
@@ -926,8 +933,8 @@ body:not([data-app-view="steward"]) #anomaly-detail-panel {
 #searchInput {
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 15px;
+  padding: 7px 16px;
+  font-size: 14px;
   outline: none;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   font-family: "DM Sans", sans-serif;
@@ -1330,6 +1337,12 @@ svg.compare-mode.search-active g.node.match-path text:not(.toggle):not(.highligh
 @media (max-width: 1120px) {
   #layout {
     grid-template-columns: 1fr;
+  }
+
+  #right-panel,
+  #stage {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   #right-panel {

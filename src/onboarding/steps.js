@@ -18,7 +18,7 @@ export const FIRST_TIME_TOUR_STEPS = [
       title: 'Click a Taxon',
       description:
         'Start by clicking a taxon in the visualizer. The path you click is highlighted in blue, and <strong>Search Results</strong> shows its path from root to taxon plus available metadata.',
-      side: 'right',
+      side: 'left',
       align: 'center',
     },
   },
@@ -48,7 +48,7 @@ export const FIRST_TIME_TOUR_STEPS = [
       title: 'Taxon Type',
       description:
         'Use Taxon Type to switch between biological and non-biological taxa. The available Taxon Groups update based on this choice.',
-      side: 'left',
+      side: 'right',
       align: 'center',
     },
   },
@@ -58,7 +58,7 @@ export const FIRST_TIME_TOUR_STEPS = [
       title: 'Search, Results, and Synonyms',
       description:
         'Search by taxon name or id. If a word, such as <strong>bison</strong>, appears in multiple taxa, all matching paths are highlighted in blue. If a match comes from a Neotoma synonym record, the path is highlighted in orange.',
-      side: 'left',
+      side: 'right',
       align: 'center',
     },
   },
@@ -68,7 +68,7 @@ export const FIRST_TIME_TOUR_STEPS = [
       title: 'Compare Two Taxa',
       description:
         'Use a comma to compare two exact taxa, for example <strong>cf. Bison latifrons, cf. Bison alaskensis</strong>. If either side matches multiple taxa, choose the exact taxon first before comparing.',
-      side: 'left',
+      side: 'right',
       align: 'center',
     },
   },

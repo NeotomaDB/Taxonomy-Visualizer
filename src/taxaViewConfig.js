@@ -21,19 +21,33 @@ export const EXPAND_ALL_RADIAL = new Set([
 
 // Large groups for radial view where we show only the top/anchor level and orders/classes,
 // immediately collapsing deeper nodes.
-// VPL added to prevent rendering 18k+ nodes simultaneously
-export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA', 'VPL']);
+export const ONE_LEVEL_RADIAL_GROUPS = new Set(['MAM', 'AVE', 'DIA']);
+
+// VPL uses the same radial-overview mechanism, but its first visible tier is too sparse.
+// Keep a few more levels visible on first render so the opening layout reads less like
+// two disconnected arcs while still avoiding a full 18k-node expansion.
+export const THREE_LEVEL_RADIAL_GROUPS = new Set(['VPL']);
+
+export function getRadialOverviewDepth(taxagroupid) {
+    if (THREE_LEVEL_RADIAL_GROUPS.has(taxagroupid)) return 3;
+    if (ONE_LEVEL_RADIAL_GROUPS.has(taxagroupid)) return 1;
+    return null;
+}
 
 // Groups that trigger the focus view mode or unique search optimizations.
 // These large groups benefit from filtered Focus View searches instead of
 // expanding every matching path in the radial tree.
 export const FOCUS_VIEW_GROUPS = new Set(['INS', 'MAM', 'AVE', 'DIA', 'VPL']);
 
+export const SEARCH_COLLAPSIBLE_MATCH_THRESHOLD = 5;
+
 // Group-specific semantic label rules for dense radial trees. Nodes and links
 // remain fully rendered; only label eligibility changes as users zoom.
 export const RADIAL_SEMANTIC_LABEL_CONFIG = {
     ALG: {
         targetScreenFontPx: 11,
+        targetScreenNodeRadiusPx: 3.5,
+        targetScreenLeafNodeRadiusPx: 2.25,
         collisionPaddingPx: 4,
         viewportPaddingPx: 8,
         tiers: [
@@ -47,6 +61,16 @@ export const RADIAL_SEMANTIC_LABEL_CONFIG = {
 
 export function getRadialSemanticLabelConfig(taxagroupid) {
     return RADIAL_SEMANTIC_LABEL_CONFIG[taxagroupid] || null;
+}
+
+export function shouldAutoFocusCollapsibleSearch(taxagroupid) {
+    if (!taxagroupid) return false;
+    if (NON_BIO_GROUPS.has(taxagroupid)) return false;
+    if (FORCE_LIST_TREE_GROUPS.has(taxagroupid)) return false;
+    if (EXPAND_ALL_RADIAL.has(taxagroupid)) return false;
+    if (FOCUS_VIEW_GROUPS.has(taxagroupid)) return false;
+    if (getRadialOverviewDepth(taxagroupid) != null) return false;
+    return true;
 }
 
 // Major-group nodes use the teal collapsed-group styling and default overview collapse.

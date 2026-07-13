@@ -11,6 +11,7 @@ let originalRootInfo = null; // Store original root info
 let renderFunction = null; // Store the render function reference
 let allRowsForSynonyms = null; // Store all rows for synonyms
 let isShowingFocusViewWarning = false; // Flag to prevent repeated warnings
+let focusViewRenderOptions = { forceCollapsible: false };
 
 /**
  * Initialize view switch functionality
@@ -73,13 +74,17 @@ export function setHighlightedPath(node) {
     currentHighlightedPath = null;
     return;
   }
+
+  const previousLeafId = currentHighlightedPath?.pathIds?.[currentHighlightedPath.pathIds.length - 1] ?? null;
   
   // Store the path from root to this node
   const ancestors = node.ancestors().reverse();
+  const nextPathIds = ancestors.map(n => n.data.id);
+  const nextLeafId = nextPathIds[nextPathIds.length - 1] ?? null;
   currentHighlightedPath = {
     node: node,
     path: ancestors, // Root to node
-    pathIds: ancestors.map(n => n.data.id)
+    pathIds: nextPathIds
   };
   
   // Clear warning when path is set
@@ -96,7 +101,7 @@ export function setHighlightedPath(node) {
   // If we're already in Focus View due to an active search result set, the
   // current filtered tree is already correct. In that case we only need to
   // update the in-place highlight, not trigger another full re-render.
-  if (isFocusView && currentMatchIds.size === 0) {
+  if (isFocusView && currentMatchIds.size === 0 && previousLeafId !== nextLeafId) {
     switchToFocusView();
   }
 }
@@ -124,6 +129,7 @@ export function setMatchIds(matchIds) {
 export function clearHighlightedPath() {
   currentHighlightedPath = null;
   currentMatchIds.clear();
+  focusViewRenderOptions = { forceCollapsible: false };
   if (isFocusView) {
     switchToWholeView();
   }
@@ -134,6 +140,13 @@ export function clearHighlightedPath() {
  */
 export async function activateFocusView() {
   await switchToFocusView();
+}
+
+export function setFocusViewRenderOptions(options = {}) {
+  focusViewRenderOptions = {
+    ...focusViewRenderOptions,
+    ...options,
+  };
 }
 
 function restoreFocusedNodeAfterRender() {
@@ -237,7 +250,13 @@ async function switchToFocusView() {
   
   // Re-render with filtered data
   console.log('Rendering with filtered data...', filteredRows.length, 'rows');
-  await renderFunction(filteredRows, originalRootInfo.rootId, originalRootInfo.rootName, allRowsForSynonyms);
+  await renderFunction(
+    filteredRows,
+    originalRootInfo.rootId,
+    originalRootInfo.rootName,
+    allRowsForSynonyms,
+    { isFocusView: true, ...focusViewRenderOptions }
+  );
   restoreFocusedNodeAfterRender();
   console.log('Rendering complete');
 }
@@ -256,7 +275,13 @@ async function switchToWholeView() {
   updateURLState({ mode: 'whole' });
   
   // Re-render with original data
-  await renderFunction(originalRows, originalRootInfo.rootId, originalRootInfo.rootName, allRowsForSynonyms);
+  await renderFunction(
+    originalRows,
+    originalRootInfo.rootId,
+    originalRootInfo.rootName,
+    allRowsForSynonyms,
+    { isFocusView: false, forceCollapsible: false }
+  );
   restoreFocusedNodeAfterRender();
 }
 
@@ -298,6 +323,7 @@ export function resetViewState() {
   isFocusView = false;
   currentHighlightedPath = null;
   currentMatchIds.clear();
+  focusViewRenderOptions = { forceCollapsible: false };
   isShowingFocusViewWarning = false;
   hideFocusViewWarning();
   updateButtonState();

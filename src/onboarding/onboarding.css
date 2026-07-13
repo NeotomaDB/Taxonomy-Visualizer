@@ -3,7 +3,7 @@
   border-radius: 10px;
   box-shadow: 0 18px 42px rgba(17, 24, 39, 0.18);
   color: #1f2937;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Figtree", sans-serif;
   max-width: 330px;
 }
 
@@ -27,7 +27,7 @@
 
 .driver-popover.neotoma-onboarding-popover button {
   border-radius: 999px;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Figtree", sans-serif;
   font-size: 12px;
   font-weight: 800;
   text-shadow: none;

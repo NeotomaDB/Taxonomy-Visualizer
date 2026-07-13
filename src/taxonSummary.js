@@ -158,26 +158,34 @@ export function renderTaxonSummary(record) {
       font-size:12px;
       color:#334155;
     ">
-      <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">Neotoma occurrence records</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:9px;">
-        <span><strong>${record.occurrenceCount}</strong> occurrences</span>
-        <span><strong>${record.siteCount}</strong> sites</span>
-        <span><strong>${record.datasetCount}</strong> datasets</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:nowrap;">
+        <div style="min-width:0;flex:1 1 auto;">
+          <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">Neotoma Occurrence Records</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <span><strong>${record.occurrenceCount}</strong> occurrences</span>
+            <span><strong>${record.siteCount}</strong> sites</span>
+            <span><strong>${record.datasetCount}</strong> datasets</span>
+          </div>
+        </div>
+        <a href="${escapeHtml(explorerUrl)}" target="_blank" rel="noopener noreferrer" style="
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:6px;
+          padding:7px 11px;
+          background:#2563eb;
+          color:#fff;
+          text-decoration:none;
+          border-radius:7px;
+          font-size:13px;
+          font-weight:700;
+          flex:0 0 auto;
+          white-space:nowrap;
+          align-self:center;
+        " onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+          See in Explorer
+        </a>
       </div>
-      <a href="${escapeHtml(explorerUrl)}" target="_blank" rel="noopener noreferrer" style="
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        padding:7px 11px;
-        background:#2563eb;
-        color:#fff;
-        text-decoration:none;
-        border-radius:7px;
-        font-size:13px;
-        font-weight:700;
-      " onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
-        See in Explorer
-      </a>
     </div>
   `;
 }

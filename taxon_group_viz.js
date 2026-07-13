@@ -9,7 +9,7 @@ import { setupSearch } from './src/search.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js';
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
-import { EXPAND_ALL_RADIAL, ONE_LEVEL_RADIAL_GROUPS, FOCUS_VIEW_GROUPS, getRadialSemanticLabelConfig, isMajorGroupDisplayName } from './src/taxaViewConfig.js?v=20260622-node-clearance-3';
+import { EXPAND_ALL_RADIAL, FOCUS_VIEW_GROUPS, SEARCH_COLLAPSIBLE_MATCH_THRESHOLD, getRadialOverviewDepth, getRadialSemanticLabelConfig, isMajorGroupDisplayName, shouldAutoFocusCollapsibleSearch } from './src/taxaViewConfig.js?v=20260622-node-clearance-3';
 import { updateURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
@@ -222,6 +222,30 @@ async function renderMammalTree({
     return true;
   }
 
+  function collapseNodeChildren(node) {
+    if (!node || !node.children || node.children.length === 0) return false;
+    node._children = node.children;
+    node.children = null;
+    return true;
+  }
+
+  function applyRadialOverviewOverrides(rootNode, taxagroupid) {
+    if (taxagroupid !== 'VPL') return;
+
+    rootNode.descendants().forEach((node) => {
+      const name = String(node.data?.name || '').trim().toLowerCase();
+
+      if (name === 'tracheophyta undiff.') {
+        collapseNodeChildren(node);
+        return;
+      }
+
+      if (name === 'angiospermae') {
+        expandHiddenChildren(node, true);
+      }
+    });
+  }
+
   // 1.5) Reorder tree to group leaves by family
   reorderTreeForGrouping(root, groupDepth);
 
@@ -286,20 +310,32 @@ async function renderMammalTree({
     collapseChemicalSubstanceLeavesByDefault(root);
   }
 
-  // Tiered summary view for large groups: show anchor + one level of children,
-  // collapse everything deeper so the initial view is readable.
+  // Tiered summary view for large groups: collapse the initial render to a
+  // group-specific visible depth so dense trees stay readable without forcing
+  // every large group into the exact same first-frame shape.
   const taxagroupid = rows[0]?.taxagroupid;
   const semanticLabelConfig = getRadialSemanticLabelConfig(taxagroupid);
 
-  if (ONE_LEVEL_RADIAL_GROUPS.has(taxagroupid) && !isInitialView) {
-    // Anchor node is root. Its direct children (Orders / Classes) stay visible;
-    // everything below them is collapsed into _children for +/– expansion.
-    root.children?.forEach(child => {
-      if (child.children && child.children.length > 0) {
-        child._children = child.children;
-        child.children = null;
-      }
-    });
+  function updateSemanticNodeCircleScale(k = currentScale) {
+    const targetRadius = semanticLabelConfig?.targetScreenNodeRadiusPx;
+    const targetLeafRadius = semanticLabelConfig?.targetScreenLeafNodeRadiusPx ?? targetRadius;
+    if (!targetRadius) return;
+    const scale = Math.max(0.01, k);
+    const scaledRadius = Math.max(1.5, Math.min(12, targetRadius / scale));
+    const scaledLeafRadius = Math.max(1.25, Math.min(12, targetLeafRadius / scale));
+    gNodes.selectAll('g.node > circle')
+      .attr('r', d => {
+        if (d.depth === 0) return 0;
+        const hasVisibleChildren = d.children && d.children.length > 0;
+        const hasHiddenChildren = d._children && d._children.length > 0;
+        return (hasVisibleChildren || hasHiddenChildren) ? scaledRadius : scaledLeafRadius;
+      });
+  }
+
+  const radialOverviewDepth = !isInitialView ? getRadialOverviewDepth(taxagroupid) : null;
+  if (radialOverviewDepth != null) {
+    applyOverviewCollapse(root, radialOverviewDepth, false);
+    applyRadialOverviewOverrides(root, taxagroupid);
   }
 
   // Collapse synthetic "Undetermined (N)" / "Unknown (N)" group nodes by default
@@ -565,6 +601,8 @@ async function renderMammalTree({
       .attr('transform', d => `rotate(${(d.x * 180 / Math.PI - 90)}) translate(${d.y},0)`)
       .style('opacity', 1);
 
+    updateSemanticNodeCircleScale();
+
     // Update toggle symbols and visibility per current expand/collapse state
     nodeMerge.select('.toggle-group')
       .style('display', d => getToggleRule(d) === 'NONE' ? 'none' : 'block')
@@ -809,6 +847,9 @@ async function renderMammalTree({
 
   // 7.5) Search + focus
   const usesFocusViewSearch = FOCUS_VIEW_GROUPS.has(taxagroupid);
+  const autoFocusManyMatchesThreshold = shouldAutoFocusCollapsibleSearch(taxagroupid)
+    ? SEARCH_COLLAPSIBLE_MATCH_THRESHOLD
+    : null;
   const searchControls = setupSearch({
     root,
     link: gLinks.selectAll('path'),       // kept for fallback
@@ -823,11 +864,24 @@ async function renderMammalTree({
     expandToNode,
     searchPathOnly: usesFocusViewSearch,
     deferLocalResultsRendering: usesFocusViewSearch,
+    autoFocusMatchThreshold: autoFocusManyMatchesThreshold,
     onSearchResults: () => {
       if (usesFocusViewSearch && typeof window !== 'undefined' && window.activateFocusView) {
         window.activateFocusView();
       }
       window.setTimeout(() => cull?.refresh(), 0);
+    },
+    onAutoFocusManyMatches: async () => {
+      if (typeof window === 'undefined' || !window.activateFocusView) return;
+      if (typeof window.setFocusViewRenderOptions === 'function') {
+        window.setFocusViewRenderOptions({ forceCollapsible: true });
+      }
+      await window.activateFocusView();
+    },
+    setSearchRenderPreference: (forceCollapsible) => {
+      if (typeof window !== 'undefined' && typeof window.setFocusViewRenderOptions === 'function') {
+        window.setFocusViewRenderOptions({ forceCollapsible: !!forceCollapsible });
+      }
     },
     onSearchClear: () => { if (cull) cull.refresh(); },
     taxagroupid,
@@ -843,6 +897,7 @@ async function renderMammalTree({
       updateViewport();
       if (semanticLabelConfig) {
         gRootLabel.attr('transform', `scale(${1 / Math.max(0.01, event.transform.k)})`);
+        updateSemanticNodeCircleScale(event.transform.k);
       }
       if (cull?.update) {
         cull.update(event.transform);

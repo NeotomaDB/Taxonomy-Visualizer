@@ -137,7 +137,7 @@ export async function fetchAndRenderExternalLinks(taxonId, containerElement, cur
         font-weight: 600;
         text-decoration: none;
         border-radius: 4px;
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Figtree', sans-serif;
         transition: filter 0.2s;
         white-space: nowrap;
       `;

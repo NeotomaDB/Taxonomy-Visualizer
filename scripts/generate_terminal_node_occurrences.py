@@ -23,6 +23,7 @@ from urllib.request import Request, urlopen
 
 DEFAULT_API_BASE = "https://api.neotomadb.org/v2.0"
 DEFAULT_PAGE_SIZE = 5000
+DEFAULT_TIMEOUT_SECONDS = 60
 MAX_FETCH_RETRIES = 8
 RETRYABLE_HTTP_STATUS = {429, 500, 502, 503, 504}
 
@@ -63,6 +64,24 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Record repeatedly failing taxonids in failed_taxonids and continue.",
     )
+    parser.add_argument(
+        "--max-taxonids",
+        type=int,
+        default=0,
+        help="Optional maximum number of terminal taxonids to process from each group.",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=DEFAULT_TIMEOUT_SECONDS,
+        help="HTTP timeout in seconds for each Neotoma API request.",
+    )
+    parser.add_argument(
+        "--max-fetch-retries",
+        type=int,
+        default=MAX_FETCH_RETRIES,
+        help="Maximum number of attempts for each Neotoma API request.",
+    )
     return parser.parse_args()
 
 
@@ -91,9 +110,13 @@ def to_int(value: Any) -> int | None:
         return None
 
 
-def fetch_json(url: str) -> Any:
+def fetch_json(
+    url: str,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    max_fetch_retries: int = MAX_FETCH_RETRIES,
+) -> Any:
     last_error: Exception | None = None
-    for attempt in range(1, MAX_FETCH_RETRIES + 1):
+    for attempt in range(1, max_fetch_retries + 1):
         request = Request(
             url,
             headers={
@@ -102,19 +125,19 @@ def fetch_json(url: str) -> Any:
             },
         )
         try:
-            with urlopen(request, timeout=60) as response:
+            with urlopen(request, timeout=timeout_seconds) as response:
                 return json.load(response)
         except HTTPError as exc:
             last_error = exc
-            if exc.code not in RETRYABLE_HTTP_STATUS or attempt == MAX_FETCH_RETRIES:
+            if exc.code not in RETRYABLE_HTTP_STATUS or attempt == max_fetch_retries:
                 raise RuntimeError(f"HTTP {exc.code} while fetching {url}") from exc
-            log(f"Retrying fetch ({attempt}/{MAX_FETCH_RETRIES}) for {url} after HTTP {exc.code}")
+            log(f"Retrying fetch ({attempt}/{max_fetch_retries}) for {url} after HTTP {exc.code}")
             time.sleep(attempt * 2)
         except (URLError, IncompleteRead, RemoteDisconnected, TimeoutError, ConnectionResetError, json.JSONDecodeError) as exc:
             last_error = exc
-            if attempt == MAX_FETCH_RETRIES:
+            if attempt == max_fetch_retries:
                 break
-            log(f"Retrying fetch ({attempt}/{MAX_FETCH_RETRIES}) for {url} after error: {exc}")
+            log(f"Retrying fetch ({attempt}/{max_fetch_retries}) for {url} after error: {exc}")
             time.sleep(attempt * 2)
     raise RuntimeError(f"Network error while fetching {url}: {last_error}") from last_error
 
@@ -157,14 +180,22 @@ def summarize_occurrence_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def fetch_occurrences_for_taxon(api_base: str, taxonid: int, page_size: int) -> list[dict[str, Any]]:
+def fetch_occurrences_for_taxon(
+    api_base: str,
+    taxonid: int,
+    page_size: int,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    max_fetch_retries: int = MAX_FETCH_RETRIES,
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     offset = 0
 
     while True:
         query = urlencode({"taxonid": taxonid, "limit": page_size, "offset": offset})
         url = f"{api_base}/data/occurrences?{query}"
-        page = extract_rows(fetch_json(url))
+        page = extract_rows(
+            fetch_json(url, timeout_seconds=timeout_seconds, max_fetch_retries=max_fetch_retries)
+        )
         if not page:
             break
         rows.extend(page)
@@ -271,9 +302,14 @@ def build_occurrence_payload_for_terminal_nodes(
     existing_failed_taxonids: set[int] | None = None,
     resume_after_index: int = 0,
     skip_fetch_errors: bool = False,
+    max_taxonids: int = 0,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    max_fetch_retries: int = MAX_FETCH_RETRIES,
     checkpoint_path: Path | None = None,
 ) -> dict[str, Any]:
     terminal_taxonids = [int(taxonid) for taxonid in terminal_nodes_payload.get("terminal_taxonids", [])]
+    if max_taxonids > 0:
+        terminal_taxonids = terminal_taxonids[:max_taxonids]
     taxa: dict[str, list[Any]] = dict(existing_taxa or {})
     processed_taxonids: set[int] = set(existing_processed_taxonids or set())
     failed_taxonids: set[int] = set(existing_failed_taxonids or set())
@@ -294,7 +330,13 @@ def build_occurrence_payload_for_terminal_nodes(
             processed_taxonids.add(taxonid)
             continue
         try:
-            rows = fetch_occurrences_for_taxon(api_base, taxonid, page_size)
+            rows = fetch_occurrences_for_taxon(
+                api_base,
+                taxonid,
+                page_size,
+                timeout_seconds=timeout_seconds,
+                max_fetch_retries=max_fetch_retries,
+            )
         except RuntimeError as exc:
             if not skip_fetch_errors:
                 raise
@@ -338,6 +380,9 @@ def write_single_group_occurrence_payload(
     force: bool = False,
     resume_after_index: int = 0,
     skip_fetch_errors: bool = False,
+    max_taxonids: int = 0,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    max_fetch_retries: int = MAX_FETCH_RETRIES,
 ) -> None:
     terminal_nodes_payload = load_json(terminal_nodes_file)
     target_file = output_dir / (output_file or default_output_filename(terminal_nodes_payload))
@@ -380,6 +425,9 @@ def write_single_group_occurrence_payload(
         existing_failed_taxonids=existing_failed_taxonids,
         resume_after_index=resume_after_index,
         skip_fetch_errors=skip_fetch_errors,
+        max_taxonids=max_taxonids,
+        timeout_seconds=timeout_seconds,
+        max_fetch_retries=max_fetch_retries,
         checkpoint_path=checkpoint_file,
     )
     write_json(target_file, payload)
@@ -424,6 +472,9 @@ def write_group_occurrence_payloads(
     force: bool = False,
     resume_after_index: int = 0,
     skip_fetch_errors: bool = False,
+    max_taxonids: int = 0,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    max_fetch_retries: int = MAX_FETCH_RETRIES,
 ) -> None:
     files = list_terminal_node_files(terminal_nodes_dir, groups)
     log(f"Loaded {len(files)} terminal-node group files")
@@ -437,6 +488,9 @@ def write_group_occurrence_payloads(
             force=force,
             resume_after_index=resume_after_index,
             skip_fetch_errors=skip_fetch_errors,
+            max_taxonids=max_taxonids,
+            timeout_seconds=timeout_seconds,
+            max_fetch_retries=max_fetch_retries,
         )
     write_occurrence_summary_index(output_dir)
 
@@ -455,6 +509,9 @@ def main() -> int:
             force=args.force,
             resume_after_index=args.resume_after_index,
             skip_fetch_errors=args.skip_fetch_errors,
+            max_taxonids=args.max_taxonids,
+            timeout_seconds=args.timeout_seconds,
+            max_fetch_retries=args.max_fetch_retries,
         )
         return 0
 
@@ -468,6 +525,9 @@ def main() -> int:
         force=args.force,
         resume_after_index=args.resume_after_index,
         skip_fetch_errors=args.skip_fetch_errors,
+        max_taxonids=args.max_taxonids,
+        timeout_seconds=args.timeout_seconds,
+        max_fetch_retries=args.max_fetch_retries,
     )
     write_occurrence_summary_index(output_dir)
     return 0

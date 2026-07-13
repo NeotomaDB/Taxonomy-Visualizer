@@ -59,7 +59,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
         cursor: pointer;
         font-size: 14px;
         font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Figtree', sans-serif;
         display: inline-flex;
         align-items: center;
         gap: 6px;
@@ -85,7 +85,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
         cursor: pointer;
         font-size: 14px;
         font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Figtree', sans-serif;
         display: inline-flex;
         align-items: center;
         gap: 6px;

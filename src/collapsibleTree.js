@@ -141,14 +141,14 @@ export async function renderCollapsibleTree({
     });
 
     // Left margin: enough space for the root label so it is never clipped.
-    // ~7px per character is a rough estimate for 12px DM Sans.
+    // ~7px per character is a rough estimate for 12px Figtree.
     const leftMargin = Math.max(rootName.length * 7 + 24, dy * 0.6);
 
     // Create SVG — overflow:visible so labels outside the SVG box are shown
     const svg = d3.select(selector).append('svg')
         .attr('width', width)
         .attr('height', height)
-        .style('font', '12px "DM Sans", sans-serif')
+        .style('font', '12px "Figtree", sans-serif')
         .style('user-select', 'none')
         .style('overflow', 'visible');    // <-- prevents label clipping
 
@@ -345,6 +345,7 @@ export async function renderCollapsibleTree({
         initialQuery,
         autoRunSearch,
         keepResultsListOnSelect: false,  // click a result → show details + synonym + Back button
+        hideAncestorLabelsOnSelect: true,
         disableGoToTree: true,           // we're already in a tree; navigateToNode is irrelevant here
         taxagroupid: taxagroupid || rows?.[0]?.taxagroupid || null,
         onSearchClear: () => { },

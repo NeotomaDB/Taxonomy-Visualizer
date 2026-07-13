@@ -24,6 +24,10 @@ import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
 import { updateURLState } from './urlhash.js';
 import { splitSearchQuery, unwrapQuotedSearchTerm } from './searchQuery.js';
+import {
+  buildTaxonAutocompleteCandidates,
+  getTaxonAutocompleteSuggestions,
+} from './taxonAutocomplete.js';
 
 export function setupSearch({
   root,
@@ -42,7 +46,11 @@ export function setupSearch({
   autoRunSearch = false,
   keepResultsListOnSelect = false,
   deferLocalResultsRendering = false,
+  autoFocusMatchThreshold = null,
+  hideAncestorLabelsOnSelect = false,
   onSearchResults = null, // called after matches are resolved
+  onAutoFocusManyMatches = null,
+  setSearchRenderPreference = null,
   onSearchClear = null,  // called when search is cleared (e.g. cull.refresh)
   disableGoToTree = false, // when true, hide "Go to Tree" buttons in results list
   taxagroupid = null,      // current taxon group id — used to show external links (e.g. AlgaeBase for DIA)
@@ -98,6 +106,10 @@ export function setupSearch({
       .filter(function () {
         return !this.classList.contains('toggle') && !this.classList.contains('label-halo');
       });
+  }
+
+  function clearSelectedPathAncestorLabelState() {
+    liveNodeLabels().classed('path-context-hidden', false);
   }
 
   // ── findMatchesForTerm ────────────────────────────────────────────────────
@@ -203,6 +215,7 @@ export function setupSearch({
     labels.classed('highlight-synonym', false);
     labels.classed('highlight-q1', false);
     labels.classed('highlight-q2', false);
+    clearSelectedPathAncestorLabelState();
     labels.style('paint-order', null)
           .style('stroke', null)
           .style('stroke-width', null)
@@ -213,6 +226,7 @@ export function setupSearch({
     if (svg) svg.classed('compare-mode', false);
 
     setSearchActive(false);
+    if (setSearchRenderPreference) setSearchRenderPreference(false);
     clearHighlightedPath();
     if (info) info.clear();
     if (onSearchClear) onSearchClear();
@@ -237,6 +251,7 @@ export function setupSearch({
     ln.classed('match-path', n => A.has(n));
     labels.classed('highlight-synonym', false);
     labels.classed('highlight', n => n === d);
+    clearSelectedPathAncestorLabelState();
     setSearchActive(true);
     setHighlightedPath(d);
     if (info) info.show(d);
@@ -261,6 +276,7 @@ export function setupSearch({
     ln.classed('match-path', false);
     labels.classed('highlight', false);
     labels.classed('highlight-synonym', false);
+    clearSelectedPathAncestorLabelState();
     labels.classed('highlight-q1', false);
     labels.classed('highlight-q2', false);
 
@@ -373,6 +389,16 @@ export function setupSearch({
       ll.classed('highlight-synonym', false);
       labels.classed('highlight', n => n === d);
       labels.classed('highlight-synonym', false);
+    }
+
+    // Once a specific search result is selected, keep only that path visible in
+    // the search overlay so dense groups like Algae do not show overlapping
+    // labels from sibling matches behind the chosen result.
+    applyMatchPathClass(A);
+    ll.classed('match-path-link', l => A.has(l.source) && A.has(l.target));
+    clearSelectedPathAncestorLabelState();
+    if (hideAncestorLabelsOnSelect) {
+      labels.classed('path-context-hidden', n => A.has(n) && n !== d);
     }
     
     // Raise the node groups to stay above links and sibling unhighlighted nodes, sorted nicely
@@ -631,7 +657,7 @@ export function setupSearch({
         cursor: pointer;
         font-size: 14px;
         font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Figtree', sans-serif;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -660,7 +686,7 @@ export function setupSearch({
         cursor: pointer;
         font-size: 14px;
         font-weight: 600;
-        font-family: 'DM Sans', sans-serif;
+        font-family: 'Figtree', sans-serif;
         display: inline-flex;
         align-items: center;
         gap: 6px;
@@ -912,10 +938,79 @@ export function setupSearch({
 
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
+  const autocompleteCandidates = buildTaxonAutocompleteCandidates(root);
+  let autocompleteSuggestions = [];
+  let autocompleteIndex = -1;
+  let autocompleteTimer = null;
+  let autocompleteList = null;
+
+  function closeAutocomplete() {
+    if (autocompleteTimer) {
+      window.clearTimeout(autocompleteTimer);
+      autocompleteTimer = null;
+    }
+    autocompleteSuggestions = [];
+    autocompleteIndex = -1;
+    if (autocompleteList) autocompleteList.hidden = true;
+    if (searchInput) searchInput.setAttribute('aria-expanded', 'false');
+  }
+
+  function renderAutocomplete() {
+    if (!autocompleteList || !searchInput) return;
+    if (autocompleteSuggestions.length === 0) {
+      closeAutocomplete();
+      return;
+    }
+
+    autocompleteList.innerHTML = autocompleteSuggestions.map((suggestion, index) => {
+      const active = index === autocompleteIndex;
+      const synonym = suggestion.isSynonym
+        ? `<span class="taxon-autocomplete-synonym">Synonym: ${suggestion.term}</span>`
+        : '';
+      return `<button type="button" role="option" aria-selected="${active}" class="taxon-autocomplete-option${active ? ' active' : ''}" data-index="${index}">
+        <span class="taxon-autocomplete-name">${suggestion.canonicalName}</span>${synonym}
+      </button>`;
+    }).join('');
+    autocompleteList.hidden = false;
+    searchInput.setAttribute('aria-expanded', 'true');
+    autocompleteList.querySelectorAll('.taxon-autocomplete-option').forEach((option) => {
+      option.addEventListener('mousedown', (event) => event.preventDefault());
+      option.addEventListener('click', () => selectAutocompleteSuggestion(Number(option.dataset.index)));
+    });
+  }
+
+  function selectAutocompleteSuggestion(index) {
+    const suggestion = autocompleteSuggestions[index];
+    if (!suggestion || !searchInput) return;
+    // Quotes preserve the existing comparison syntax for taxa whose names contain commas.
+    searchInput.value = suggestion.canonicalName.includes(',')
+      ? `"${suggestion.canonicalName}"`
+      : suggestion.canonicalName;
+    closeAutocomplete();
+    runSearch();
+  }
+
+  function scheduleAutocomplete() {
+    if (!searchInput) return;
+    const query = searchInput.value.trim();
+    // A comma starts comparison mode. Suggestions intentionally stay scoped to
+    // one taxon, so comparison parsing remains unchanged.
+    if (!query || splitSearchQuery(query).length > 1) {
+      closeAutocomplete();
+      return;
+    }
+    if (autocompleteTimer) window.clearTimeout(autocompleteTimer);
+    autocompleteTimer = window.setTimeout(() => {
+      autocompleteSuggestions = getTaxonAutocompleteSuggestions(autocompleteCandidates, query);
+      autocompleteIndex = -1;
+      renderAutocomplete();
+    }, 120);
+  }
 
   async function runSearch() {
     if (!searchInput) return;
     const q = searchInput.value.trim();
+    if (setSearchRenderPreference) setSearchRenderPreference(false);
     
     // Update URL hash state
     updateURLState({ q: q || null });
@@ -1178,11 +1273,66 @@ export function setupSearch({
         focusNode(matches[0]);
       }
       showSearchResultsList();
+      if (autoFocusMatchThreshold != null &&
+          matches.length > autoFocusMatchThreshold &&
+          onAutoFocusManyMatches) {
+        await onAutoFocusManyMatches({
+          matches,
+          primaryMatchIds: new Set(primaryMatchIds),
+          synonymMatchIds: new Set(synonymMatchIds),
+        });
+      }
     }
   }
 
   if (searchBtn) searchBtn.addEventListener('click', runSearch);
   if (searchInput) {
+    searchInput.__taxonAutocompleteCleanup?.();
+    const searchSection = searchInput.closest('.search-section');
+    if (searchSection) {
+      autocompleteList = document.createElement('div');
+      autocompleteList.id = 'taxonAutocompleteList';
+      autocompleteList.className = 'taxon-autocomplete-list';
+      autocompleteList.setAttribute('role', 'listbox');
+      autocompleteList.hidden = true;
+      searchSection.appendChild(autocompleteList);
+      searchInput.setAttribute('role', 'combobox');
+      searchInput.setAttribute('aria-autocomplete', 'list');
+      searchInput.setAttribute('aria-controls', autocompleteList.id);
+      searchInput.setAttribute('aria-expanded', 'false');
+    }
+
+    const onAutocompleteKeyDown = (e) => {
+      if (autocompleteSuggestions.length === 0) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const direction = e.key === 'ArrowDown' ? 1 : -1;
+        autocompleteIndex = (autocompleteIndex + direction + autocompleteSuggestions.length) % autocompleteSuggestions.length;
+        renderAutocomplete();
+      } else if (e.key === 'Enter' && autocompleteIndex >= 0) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        selectAutocompleteSuggestion(autocompleteIndex);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        closeAutocomplete();
+      }
+    };
+    const onAutocompleteInput = () => scheduleAutocomplete();
+    const onAutocompleteBlur = () => window.setTimeout(closeAutocomplete, 150);
+    searchInput.addEventListener('keydown', onAutocompleteKeyDown, true);
+    searchInput.addEventListener('input', onAutocompleteInput);
+    searchInput.addEventListener('blur', onAutocompleteBlur);
+    searchInput.__taxonAutocompleteCleanup = () => {
+      searchInput.removeEventListener('keydown', onAutocompleteKeyDown, true);
+      searchInput.removeEventListener('input', onAutocompleteInput);
+      searchInput.removeEventListener('blur', onAutocompleteBlur);
+      closeAutocomplete();
+      if (autocompleteList) autocompleteList.remove();
+    };
+
     if (initialQuery && !searchInput.value.trim()) {
       searchInput.value = initialQuery;
     }

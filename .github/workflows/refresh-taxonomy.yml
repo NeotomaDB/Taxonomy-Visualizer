@@ -30,6 +30,7 @@ jobs:
 
       - name: Verify split taxonomy parity
         run: |
+          python -m unittest discover -s tests -p 'test_refresh_fetch.py' -v
           python -m unittest discover -s tests -p 'test_refresh_parity.py' -v
           python -m unittest discover -s tests -p 'test_generate_terminal_nodes.py' -v
           python -m unittest discover -s tests -p 'test_generate_terminal_node_occurrences.py' -v

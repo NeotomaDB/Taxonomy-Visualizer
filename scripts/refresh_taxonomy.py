@@ -21,20 +21,22 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
+from http.client import IncompleteRead, RemoteDisconnected
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
-from http.client import IncompleteRead
 
 
 DEFAULT_API_BASE = "https://api.neotomadb.org/v2.0"
 DEFAULT_PAGE_SIZE = 5000
 MAX_FETCH_RETRIES = 3
+RETRYABLE_HTTP_STATUS = {408, 429, 500, 502, 503, 504}
 PUBLICATION_FETCH_WORKERS = 12
 WATCH_FIELDS = (
     "taxonname",
@@ -75,12 +77,24 @@ def fetch_json(url: str) -> Any:
             with urlopen(request, timeout=60) as response:
                 return json.load(response)
         except HTTPError as exc:
-            raise RuntimeError(f"HTTP {exc.code} while fetching {url}") from exc
-        except (URLError, IncompleteRead, json.JSONDecodeError) as exc:
+            last_error = exc
+            if exc.code not in RETRYABLE_HTTP_STATUS or attempt == MAX_FETCH_RETRIES:
+                raise RuntimeError(f"HTTP {exc.code} while fetching {url}") from exc
+            log(f"Retrying fetch ({attempt}/{MAX_FETCH_RETRIES}) for {url} after HTTP {exc.code}")
+            time.sleep(attempt * 2)
+        except (
+            URLError,
+            IncompleteRead,
+            RemoteDisconnected,
+            TimeoutError,
+            ConnectionResetError,
+            json.JSONDecodeError,
+        ) as exc:
             last_error = exc
             if attempt == MAX_FETCH_RETRIES:
                 break
             log(f"Retrying fetch ({attempt}/{MAX_FETCH_RETRIES}) for {url} after error: {exc}")
+            time.sleep(attempt * 2)
     raise RuntimeError(f"Network error while fetching {url}: {last_error}") from last_error
 
 

@@ -245,7 +245,7 @@ body {
   padding: 9px 10px;
   font-family: "Figtree", sans-serif;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: background 0.16s ease, color 0.16s ease;
@@ -1168,7 +1168,7 @@ body[data-app-view="about"] #right-panel {
 
 .taxon-group-section label {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: #1f2937;
   white-space: nowrap;
   flex-shrink: 0;
@@ -1194,7 +1194,7 @@ body[data-app-view="about"] #right-panel {
 
 .taxon-type-label {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: #1f2937;
   white-space: nowrap;
   flex-shrink: 0;
@@ -1218,7 +1218,7 @@ body[data-app-view="about"] #right-panel {
   border: none;
   padding: 7px 8px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: "Figtree", sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1263,7 +1263,7 @@ body[data-app-view="about"] #right-panel {
   padding: 7px 16px;
   font-size: 14px;
   font-family: "Figtree", sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   color: #374151;
   background: #f9fafb;
   border: 2px solid #e5e7eb;
@@ -1374,7 +1374,7 @@ body[data-app-view="about"] #right-panel {
   box-shadow: 0 3px 8px rgba(47, 94, 215, 0.25);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: "Figtree", sans-serif;
 }
 
@@ -1460,7 +1460,7 @@ body[data-app-view="about"] #right-panel {
   border-radius: 8px;
   padding: 7px 16px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   outline: none;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   font-family: "Figtree", sans-serif;
@@ -1472,7 +1472,7 @@ body[data-app-view="about"] #right-panel {
 }
 
 #searchInput::placeholder {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 #searchInput:focus {
@@ -1545,7 +1545,7 @@ body[data-app-view="about"] #right-panel {
 
 .cmp-heading {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: #111827;
   margin-bottom: 12px;
   letter-spacing: -0.2px;
@@ -1644,7 +1644,7 @@ body[data-app-view="about"] #right-panel {
 
 .cmp-col-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

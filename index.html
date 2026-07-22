@@ -12,7 +12,8 @@
 
 <body>
     <div id="layout" style="display:flex; align-items:flex-start; gap:16px;">
-        <div id="stage" style="position:relative;">
+        <div id="canvas-column">
+            <div id="stage" style="position:relative;">
             <div id="visualizerControlBox" class="visualizer-control-box" aria-label="Visualizer controls">
                 <button id="visualizerControlToggle" class="visualizer-control-toggle" type="button"
                     aria-label="Collapse visualizer controls" aria-expanded="true" data-tooltip="Collapse"
@@ -71,6 +72,8 @@
             <div id="popup"
                 style="position:absolute; left:-9999px; top:-9999px; background:#fff; border:1px solid #ddd; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:6px; padding:10px 12px; max-width:320px; z-index:1000;">
             </div>
+            </div>
+            <section id="steward-taxon-detail" hidden aria-live="polite"></section>
         </div>
         <div id="right-panel" style="min-width:360px; display:flex; flex-direction:column; gap:8px;">
             <div id="title-section">
@@ -146,15 +149,10 @@
                     </button>
                 </div>
 
-                <!-- Anomaly status bar: shown per taxon group when anomalies / orphans exist -->
-                <div id="anomaly-bar"
-                    style="display:none; margin-top:10px; padding:7px 12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb;">
-                </div>
+                <!-- Data Steward review queue for potential taxonomy issues -->
+                <div id="anomaly-bar" class="taxonomic-issues-bar" style="display:none;"></div>
 
-                <!-- Anomaly detail panel: toggled by "View details →" link -->
-                <div id="anomaly-detail-panel"
-                    style="display:none; margin-top:8px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; max-height:420px; overflow-y:auto;">
-                </div>
+                <div id="anomaly-detail-panel" class="taxonomic-issues-panel" style="display:none;"></div>
                 <div id="summary-panel"
                     style="display:none; margin-top:12px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;">
                 </div>
@@ -320,7 +318,7 @@
     <script type="module" src="taxon_group_viz.js?v=20260622-node-clearance-3"></script>
     <script type="module">
         import { updateURLState, getURLState } from './src/urlhash.js';
-        import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260622-node-clearance-3';
+        import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260722-taxonomy-forest-1';
         import { initViewSwitch, resetViewState, activateFocusView, setFocusViewRenderOptions } from './src/viewSwitch.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js';
         import { updateSummaryPanel } from './src/summaryPanel.js';
@@ -595,6 +593,14 @@
         };
 
         const GROUP_OVERVIEW_CONFIG = {
+            // Acritarchs is an operational group whose recorded paths form a
+            // forest. Render its Acritarcha and Eukaryota roots independently;
+            // never invent a taxonomic relationship between them.
+            ACR: {
+                overviewDepth: 4,
+                forest: true,
+                layoutContainerId: '__layout_container_acr__',
+            },
             INS: { overviewDepth: 2, rootId: 0, rootName: 'Root', hideSingletonRootChildren: true },
         };
 
@@ -1290,16 +1296,22 @@
             // absent from filteredRows (they lack the anchor name), so this is purely
             // for counting + UI display — it does not change what the tree renders.
             if (!NON_BIO_GROUPS.has(taxagroupid)) {
-                const anomalyRows = resolveGroupAnomalyRows(allRowsForGroup, filteredRows, taxagroupid);
+                // Classify placement depth against the taxonomic anchor rather
+                // than a display-only overview root.
+                const classificationRows = filterRowsByGroup(allRows, taxagroupid);
+                const anomalyRows = resolveGroupAnomalyRows(
+                    allRowsForGroup,
+                    filteredRows,
+                    taxagroupid,
+                    { classificationRows }
+                );
                 filteredRows = anomalyRows.filteredRows;
 
                 const groupName = taxagroupNames ? (taxagroupNames[taxagroupid] || taxagroupid) : taxagroupid;
                 updateAnomalyBar(
                     taxagroupid,
                     groupName,
-                    anomalyRows.anomalies,
-                    anomalyRows.orphanNodes,
-                    renderRootName
+                    anomalyRows.issues
                 );
             } else {
                 // Non-bio group — hide bar if previously shown
@@ -1334,7 +1346,7 @@
                     const isFilteredSearchView = rows !== filteredRows;
                     const shouldUseSearchCollapsible = forceCollapsible || (FOCUS_VIEW_GROUPS.has(taxagroupid) && isFilteredSearchView);
                     if (shouldUseCollapsible || shouldUseSearchCollapsible) {
-                        const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
+                        const { renderCollapsibleTree } = await import('./src/collapsibleTree.js?v=20260722-taxonomy-forest-1');
                         const currentQuery = document.getElementById('searchInput')?.value?.trim() || '';
                         await renderCollapsibleTree({
                             rows: rows,
@@ -1348,6 +1360,7 @@
                             taxagroupid: taxagroupid,
                             dx: getTreeViewSpacing(taxagroupid).dx,
                             dy: getTreeViewSpacing(taxagroupid).dy,
+                            hideRoot: !!overviewConfig?.forest,
                         });
                         return;
                     }
@@ -1373,7 +1386,7 @@
             // Use collapsible tree for small datasets (< 50 nodes) OR forced groups
             if (shouldUseCollapsible) {
                 console.log('Using collapsible tree view');
-                const { renderCollapsibleTree } = await import('./src/collapsibleTree.js');
+                const { renderCollapsibleTree } = await import('./src/collapsibleTree.js?v=20260722-taxonomy-forest-1');
                 await renderCollapsibleTree({
                     rows: filteredRows,
                     allRowsForSynonyms: allRowsForGroup,
@@ -1384,6 +1397,7 @@
                     dx: getTreeViewSpacing(taxagroupid).dx,
                     dy: getTreeViewSpacing(taxagroupid).dy,
                     taxagroupid: taxagroupid,
+                    hideRoot: !!overviewConfig?.forest,
                 });
             } else {
                 console.log('Using radial dendrogram view');

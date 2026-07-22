@@ -42,9 +42,18 @@ export function resolveGroupTreeRows({
     renderRootName = synth.rootName;
   } else if (groupOverviewConfig[taxagroupid]) {
     overviewConfig = groupOverviewConfig[taxagroupid];
-    filteredRows = buildGroupOverviewRows(groupRows, overviewConfig);
-    renderRootId = overviewConfig.rootId;
-    renderRootName = overviewConfig.rootName;
+    // A forest has multiple legitimate recorded roots. Keep every recorded
+    // path unchanged; the renderer supplies an invisible layout container.
+    // Non-forest overviews retain the existing display-root behaviour.
+    filteredRows = overviewConfig.forest
+      ? groupRows.filter((row) =>
+          (row.ids_root_to_leaf || []).length > 0 &&
+          (row.names_root_to_leaf || []).length > 0)
+      : buildGroupOverviewRows(groupRows, overviewConfig);
+    renderRootId = overviewConfig.forest
+      ? overviewConfig.layoutContainerId
+      : overviewConfig.rootId;
+    renderRootName = overviewConfig.forest ? '' : overviewConfig.rootName;
   } else {
     filteredRows = getFilteredRows(taxagroupid);
     const rootInfo = getRootInfo(taxagroupid);

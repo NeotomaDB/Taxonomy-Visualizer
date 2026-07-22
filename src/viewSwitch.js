@@ -2,6 +2,7 @@
 // Focus View shows only the highlighted path, Whole View shows the full tree
 
 import { updateURLState } from './urlhash.js';
+import { taxonomicAncestors } from './taxonomicPath.js';
 
 let currentHighlightedPath = null; // The currently highlighted node path
 let currentMatchIds = new Set(); // IDs of the matched search result taxa
@@ -78,7 +79,7 @@ export function setHighlightedPath(node) {
   const previousLeafId = currentHighlightedPath?.pathIds?.[currentHighlightedPath.pathIds.length - 1] ?? null;
   
   // Store the path from root to this node
-  const ancestors = node.ancestors().reverse();
+  const ancestors = taxonomicAncestors(node, { rootToLeaf: true });
   const nextPathIds = ancestors.map(n => n.data.id);
   const nextLeafId = nextPathIds[nextPathIds.length - 1] ?? null;
   currentHighlightedPath = {

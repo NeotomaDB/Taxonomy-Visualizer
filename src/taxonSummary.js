@@ -143,24 +143,23 @@ export async function fetchTaxonSummaryRecord(taxonId, taxagroupid) {
   return getTaxonSummaryRecord(payload, taxonId);
 }
 
-export function renderTaxonSummary(record) {
-  if (!record || !record.datasetids.length) return '';
+export function renderTaxonSummary(record, { showHeading = true, emptyMessage = '', framed = true } = {}) {
+  if (!record || !record.datasetids.length) {
+    return emptyMessage
+      ? `<div style="margin-top:9px;font-size:12px;color:#64748b;">${escapeHtml(emptyMessage)}</div>`
+      : '';
+  }
   const explorerUrl = buildExplorerUrl(record.datasetids);
   if (!explorerUrl) return '';
 
   return `
-    <div style="
-      margin-top:12px;
-      padding:10px 12px;
-      background:#f8fafc;
-      border:1px solid #dbeafe;
-      border-radius:8px;
-      font-size:12px;
-      color:#334155;
-    ">
+    <div style="${framed
+      ? 'margin-top:12px;padding:10px 12px;background:#f8fafc;border:1px solid #dbeafe;border-radius:8px;'
+      : 'margin-top:9px;padding:0;'
+    }font-size:12px;color:#334155;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:nowrap;">
         <div style="min-width:0;flex:1 1 auto;">
-          <div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">Neotoma Occurrence Records</div>
+          ${showHeading ? '<div style="font-weight:700;color:#1d4ed8;margin-bottom:6px;">Neotoma Occurrence Records</div>' : ''}
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             <span><strong>${record.occurrenceCount}</strong> occurrences</span>
             <span><strong>${record.siteCount}</strong> sites</span>
@@ -195,15 +194,19 @@ export async function fetchAndRenderTaxonSummary(
   taxagroupid,
   containerElement,
   currentClickIdRef,
+  renderOptions,
 ) {
-  if (!containerElement || taxonId == null || !taxagroupid) return;
+  if (!containerElement || taxonId == null) return;
   containerElement.innerHTML = '';
 
-  if (!isOccurrenceSummaryEnabled(taxagroupid)) return;
+  if (!isOccurrenceSummaryEnabled(taxagroupid)) {
+    containerElement.innerHTML = renderTaxonSummary(null, renderOptions);
+    return;
+  }
 
   const payload = await loadTaxonSummary(taxagroupid);
   if (currentClickIdRef && String(currentClickIdRef.value) !== String(taxonId)) return;
 
   const record = getTaxonSummaryRecord(payload, taxonId);
-  containerElement.innerHTML = renderTaxonSummary(record);
+  containerElement.innerHTML = renderTaxonSummary(record, renderOptions);
 }

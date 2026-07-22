@@ -157,7 +157,7 @@ export async function fetchTaxonMetadata(taxonId) {
   return metadata;
 }
 
-export function renderTaxonMetadataHtml(metadata) {
+export function renderTaxonMetadataHtml(metadata, { framed = true } = {}) {
   if (!metadata) return '';
 
   const citationValue = buildCitationDisplayValue(metadata);
@@ -176,11 +176,12 @@ export function renderTaxonMetadataHtml(metadata) {
     ? validationParts.join(', ')
     : '<span style="color:#9ca3af;font-style:italic;">Not recorded</span>';
 
+  const surfaceStyle = framed
+    ? 'margin:12px 0 0 0;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;'
+    : 'margin:9px 0 0 0;padding:0;';
+
   return `
-    <dl style="
-      margin:12px 0 0 0;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;
-      border-radius:8px;font-size:12px;line-height:1.55;
-    ">
+    <dl style="${surfaceStyle}font-size:12px;line-height:1.55;">
       <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:72px;margin:0 0 4px 0;">Citation</dt>
       <dd style="margin:0 0 8px 72px;color:#374151;word-break:break-word;">${citation}</dd>
       <dt style="font-weight:600;color:#6b7280;float:left;clear:left;width:72px;margin:0 0 4px 0;">Validation</dt>
@@ -189,7 +190,7 @@ export function renderTaxonMetadataHtml(metadata) {
   `;
 }
 
-export async function fetchAndRenderTaxonMetadata(taxonId, containerElement, currentClickIdRef) {
+export async function fetchAndRenderTaxonMetadata(taxonId, containerElement, currentClickIdRef, renderOptions) {
   if (!containerElement || taxonId == null) return;
 
   const requestedId = Number(taxonId);
@@ -204,7 +205,7 @@ export async function fetchAndRenderTaxonMetadata(taxonId, containerElement, cur
     if (currentClickIdRef && Number(currentClickIdRef.value) !== requestedId) {
       return;
     }
-    containerElement.innerHTML = renderTaxonMetadataHtml(metadata);
+    containerElement.innerHTML = renderTaxonMetadataHtml(metadata, renderOptions);
   } catch (err) {
     console.error('Failed to load local taxon metadata:', err);
     if (currentClickIdRef && Number(currentClickIdRef.value) !== requestedId) {

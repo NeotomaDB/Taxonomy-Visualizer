@@ -22,7 +22,9 @@ import { setHighlightedPath, clearHighlightedPath, setMatchIds } from './viewSwi
 import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
+import { renderStewardTaxonDetail } from './stewardTaxonDetail.js';
 import { updateURLState } from './urlhash.js';
+import { taxonomicAncestors } from './taxonomicPath.js';
 import { splitSearchQuery, unwrapQuotedSearchTerm } from './searchQuery.js';
 import {
   buildTaxonAutocompleteCandidates,
@@ -183,8 +185,10 @@ export function setupSearch({
   // ── findLCA ───────────────────────────────────────────────────────────────
   function findLCA(nodeA, nodeB) {
     if (!nodeA || !nodeB) return null;
-    const ancestorsA = new Set(nodeA.ancestors().map(n => n.data.id));
-    for (const anc of nodeB.ancestors()) { if (ancestorsA.has(anc.data.id)) return anc; }
+    const ancestorsA = new Set(taxonomicAncestors(nodeA));
+    for (const anc of taxonomicAncestors(nodeB)) {
+      if (ancestorsA.has(anc)) return anc;
+    }
     return null;
   }
 
@@ -427,7 +431,7 @@ export function setupSearch({
     highlightAllMatches(currentMatches);
 
     const matchList = currentMatches.map((m, idx) => {
-      const path = m.ancestors().reverse().map(n => n.data.name).join(' / ');
+      const path = taxonomicAncestors(m, { rootToLeaf: true }).map(n => n.data.name).join(' / ');
 
       // Show synonym resolution badge when this node was found via a synonym search
       let synonymBadge = '';
@@ -559,9 +563,22 @@ export function setupSearch({
     const panel = document.getElementById('info');
     if (!panel) return;
 
-    const names = selectedNode.ancestors().reverse().map(n => n.data.name);
+    const names = taxonomicAncestors(selectedNode, { rootToLeaf: true }).map(n => n.data.name);
     const nodeId = selectedNode.data.id;
     currentSearchDetailIdRef.value = nodeId; // Set for async fetch race-condition check
+    const selectionHasSubtree = (selectedNode.children && selectedNode.children.length > 0) ||
+      (selectedNode._children && selectedNode._children.length > 0) ||
+      (selectedNode.descendants && selectedNode.descendants().length > 1);
+
+    if (renderStewardTaxonDetail({
+      taxonId: nodeId,
+      names,
+      taxagroupid,
+      currentClickIdRef: currentSearchDetailIdRef,
+      isTerminalTaxon: !selectionHasSubtree,
+    })) {
+      return;
+    }
 
     // Build the dynamic path HTML
     const pathHtml = names.map((n, idx) => {
@@ -803,12 +820,17 @@ export function setupSearch({
     }
     const node1 = q1Matches[0], node2 = q2Matches[0];
     const lca = findLCA(node1, node2);
-    const path1 = node1.ancestors().reverse().map(n => n.data.name);
-    const path2 = node2.ancestors().reverse().map(n => n.data.name);
-    const lcaDepth = lca ? lca.depth : -1;
-    const div1 = lcaDepth >= 0 ? path1.slice(lcaDepth + 1) : path1;
-    const div2 = lcaDepth >= 0 ? path2.slice(lcaDepth + 1) : path2;
-    const lcaPath = lca ? lca.ancestors().reverse().map(n => n.data.name) : [];
+    const pathNodes1 = taxonomicAncestors(node1, { rootToLeaf: true });
+    const pathNodes2 = taxonomicAncestors(node2, { rootToLeaf: true });
+    const path1 = pathNodes1.map(n => n.data.name);
+    const path2 = pathNodes2.map(n => n.data.name);
+    const lcaIndex1 = lca ? pathNodes1.indexOf(lca) : -1;
+    const lcaIndex2 = lca ? pathNodes2.indexOf(lca) : -1;
+    const div1 = lcaIndex1 >= 0 ? path1.slice(lcaIndex1 + 1) : path1;
+    const div2 = lcaIndex2 >= 0 ? path2.slice(lcaIndex2 + 1) : path2;
+    const lcaPath = lca
+      ? taxonomicAncestors(lca, { rootToLeaf: true }).map(n => n.data.name)
+      : [];
     const lcaHtml = lcaPath.map((n, i) => i === lcaPath.length - 1
       ? `<strong class="cmp-ancestor-lca">${n}</strong>`
       : n).join('<span class="cmp-arrow">→</span>');
@@ -873,7 +895,7 @@ export function setupSearch({
 
       if (matches.length === 1) {
         const only = matches[0];
-        const path = only.ancestors().reverse().map(n => n.data.name).join(' → ');
+        const path = taxonomicAncestors(only, { rootToLeaf: true }).map(n => n.data.name).join(' → ');
         return `
           <div class="cmp-resolve-card ${sideClass}">
             <div class="cmp-resolve-label">${label}</div>
@@ -889,7 +911,7 @@ export function setupSearch({
           <div class="cmp-resolve-empty">${matches.length} matches found. Choose one exact taxon to compare.</div>
           <div class="cmp-resolve-list">
             ${matches.map((match, index) => {
-              const path = match.ancestors().reverse().map(n => n.data.name).join(' → ');
+              const path = taxonomicAncestors(match, { rootToLeaf: true }).map(n => n.data.name).join(' → ');
               return `
                 <button class="cmp-resolve-option" type="button" data-query-side="${label === q1Label ? 'q1' : 'q2'}" data-match-index="${index}">
                   <span class="cmp-resolve-name">${match.data.name}</span>

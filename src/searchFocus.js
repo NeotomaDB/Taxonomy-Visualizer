@@ -9,11 +9,19 @@ import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
 import { isMajorGroupDisplayName } from './taxaViewConfig.js';
 import { updateURLState } from './urlhash.js';
+import { clearStewardTaxonDetail, renderStewardTaxonDetail } from './stewardTaxonDetail.js';
+import { taxonomicAncestors } from './taxonomicPath.js';
 
 export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
   const panel = document.getElementById('info');
   let currentNode = null; // Store current node for button handler
   const currentClickIdRef = { value: null }; // Track current click for async fetch
+
+  // Focus View expands/rebuilds parts of the SVG after this helper is created.
+  // Accept a getter so the path-label code always works with those live nodes.
+  function liveNodeSelection() {
+    return typeof nodeSelection === 'function' ? nodeSelection() : nodeSelection;
+  }
 
   function show(d) {
     if (!panel || !d) return;
@@ -26,7 +34,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     updateURLState({ focus: nodeId });
 
     // Update info panel
-    const names = d.ancestors().reverse().map(n => n.data.name);
+    const names = taxonomicAncestors(d, { rootToLeaf: true }).map(n => n.data.name);
 
     // Build the dynamic path HTML
     const pathHtml = names.map((n, idx) => {
@@ -45,6 +53,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     // 1. It has children in the current tree, OR
     // 2. We can check if there's data available to build a subtree
     const hasSubtree = (d.children && d.children.length > 0) ||
+      (d._children && d._children.length > 0) ||
       (d.descendants && d.descendants().length > 1); // Has descendants beyond itself
 
     // Add "Go to Tree" button only if node has a subtree and navigateToNode is available
@@ -73,6 +82,13 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     const isAnchor = d.data && d.data.isAnchor;
     const isSyntheticEntry = d.data && d.data.isSyntheticGroup;
     const taxagroupid = d.data && d.data.taxagroupid;
+    const isStewardDetail = renderStewardTaxonDetail({
+      taxonId: nodeId,
+      names,
+      taxagroupid,
+      currentClickIdRef,
+      isTerminalTaxon: !hasSubtree,
+    });
     const goToGroupButton = ((isAnchor || isSyntheticEntry) && taxagroupid && window.loadTreeForGroup) ? `
       <button id="goToGroupBtn" style="
         margin-top: 12px;
@@ -96,32 +112,37 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
       </button>
     ` : '';
 
-    panel.innerHTML = `
-      <div style="font-weight:600;margin-bottom:6px;">Search Result (1 matched path)</div>
-      <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
-      <div id="taxon-metadata-container"></div>
-      <div id="taxon-summary-container"></div>
-      <div style="display:flex; flex-wrap:wrap; gap:8px;">
-        ${goToTreeButton}
-        ${goToGroupButton}
-      </div>
-    `;
-    panel.style.display = 'block';
+    if (isStewardDetail) {
+      // Data Steward renders identity/path in the right panel and places the
+      // data cards under the primary canvas.
+    } else {
+      panel.innerHTML = `
+        <div style="font-weight:600;margin-bottom:6px;">Search Result (1 matched path)</div>
+        <div style="margin-bottom:8px;"><strong>Path:</strong> ${pathHtml}</div>
+        <div id="taxon-metadata-container"></div>
+        <div id="taxon-summary-container"></div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          ${goToTreeButton}
+          ${goToGroupButton}
+        </div>
+      `;
+      panel.style.display = 'block';
 
-    const metadataContainer = document.getElementById('taxon-metadata-container');
-    if (metadataContainer && currentClickIdRef.value) {
-      fetchAndRenderTaxonMetadata(currentClickIdRef.value, metadataContainer, currentClickIdRef);
-    }
+      const metadataContainer = document.getElementById('taxon-metadata-container');
+      if (metadataContainer && currentClickIdRef.value) {
+        fetchAndRenderTaxonMetadata(currentClickIdRef.value, metadataContainer, currentClickIdRef);
+      }
 
-    const summaryContainer = document.getElementById('taxon-summary-container');
-    if (summaryContainer && currentClickIdRef.value && taxagroupid) {
-      fetchAndRenderTaxonSummary(currentClickIdRef.value, taxagroupid, summaryContainer, currentClickIdRef);
-    }
+      const summaryContainer = document.getElementById('taxon-summary-container');
+      if (summaryContainer && currentClickIdRef.value && taxagroupid) {
+        fetchAndRenderTaxonSummary(currentClickIdRef.value, taxagroupid, summaryContainer, currentClickIdRef);
+      }
 
-    // Fetch and render external links dynamically
-    const extLinksContainer = document.getElementById('ext-links-container');
-    if (extLinksContainer && currentClickIdRef.value) {
-      fetchAndRenderExternalLinks(currentClickIdRef.value, extLinksContainer, currentClickIdRef);
+      // Fetch and render external links dynamically
+      const extLinksContainer = document.getElementById('ext-links-container');
+      if (extLinksContainer && currentClickIdRef.value) {
+        fetchAndRenderExternalLinks(currentClickIdRef.value, extLinksContainer, currentClickIdRef);
+      }
     }
 
     // Add event listener for "Go to Tree" button
@@ -144,27 +165,35 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
       });
     }
 
-    // Add taxon name labels to all nodes in the path
-    if (nodeSelection) {
+    // Keep the selected taxon prominent, but retain its ancestor names as
+    // quieter context labels. In group/focus views the label culler otherwise
+    // hides internal-node names immediately after this selection is rendered.
+    const currentNodeSelection = liveNodeSelection();
+    if (currentNodeSelection) {
       // Remove any existing focus styling
-      nodeSelection.select('text').classed('focused-text', false);
+      currentNodeSelection.select('text')
+        .classed('focused-text', false)
+        .classed('path-context-label', false);
 
       // Get all ancestors (the complete path from root to selected node)
-      const pathNodes = d.ancestors();
+      const pathNodes = taxonomicAncestors(d);
       pathNodes.forEach(ancestorNode => {
-        // Obey filtering rule: if we only want the target node name, skip intermediate nodes
-        if (highlightOnlyTargetNode && ancestorNode !== d) {
-          return;
-        }
-        const nodeGroup = nodeSelection.filter(n => n === ancestorNode);
+        const nodeGroup = currentNodeSelection.filter(n => n === ancestorNode);
 
         // Check if this is a collapsed group node
         const nodeName = (ancestorNode.data && ancestorNode.data.name) ? String(ancestorNode.data.name).trim().toLowerCase() : '';
         const isCollapsedGroup = isMajorGroupDisplayName(nodeName);
 
-        nodeGroup.select('text:not(.toggle):not(.label-halo)')
-          .classed('focused-text', true)
-          .style('fill', isCollapsedGroup ? '#7cafae' : '#0d47a1');
+        const label = nodeGroup.select('text:not(.toggle):not(.label-halo)');
+        if (ancestorNode === d) {
+          label
+            .classed('focused-text', true)
+            .style('fill', isCollapsedGroup ? '#7cafae' : '#0d47a1');
+        } else {
+          label
+            .classed('path-context-label', true)
+            .style('fill', null);
+        }
       });
     }
   }
@@ -172,10 +201,15 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
   function clear() {
     // Hide panel
     if (panel) panel.style.display = 'none';
+    clearStewardTaxonDetail();
 
     // Remove focus styling from dendrogram
-    if (nodeSelection) {
-      nodeSelection.select('text:not(.label-halo)').classed('focused-text', false).style('fill', null);
+    const currentNodeSelection = liveNodeSelection();
+    if (currentNodeSelection) {
+      currentNodeSelection.select('text:not(.label-halo)')
+        .classed('focused-text', false)
+        .classed('path-context-label', false)
+        .style('fill', null);
     }
   }
 

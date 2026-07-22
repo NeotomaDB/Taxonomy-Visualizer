@@ -290,11 +290,476 @@ body {
 
 body:not([data-app-view="steward"]) #summary-panel,
 body:not([data-app-view="steward"]) #anomaly-bar,
-body:not([data-app-view="steward"]) #anomaly-detail-panel {
+body:not([data-app-view="steward"]) #anomaly-detail-panel,
+body:not([data-app-view="steward"]) #steward-taxon-detail {
   display: none !important;
 }
 
-body[data-app-view="about"] #stage,
+/* Data steward: compact recent-change stream */
+#summary-panel {
+  padding: 16px !important;
+  border-color: #dce5de !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 2px rgba(25, 54, 35, 0.03);
+}
+
+.summary-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.summary-panel-title {
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.summary-panel-subtitle {
+  margin-top: 3px;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.summary-range-select {
+  flex: 0 0 auto;
+  min-height: 29px;
+  padding: 3px 24px 3px 8px;
+  border: 1px solid #cbd5d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #374151;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.summary-stat {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.summary-stat--total { background: #f3f4f6; color: #475569; }
+.summary-stat--new { background: #dcfce7; color: #166534; }
+.summary-stat--modified { background: #fef3c7; color: #92400e; }
+
+.summary-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  color: #8a96a6;
+  font-size: 11px;
+}
+
+.summary-pagination-copy { min-width: 0; }
+
+.summary-pagination-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.summary-pagination-actions button {
+  min-height: 26px;
+  padding: 3px 8px;
+  border: 1px solid #cbd5d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.summary-pagination-actions button:disabled {
+  border-color: #d9dfdb;
+  background: #f5f7f5;
+  color: #a7b0aa;
+  cursor: default;
+}
+
+.summary-items {
+  max-height: 352px;
+  margin-top: 7px;
+  overflow-y: auto;
+  border-top: 1px solid #e1e8e3;
+}
+
+.summary-item {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 8px;
+  min-height: 43px;
+  border-bottom: 1px solid #e9eeea;
+}
+
+.summary-item:hover { background: #f8fbf8; }
+
+.summary-kind {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 52px;
+  min-height: 21px;
+  border: 1px solid var(--summary-badge-border);
+  border-radius: 999px;
+  background: var(--summary-badge-bg);
+  color: var(--summary-badge-fg);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+}
+
+.summary-item-main {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  gap: 9px;
+  overflow: hidden;
+}
+
+.summary-taxon-name {
+  flex: 0 1 auto;
+  min-width: 60px;
+  overflow: hidden;
+  color: #243044;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-item-details {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  min-width: 0;
+  gap: 4px;
+  overflow: hidden;
+  color: #748091;
+  font-size: 10px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-group {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-change-count {
+  flex: 0 0 auto;
+  margin-left: 2px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #fff5d6;
+  color: #946200;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.summary-search-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #388d40;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.summary-search-btn:hover,
+.summary-search-btn:focus-visible {
+  border-color: #b9dfbd;
+  background: #e9f8eb;
+  color: #21772a;
+  outline: none;
+}
+
+.summary-empty-state {
+  padding: 20px 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 620px) {
+  .summary-panel-header { align-items: center; }
+  .summary-panel-subtitle { display: none; }
+  .summary-pagination-copy { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .summary-item-main { gap: 6px; }
+  .summary-item-details > span[aria-hidden="true"] { display: none; }
+  .summary-group { max-width: 74px; }
+  .summary-item-details time { display: none; }
+}
+
+.taxonomic-issues-bar {
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid #dfe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.taxonomic-issues-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 0;
+  color: #27332c;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.taxonomic-issues-summary:hover,
+.taxonomic-issues-summary:focus-visible {
+  background: #f6f9f7;
+}
+
+.taxonomic-issues-summary:focus-visible {
+  outline: 2px solid #43a047;
+  outline-offset: -2px;
+}
+
+.taxonomic-issues-summary-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.taxonomic-issues-summary-copy strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.taxonomic-issues-summary-copy > span {
+  overflow: hidden;
+  color: #6b756e;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taxonomic-issues-summary-count {
+  min-width: 28px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #39443d;
+  background: #edf1ee;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.taxonomic-issues-summary-action {
+  color: #2f7d3b;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.taxonomic-issues-panel {
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid #dfe6e1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.taxonomic-issues-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 14px 10px;
+}
+
+.taxonomic-issues-panel-header h3 {
+  margin: 0;
+  color: #27332c;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.taxonomic-issues-panel-header p {
+  margin: 3px 0 0;
+  color: #727c75;
+  font-size: 11px;
+}
+
+.taxonomic-issues-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #68726b;
+  background: transparent;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.taxonomic-issues-close:hover,
+.taxonomic-issues-close:focus-visible {
+  background: #f0f3f1;
+}
+
+.taxonomic-issues-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 14px 12px;
+}
+
+.taxonomic-issues-toolbar label {
+  color: #525e56;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.taxonomic-issues-toolbar select {
+  min-width: 168px;
+  height: 32px;
+  padding: 0 30px 0 10px;
+  border: 1px solid #ced6d0;
+  border-radius: 7px;
+  color: #303a33;
+  background-color: #fff;
+  font: inherit;
+  font-size: 12px;
+}
+
+.taxonomic-issues-table-wrap {
+  max-height: 390px;
+  overflow: auto;
+  border-top: 1px solid #e6ebe7;
+}
+
+.taxonomic-issues-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  color: #354039;
+  font-size: 11px;
+  text-align: left;
+}
+
+.taxonomic-issues-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 9px 10px;
+  color: #606b63;
+  background: #f6f8f6;
+  border-bottom: 1px solid #dde4df;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.taxonomic-issues-table td {
+  padding: 10px;
+  border-bottom: 1px solid #edf0ee;
+  vertical-align: top;
+}
+
+.taxonomic-issues-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.taxonomic-issue-taxon {
+  width: 20%;
+  font-weight: 650;
+}
+
+.taxonomic-issue-taxon span,
+.taxonomic-issue-taxon small {
+  display: block;
+}
+
+.taxonomic-issue-taxon small {
+  margin-top: 2px;
+  color: #818a83;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.taxonomic-issue-path {
+  width: 36%;
+  color: #59645c;
+  line-height: 1.45;
+}
+
+.taxonomic-issue-next-step {
+  width: 26%;
+  line-height: 1.4;
+}
+
+.taxonomic-issue-badge {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid #d7ded9;
+  border-radius: 999px;
+  color: #4a554d;
+  background: #f5f7f5;
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.taxonomic-issue-badge[data-tone="review"] {
+  border-color: #d9d4c8;
+  color: #665e4e;
+  background: #f8f6f1;
+}
+
+.taxonomic-issue-badge[data-tone="conflict"] {
+  border-color: #dfceca;
+  color: #76524a;
+  background: #faf5f3;
+}
+
+.taxonomic-issues-empty {
+  padding: 28px 14px !important;
+  color: #79837c;
+  text-align: center;
+}
+
+body[data-app-view="about"] #canvas-column,
 body[data-app-view="about"] #sidebar {
   display: none !important;
 }
@@ -778,6 +1243,16 @@ body[data-app-view="about"] #right-panel {
   grid-row: 1;
 }
 
+#canvas-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  grid-column: 2;
+  grid-row: 1;
+}
+
 #stage {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -786,8 +1261,6 @@ body[data-app-view="about"] #right-panel {
   padding: 8px;
   width: 100%;
   box-sizing: border-box;
-  grid-column: 2;
-  grid-row: 1;
 }
 
 #chart {
@@ -800,6 +1273,115 @@ body[data-app-view="about"] #right-panel {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+#steward-taxon-detail {
+  width: 100%;
+  padding: 0 4px 4px;
+  box-sizing: border-box;
+  color: #263238;
+  font-family: "Figtree", sans-serif;
+}
+
+#steward-taxon-detail[hidden] {
+  display: none;
+}
+
+.steward-detail-heading,
+.steward-path-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  font-family: "Figtree", sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.steward-detail-heading {
+  flex-wrap: wrap;
+}
+
+.steward-detail-kicker,
+.steward-path-label {
+  color: #6b7280;
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.steward-detail-name {
+  color: #1f2937;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.steward-detail-id {
+  color: #6b7280;
+  font-size: inherit;
+}
+
+.steward-path-row {
+  margin-top: 4px;
+  align-items: baseline;
+}
+
+.steward-path-label {
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.steward-path {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  color: #374151;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.steward-path-separator {
+  color: #9ca3af;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.steward-path-current {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.steward-detail-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.steward-detail-card {
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.steward-detail-card h2 {
+  margin: 0;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.steward-detail-card dl,
+.steward-detail-card > div > div {
+  margin-top: 9px !important;
+}
+
+@media (max-width: 760px) {
+  .steward-detail-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 .visualizer-control-box {
@@ -1889,6 +2471,20 @@ svg.compare-mode.search-active g.node.match-path text:not(.toggle):not(.highligh
   /* Ensure it overrides culling */
 }
 
+/* Ancestors of the selected taxon stay readable in Focus View without
+   competing with the selected node.  !important deliberately wins over the
+   radial label culler, which normally hides all internal-node labels. */
+.path-context-label {
+  display: block !important;
+  fill: #4b5563 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  paint-order: stroke fill;
+  stroke: white;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
 /* Collapsible tree styling */
 #chart svg g text {
   font-family: 'Figtree', sans-serif;
@@ -1915,7 +2511,7 @@ svg.compare-mode.search-active g.node.match-path text:not(.toggle):not(.highligh
   }
 
   #right-panel,
-  #stage {
+  #canvas-column {
     grid-column: auto;
     grid-row: auto;
   }

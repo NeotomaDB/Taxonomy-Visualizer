@@ -773,7 +773,7 @@ async function renderMammalTree({
         getObstacleElements: () => [gRootLabel.select('circle').node()],
       })
     : applyAngleCulling(root, () => gNodes.selectAll('g.node'), 1.1);
-  const info = setupFocusInfo(gNodes.selectAll('g.node'), () => currentRotate, !isInitialView);
+  const info = setupFocusInfo(() => gNodes.selectAll('g.node'), () => currentRotate, !isInitialView);
   const { showAt: showPopupAt } = createPopup('popup');
 
   // Rebind interactions after initial info is created

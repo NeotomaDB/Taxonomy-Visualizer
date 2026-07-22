@@ -9,6 +9,26 @@ function formatDateLabel(value) {
   });
 }
 
+function formatCompactDateLabel(value) {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>'\"]/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  }[character]));
+}
+
 function getSummaryDateLabel(item) {
   if (item._kind === 'new') {
     return `Created ${formatDateLabel(item.recdatecreated)}`;
@@ -66,10 +86,6 @@ const RANGE_OPTIONS = [
 
 function getRangeLabel(days) {
   return RANGE_OPTIONS.find(option => option.days === days)?.label ?? `Last ${days} days`;
-}
-
-function getSummaryHeaderRangeLabel(days) {
-  return `${getRangeLabel(days)} from the most recent update`;
 }
 
 function getDataCoverageDays(summaryData) {
@@ -153,87 +169,84 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
         const groupLabel = item.taxagroupid
           ? (currentTaxagroupNames[item.taxagroupid] || item.taxagroupid)
           : 'Unknown group';
+        const itemDate = item.recdatemodified || item.recdatecreated;
         const changedFields = item.changed_fields?.length
-          ? `<div style="font-size:11px;color:#6b7280;margin-top:2px;">Changed: ${item.changed_fields.join(', ')}</div>`
+          ? `<span class="summary-change-count" title="Changed: ${escapeHtml(item.changed_fields.join(', '))}">
+              ${item.changed_fields.length} field${item.changed_fields.length === 1 ? '' : 's'}
+            </span>`
           : '';
         return `
-          <div class="summary-item" style="padding:10px 0;border-top:1px solid #e5e7eb;">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-              <div style="min-width:0;flex:1;">
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                  <span style="
-                    display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;
-                    background:${badge.bg};color:${badge.fg};border:1px solid ${badge.border};
-                    font-size:11px;font-weight:700;
-                  ">${badge.text}</span>
-                  <span style="font-size:11px;color:#6b7280;">${groupLabel}</span>
-                </div>
-                <div style="font-weight:600;color:#1f2937;margin-top:6px;">${item.taxonname}</div>
-                <div style="font-size:12px;color:#4b5563;margin-top:3px;">Taxon ID: ${item.taxonid}</div>
-                <div style="font-size:12px;color:#6b7280;margin-top:4px;line-height:1.45;">${getSummaryDateLabel(item)}</div>
+          <div class="summary-item" role="listitem">
+            <span class="summary-kind summary-kind--${item._kind}" style="--summary-badge-bg:${badge.bg};--summary-badge-fg:${badge.fg};--summary-badge-border:${badge.border};">
+              ${badge.text}
+            </span>
+            <div class="summary-item-main">
+              <span class="summary-taxon-name" title="${escapeHtml(item.taxonname)}">${escapeHtml(item.taxonname)}</span>
+              <span class="summary-item-details">
+                <span class="summary-group" title="${escapeHtml(groupLabel)}">${escapeHtml(groupLabel)}</span>
+                <span aria-hidden="true">·</span>
+                <span>#${escapeHtml(item.taxonid)}</span>
+                <span aria-hidden="true">·</span>
+                <time datetime="${escapeHtml(itemDate)}" title="${escapeHtml(getSummaryDateLabel(item))}">${formatCompactDateLabel(itemDate)}</time>
                 ${changedFields}
-              </div>
-              <button
-                class="summary-search-btn"
-                data-taxonid="${item.taxonid}"
-                style="
-                  flex-shrink:0;padding:6px 10px;border:none;border-radius:6px;background:#43a047;color:#fff;
-                  font-size:12px;font-weight:600;cursor:pointer;
-                "
-              >Search</button>
+              </span>
             </div>
+            <button
+              class="summary-search-btn"
+              data-taxonid="${item.taxonid}"
+              aria-label="View ${escapeHtml(item.taxonname)}"
+              title="View in taxonomy"
+            ><span aria-hidden="true">↗</span></button>
           </div>
         `;
       }).join('')
     : `
-      <div style="font-size:13px;color:#6b7280;line-height:1.5;">
-        No new or modified taxa in the current summary window for ${currentGroupName}.
+      <div class="summary-empty-state">
+        No new or modified taxa in the current summary window for ${escapeHtml(currentGroupName)}.
       </div>
     `;
 
   panel.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-weight:700;font-size:14px;color:#1f2937;">Recent Change</div>
-      <select id="summary-range-select" style="font-size:12px; border-radius:4px; border:1px solid #d1d5db; padding:2px 4px; background:#fff; cursor:pointer;">
+    <div class="summary-panel-header">
+      <div>
+        <div class="summary-panel-title">Recent changes</div>
+        <div class="summary-panel-subtitle">Refreshed ${formatDateLabel(dataToRender.generated_at)} · Scope: ${escapeHtml(currentGroupName)}${coverageNote}</div>
+      </div>
+      <select id="summary-range-select" class="summary-range-select" aria-label="Change time range">
         ${RANGE_OPTIONS.map(option => `
           <option value="${option.days}" ${currentRangeDays === option.days ? 'selected' : ''}>${option.label}</option>
         `).join('')}
       </select>
     </div>
-    <div style="font-size:12px;color:#6b7280;margin-top:4px;">
-      Refreshed ${formatDateLabel(dataToRender.generated_at)} · ${getSummaryHeaderRangeLabel(currentRangeDays)} · Scope: ${currentGroupName}${coverageNote}
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-      <span style="padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px;color:#374151;">
+    <div class="summary-stats" aria-label="Change counts for ${getRangeLabel(currentRangeDays)}">
+      <span class="summary-stat summary-stat--total">
         ${filteredEntries.length} total
       </span>
-      <span style="padding:4px 8px;border-radius:999px;background:#dcfce7;font-size:12px;color:#166534;">
+      <span class="summary-stat summary-stat--new">
         ${newCount} new
       </span>
-      <span style="padding:4px 8px;border-radius:999px;background:#fef3c7;font-size:12px;color:#92400e;">
+      <span class="summary-stat summary-stat--modified">
         ${modifiedCount} modified
       </span>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:#9ca3af;margin-top:8px;">
-      <div>
+    <div class="summary-pagination">
+      <div class="summary-pagination-copy">
         ${filteredEntries.length === 0
           ? `No items in ${getRangeLabel(currentRangeDays)}`
           : `Page ${currentSummaryPage} of ${totalPages} · ${filteredEntries.length} items in ${getRangeLabel(currentRangeDays)}`}
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
+      <div class="summary-pagination-actions">
         <button
           id="summary-prev-page"
           ${currentSummaryPage <= 1 ? 'disabled' : ''}
-          style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;background:${currentSummaryPage <= 1 ? '#f3f4f6' : '#fff'};color:${currentSummaryPage <= 1 ? '#9ca3af' : '#374151'};font-size:11px;cursor:${currentSummaryPage <= 1 ? 'default' : 'pointer'};"
         >Previous</button>
         <button
           id="summary-next-page"
           ${currentSummaryPage >= totalPages ? 'disabled' : ''}
-          style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;background:${currentSummaryPage >= totalPages ? '#f3f4f6' : '#fff'};color:${currentSummaryPage >= totalPages ? '#9ca3af' : '#374151'};font-size:11px;cursor:${currentSummaryPage >= totalPages ? 'default' : 'pointer'};"
         >Next</button>
       </div>
     </div>
-    <div style="margin-top:4px;max-height:360px;overflow-y:auto;">${rowsHtml}</div>
+    <div class="summary-items" role="list">${rowsHtml}</div>
   `;
   panel.style.display = 'block';
 

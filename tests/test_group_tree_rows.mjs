@@ -82,6 +82,38 @@ test('resolves configured overview group rows', () => {
   assert.equal(result.filteredRows.length, 2);
 });
 
+test('resolves a forest without altering or joining recorded taxonomic paths', () => {
+  const forestRows = [
+    groupRows[0],
+    {
+      ...groupRows[1],
+      ids_root_to_leaf: [20, 21, 11],
+      names_root_to_leaf: ['Second Root', 'Branch', 'Leaf B'],
+    },
+  ];
+  const overview = {
+    forest: true,
+    layoutContainerId: '__layout_container_test__',
+    overviewDepth: 4,
+  };
+  const result = resolveGroupTreeRows({
+    taxagroupid: 'AAA',
+    groupRows: forestRows,
+    syntheticGroupRoots: {},
+    groupOverviewConfig: { AAA: overview },
+    getFilteredRows: () => [],
+    getRootInfo: () => ({ rootId: 1, rootName: 'Root' }),
+  });
+
+  assert.equal(result.renderRootId, '__layout_container_test__');
+  assert.equal(result.renderRootName, '');
+  assert.equal(result.overviewConfig, overview);
+  assert.deepEqual(result.filteredRows.map((row) => row.ids_root_to_leaf), [
+    [1, 2, 10],
+    [20, 21, 11],
+  ]);
+});
+
 test('resolves normal group rows through provided callbacks', () => {
   const result = resolveGroupTreeRows({
     taxagroupid: 'AAA',

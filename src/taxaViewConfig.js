@@ -5,13 +5,13 @@
 
 // Groups that always use the vertically collapsible (linear) tree,
 // usually because their hierarchy is extremely flat, irregular, or radial view looks bad.
-export const FORCE_LIST_TREE_GROUPS = new Set(['WCH', 'LAB', 'CHO', 'BRZ', 'PLA', 'PRO', 'PRZ', 'ROT', 'VER']);
+export const FORCE_LIST_TREE_GROUPS = new Set(['ACR', 'WCH', 'LAB', 'CHO', 'BRZ', 'PLA', 'PRO', 'PRZ', 'ROT', 'VER']);
 
 export const NON_BIO_GROUPS = new Set(['WCH', 'BIM', 'AQU', 'PHY', 'MAG', 'CHM', 'SED', 'LOI', 'LAB', 'CAR', 'ISO', 'CHR', 'UPA', 'DNA', 'PHT']);
 
 // Groups where the collapsible list tree should be completely expanded at initialization.
 export const EXPAND_ALL_COLLAPSIBLE = new Set([
-    'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN', 'CHO', 'FOR', 'SIL', 'PLA', 'PRO', 'PRZ', 'VER', 'ISO',
+    'ACR', 'SPO', 'CNI', 'BRC', 'ANL', 'MOL', 'NEM', 'FLT', 'ECH', 'ROT', 'BRZ', 'FUN', 'CHO', 'FOR', 'SIL', 'PLA', 'PRO', 'PRZ', 'VER', 'ISO',
 ]);
 
 // Small/manageable groups using the radial view where all nodes are force-expanded.

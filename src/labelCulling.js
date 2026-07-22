@@ -22,7 +22,14 @@ export function applyAngleCulling(root, getNodeSel, minDeg = 0.9) {
     // Re-query the live DOM so newly entered nodes are included.
     const sel = typeof getNodeSel === 'function' ? getNodeSel() : getNodeSel;
     sel.select('text')
-      .style('display', d => d.children ? 'none' : (visible.has(d) ? 'block' : 'none'));
+      .style('display', function (d) {
+        // Selection-path labels are deliberately protected from the regular
+        // internal-node/angle culling pass.
+        if (this.classList.contains('focused-text') || this.classList.contains('path-context-label')) {
+          return 'block';
+        }
+        return d.children ? 'none' : (visible.has(d) ? 'block' : 'none');
+      });
   }
 
   let lastK = null;
@@ -50,7 +57,8 @@ function isForcedLabel(element) {
     element.classList.contains('highlight-synonym') ||
     element.classList.contains('highlight-q1') ||
     element.classList.contains('highlight-q2') ||
-    element.classList.contains('focused-text');
+    element.classList.contains('focused-text') ||
+    element.classList.contains('path-context-label');
 }
 
 export function applySemanticZoomLabels(root, getNodeSel, options = {}) {

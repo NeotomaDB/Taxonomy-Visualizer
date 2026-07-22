@@ -26,6 +26,7 @@ export async function renderCollapsibleTree({
     taxagroupid = null,    // e.g. 'DIA' — used to show external links like AlgaeBase
     dx = 25,               // Vertical node spacing
     dy = null,             // Horizontal level spacing (null = auto-calculate)
+    hideRoot = false,      // Layout-only root for a forest of disconnected trees
 } = {}) {
     if (!rows || !rows.length) {
         console.warn('renderCollapsibleTree: rows is empty.');
@@ -41,7 +42,12 @@ export async function renderCollapsibleTree({
 
     // Build hierarchy from path-list
     const byId = new Map();
-    const root = { id: rootId, name: rootName, children: [] };
+    const root = {
+        id: rootId,
+        name: rootName,
+        children: [],
+        isVirtualForestRoot: hideRoot,
+    };
     byId.set(rootId, root);
 
     rows.forEach(row => {
@@ -74,6 +80,13 @@ export async function renderCollapsibleTree({
 
                 if (parent && child && !parent.children.includes(child)) {
                     parent.children.push(child);
+                }
+            } else if (hideRoot && String(id) !== String(rootId)) {
+                // Attach each recorded root to an internal layout container.
+                // The container and these links are never rendered.
+                const child = byId.get(id);
+                if (child && !root.children.includes(child)) {
+                    root.children.push(child);
                 }
             }
         }
@@ -142,7 +155,9 @@ export async function renderCollapsibleTree({
 
     // Left margin: enough space for the root label so it is never clipped.
     // ~7px per character is a rough estimate for 12px Figtree.
-    const leftMargin = Math.max(rootName.length * 7 + 24, dy * 0.6);
+    const leftMargin = hideRoot
+        ? 32
+        : Math.max(String(rootName || '').length * 7 + 24, _dy * 0.6);
 
     // Create SVG — overflow:visible so labels outside the SVG box are shown
     const svg = d3.select(selector).append('svg')
@@ -180,18 +195,25 @@ export async function renderCollapsibleTree({
     // Track whether the initial centering has been applied
     let initialised = false;
 
+    const displayY = (node) => (node?.y || 0) - (hideRoot ? _dy : 0);
+
     function update(source) {
         const duration = 250;
-        const nodes = hierarchyRoot.descendants().reverse();
-        const links = hierarchyRoot.links();
 
         // Compute new tree layout
         tree(hierarchyRoot);
 
+        // The layout-only root lets D3 position multiple real roots in one SVG,
+        // but it is not a taxon. Exclude it and its outgoing links entirely.
+        const nodes = hierarchyRoot.descendants().reverse()
+            .filter(d => !d.data.isVirtualForestRoot);
+        const links = hierarchyRoot.links()
+            .filter(d => !d.source.data.isVirtualForestRoot);
+
         // Find vertical extent
-        let topNode = hierarchyRoot;
-        let bottomNode = hierarchyRoot;
-        hierarchyRoot.eachBefore(node => {
+        let topNode = nodes[0] || hierarchyRoot;
+        let bottomNode = nodes[0] || hierarchyRoot;
+        nodes.forEach(node => {
             if (node.x < topNode.x) topNode = node;
             if (node.x > bottomNode.x) bottomNode = node;
         });
@@ -202,8 +224,8 @@ export async function renderCollapsibleTree({
 
             // Calculate max horizontal position of the nodes
             let maxNodeY = 0;
-            hierarchyRoot.each(node => {
-                if (node.y > maxNodeY) maxNodeY = node.y;
+            nodes.forEach(node => {
+                if (displayY(node) > maxNodeY) maxNodeY = displayY(node);
             });
 
             // Align the rightmost nodes with the right edge of the white box, padding 160px for names
@@ -226,7 +248,7 @@ export async function renderCollapsibleTree({
 
         const nodeEnter = node.enter().append('g')
             .attr('class', 'node')
-            .attr('transform', d => `translate(${source.y0 || 0},${source.x0 || 0})`)
+            .attr('transform', d => `translate(${displayY({ y: source.y0 ?? source.y ?? 0 })},${source.x0 ?? source.x ?? 0})`)
             .attr('fill-opacity', 0)
             .attr('stroke-opacity', 0)
             .on('click', (event, d) => {
@@ -279,12 +301,12 @@ export async function renderCollapsibleTree({
             .attr('stroke', 'white');
 
         node.merge(nodeEnter).transition(transition)
-            .attr('transform', d => `translate(${d.y},${d.x})`)
+            .attr('transform', d => `translate(${displayY(d)},${d.x})`)
             .attr('fill-opacity', 1)
             .attr('stroke-opacity', 1);
 
         node.exit().transition(transition).remove()
-            .attr('transform', d => `translate(${source.y},${source.x})`)
+            .attr('transform', d => `translate(${displayY(source)},${source.x})`)
             .attr('fill-opacity', 0)
             .attr('stroke-opacity', 0);
 
@@ -317,16 +339,18 @@ export async function renderCollapsibleTree({
     }
 
     function diagonal(d) {
-        return `M${d.source.y},${d.source.x}
-            C${(d.source.y + d.target.y) / 2},${d.source.x}
-             ${(d.source.y + d.target.y) / 2},${d.target.x}
-             ${d.target.y},${d.target.x}`;
+        const sourceY = displayY(d.source);
+        const targetY = displayY(d.target);
+        return `M${sourceY},${d.source.x}
+            C${(sourceY + targetY) / 2},${d.source.x}
+             ${(sourceY + targetY) / 2},${d.target.x}
+             ${targetY},${d.target.x}`;
     }
 
     let i = 0;
 
     // Setup info panel BEFORE running update() so node click bindings don't trigger ReferenceError on "info"
-    const info = setupFocusInfo(gNode.selectAll('g.node'), () => 0);
+    const info = setupFocusInfo(() => gNode.selectAll('g.node'), () => 0);
 
     update(hierarchyRoot);
 

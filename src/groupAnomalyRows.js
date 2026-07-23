@@ -80,12 +80,24 @@ export function resolveGroupAnomalyRows(
   allGroupRows,
   filteredRows,
   taxagroupid,
-  { classificationRows = filteredRows } = {},
+  {
+    classificationRows = filteredRows,
+    // Invalid synonym records are deliberate name-resolution records, not
+    // placement problems. Keep this dependency injectable so this module
+    // remains deterministic and does not need to load the synonym dataset.
+    isInvalidSynonym = () => false,
+  } = {},
 ) {
-  const { anomalies } = detectAnomalies(allGroupRows, taxagroupid);
+  const isReviewableTaxon = (row) => !isInvalidSynonym(row.taxonid);
+  const synonymRows = allGroupRows.filter((row) => !isReviewableTaxon(row));
+  const reviewableGroupRows = allGroupRows.filter(isReviewableTaxon);
+  const reviewableClassificationRows = classificationRows.filter(isReviewableTaxon);
+
+  const { anomalies } = detectAnomalies(reviewableGroupRows, taxagroupid);
   const anomalyIds = new Set(anomalies.map((anomaly) => anomaly.taxonid));
-  const unplacedCandidateRows = allGroupRows.filter((row) => !anomalyIds.has(row.taxonid));
-  const placementCandidateRows = classificationRows.filter((row) => !anomalyIds.has(row.taxonid));
+  const unplacedCandidateRows = reviewableGroupRows.filter((row) => !anomalyIds.has(row.taxonid));
+  const placementCandidateRows = reviewableClassificationRows
+    .filter((row) => !anomalyIds.has(row.taxonid));
 
   const unplacedTaxa = findUnplacedTaxa(unplacedCandidateRows);
   const shallowPlacements = findShallowPlacements(placementCandidateRows);
@@ -122,11 +134,12 @@ export function resolveGroupAnomalyRows(
   return {
     anomalies,
     issues,
+    synonymRows,
     unplacedTaxa,
     shallowPlacements,
     missingSubordinateData,
-    // A taxon belongs in exactly one steward surface: either the primary
-    // canvas or the issue queue. Remove every classified issue from the tree.
-    filteredRows: removeRowsByTaxonId(filteredRows, issues),
+    // A taxonomy record belongs in exactly one steward surface: the primary
+    // canvas, the synonym relationship panel, or the issue queue.
+    filteredRows: removeRowsByTaxonId(filteredRows, [...issues, ...synonymRows]),
   };
 }

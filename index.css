@@ -282,10 +282,216 @@ body {
 }
 
 body:not([data-app-view="steward"]) #summary-panel,
+body:not([data-app-view="steward"]) #synonym-bar,
+body:not([data-app-view="steward"]) #synonym-detail-panel,
 body:not([data-app-view="steward"]) #anomaly-bar,
 body:not([data-app-view="steward"]) #anomaly-detail-panel,
 body:not([data-app-view="steward"]) #steward-taxon-detail {
   display: none !important;
+}
+
+/* Data Steward: resolved invalid-name relationships. */
+.synonym-relationships-bar {
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid #ead9c6;
+  border-radius: 10px;
+  background: #fffdf9;
+  box-shadow: 0 1px 2px rgba(83, 52, 23, 0.03);
+}
+
+.synonym-relationships-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  min-height: 26px;
+  padding: 12px;
+  border: 0;
+  color: #3f352b;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.synonym-relationships-summary:hover,
+.synonym-relationships-summary:focus-visible {
+  background: #fff8ef;
+}
+
+.synonym-relationships-summary:focus-visible {
+  outline: 2px solid #c98036;
+  outline-offset: -2px;
+}
+
+.synonym-relationships-summary-copy {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 5px;
+}
+
+.synonym-relationships-summary-copy strong {
+  color: #3e352d;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.synonym-relationships-summary-spacer {
+  visibility: hidden;
+}
+
+.synonym-relationships-summary-count {
+  min-width: 28px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #784a20;
+  background: #f8ead8;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.synonym-relationships-summary-action {
+  color: #a45b1b;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.synonym-relationships-panel {
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid #ead9c6;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.synonym-relationships-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.synonym-relationships-panel-header h3 {
+  margin: 0;
+  color: #3e352d;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.synonym-relationships-panel-header p {
+  margin: 3px 0 0;
+  color: #74695f;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.synonym-relationships-close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #7b6b5d;
+  background: transparent;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.synonym-relationships-close:hover,
+.synonym-relationships-close:focus-visible {
+  background: #fff5e9;
+}
+
+.synonym-relationships-table-wrap {
+  max-height: 390px;
+  overflow: auto;
+  border-top: 1px solid #efe4d8;
+}
+
+.synonym-relationships-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  color: #433b34;
+  font-size: 11px;
+  text-align: left;
+}
+
+.synonym-relationships-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 9px 10px;
+  border-bottom: 1px solid #e9ddcf;
+  color: #74695f;
+  background: #fcf8f3;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.synonym-relationships-table td {
+  padding: 10px;
+  border-bottom: 1px solid #f2ebe4;
+  vertical-align: top;
+}
+
+.synonym-relationships-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.synonym-relationship-name {
+  width: 27%;
+}
+
+.synonym-relationship-name span,
+.synonym-relationship-name small {
+  display: block;
+}
+
+.synonym-relationship-name span {
+  font-weight: 650;
+}
+
+.synonym-relationship-name small {
+  margin-top: 2px;
+  color: #8b8178;
+  font-size: 10px;
+}
+
+.synonym-relationship-name--invalid span {
+  color: #965318;
+  font-style: italic;
+}
+
+.synonym-relationship-name--valid span {
+  color: #2f743e;
+}
+
+.synonym-relationship-type {
+  width: 31%;
+  color: #655b52;
+  line-height: 1.4;
+}
+
+.synonym-relationship-date {
+  color: #74695f;
+  white-space: nowrap;
+}
+
+.synonym-relationships-empty {
+  padding: 28px 14px !important;
+  color: #887b70;
+  text-align: center;
 }
 
 /* Data Steward: potential-taxonomic-issues review queue. */
@@ -563,6 +769,85 @@ body:not([data-app-view="steward"]) #steward-taxon-detail {
 
 .steward-path-separator {
   color: #9ca3af;
+}
+
+.steward-synonym-panel {
+  margin: 8px 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  color: #1f2937;
+  background: #f0fdf4;
+}
+
+.steward-synonym-panel--resolution {
+  background: #fff7ed;
+}
+
+.steward-synonym-line {
+  color: #1f2937;
+}
+
+.steward-synonym-line--accepted {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.steward-synonym-line--accepted strong {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.steward-synonym-line--accepted span {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.steward-synonym-panel--resolution .steward-synonym-line--accepted strong {
+  color: #9a3412;
+}
+
+.steward-synonym-entry {
+  margin-top: 2px;
+}
+
+.steward-synonym-entry + .steward-synonym-entry {
+  margin-top: 4px;
+}
+
+.steward-synonym-line--name {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.steward-synonym-line--name strong {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.steward-synonym-line--name em {
+  color: #b45309;
+  font-style: italic;
+}
+
+.steward-synonym-panel--resolution .steward-synonym-line--name strong {
+  color: #9a3412;
+}
+
+.steward-synonym-line--meta {
+  margin-top: 2px;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.steward-synonym-line--meta strong {
+  color: inherit;
+  font-weight: 700;
+}
+
+.steward-synonym-panel--resolution .steward-synonym-line--meta {
+  margin-top: 4px;
+  color: #7c3a1e;
 }
 
 .steward-detail-group {
@@ -1967,6 +2252,8 @@ body[data-app-view="about"] #right-panel {
   align-items: center;
   justify-content: space-between;
   user-select: none;
+  width: 100%;
+  text-align: left;
 }
 
 .custom-select-trigger::after {
@@ -1986,6 +2273,12 @@ body[data-app-view="about"] #right-panel {
 .custom-select-trigger:hover {
   border-color: #43a047;
   background-color: #ffffff;
+}
+
+.custom-select-trigger:focus-visible,
+.custom-options:focus-visible {
+  outline: 3px solid rgba(67, 160, 71, 0.35);
+  outline-offset: 2px;
 }
 
 .custom-select.open .custom-select-trigger {
@@ -2033,6 +2326,11 @@ body[data-app-view="about"] #right-panel {
 
 .custom-option:hover {
   background-color: #e8f5e9;
+}
+
+.custom-option.keyboard-active {
+  background-color: #c8edcb;
+  box-shadow: inset 3px 0 0 #43a047;
 }
 
 .custom-option.selected {

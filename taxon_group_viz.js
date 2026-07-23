@@ -10,7 +10,7 @@ import { initSynonyms, getSynonymInfo, isSynonymsReady } from './src/synonyms.js
 import { setHighlightedPath, clearHighlightedPath } from './src/viewSwitch.js';
 import { setupHover } from './src/hover.js';
 import { EXPAND_ALL_RADIAL, FOCUS_VIEW_GROUPS, SEARCH_COLLAPSIBLE_MATCH_THRESHOLD, getRadialOverviewDepth, getRadialSemanticLabelConfig, isMajorGroupDisplayName, shouldAutoFocusCollapsibleSearch } from './src/taxaViewConfig.js?v=20260622-node-clearance-3';
-import { updateURLState } from './src/urlhash.js';
+import { getURLState, pushURLState } from './src/urlhash.js';
 // Data helpers now imported from ./src/data.js
 
 /**
@@ -438,7 +438,7 @@ async function renderMammalTree({
         const t = d.target;
         highlightPath(link, node, t);
         setHighlightedPath(t);
-        if (typeof info !== 'undefined' && info) info.show(t);
+        if (typeof info !== 'undefined' && info) info.show(t, { history: 'push' });
       }, 220);
     });
 
@@ -650,7 +650,7 @@ async function renderMammalTree({
           const tNode = d.target;
           highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), tNode);
           setHighlightedPath(tNode);
-          if (typeof info !== 'undefined' && info) info.show(tNode);
+          if (typeof info !== 'undefined' && info) info.show(tNode, { history: 'push' });
           window.setTimeout(() => cull?.refresh(), 0);
         }, 220);
       });
@@ -670,7 +670,7 @@ async function renderMammalTree({
           // Then apply new highlights
           highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), d);
           setHighlightedPath(d);
-          if (info) info.show(d);
+          if (info) info.show(d, { history: 'push' });
           window.setTimeout(() => cull?.refresh(), 0);
         }, 220);
       })
@@ -691,7 +691,7 @@ async function renderMammalTree({
       // Only clear if clicking directly on the SVG (not on nodes or links)
       if (event.target === event.currentTarget || event.target.tagName === 'svg') {
         if (searchControls && typeof searchControls.resetSearchState === 'function') {
-          searchControls.resetSearchState();
+          searchControls.resetSearchState({ history: 'push' });
         } else {
           document.querySelectorAll('.highlight').forEach(el => {
             el.classList.remove('highlight');
@@ -782,19 +782,19 @@ async function renderMammalTree({
   // 7) Rotation UI hookup (optional)
   const rotateInput = document.getElementById('rotate');
   const rotateValueEl = document.getElementById('rotateValue');
-  function applyRotation(deg, skipUrlUpdate = false) {
+  function applyRotation(deg) {
     currentRotate = deg;
     updateRotate();
     updateLabelOrientation();
     if (cull?.refresh) cull.refresh();
     if (rotateValueEl) rotateValueEl.textContent = `${deg}\u00B0`;
-    if (!skipUrlUpdate) {
-      updateURLState({ rot: deg });
-    }
   }
   if (rotateInput) {
-    applyRotation(Number(rotateInput.value || 0), true);
+    applyRotation(Number(rotateInput.value || 0));
     rotateInput.addEventListener('input', (e) => applyRotation(Number(e.target.value)));
+    rotateInput.addEventListener('change', (e) => {
+      pushURLState({ rot: Number(e.target.value) });
+    });
   }
 
   // Function to ensure a node's full path is visible (expanded)
@@ -840,7 +840,9 @@ async function renderMammalTree({
       setTimeout(() => {
         highlightPath(gLinks.selectAll('path'), gNodes.selectAll('g.node'), targetNode);
         setHighlightedPath(targetNode);
-        if (info) info.show(targetNode);
+        if (!getURLState().q && info) {
+          info.show(targetNode, { history: 'none' });
+        }
       }, 300);
     }
   }, { once: true });

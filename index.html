@@ -118,8 +118,10 @@
                                     <option value="">Loading...</option>
                                 </select>
                                 <div class="custom-select">
-                                    <div class="custom-select-trigger">Loading...</div>
-                                    <div class="custom-options"></div>
+                                    <button type="button" class="custom-select-trigger" aria-haspopup="listbox"
+                                        aria-expanded="false" aria-controls="taxagroupOptions">Loading...</button>
+                                    <div id="taxagroupOptions" class="custom-options" role="listbox" tabindex="-1"
+                                        aria-label="Taxon Group options"></div>
                                 </div>
                             </div>
                         </div>
@@ -158,6 +160,10 @@
                         ← Go Back
                     </button>
                 </div>
+
+                <!-- Data Steward: resolved synonym relationships -->
+                <div id="synonym-bar" class="synonym-relationships-bar" style="display:none;"></div>
+                <div id="synonym-detail-panel" class="synonym-relationships-panel" style="display:none;"></div>
 
                 <!-- Data Steward review queue for potential taxonomy issues -->
                 <div id="anomaly-bar" class="taxonomic-issues-bar" style="display:none;"></div>
@@ -327,13 +333,21 @@
     <script src="src/taxon-group-select.js"></script>
     <script type="module" src="taxon_group_viz.js?v=20260622-node-clearance-3"></script>
     <script type="module">
-        import { updateURLState, getURLState } from './src/urlhash.js';
+        import {
+            getURLNavigationState,
+            getURLState,
+            initializeURLHistory,
+            pushURLState,
+            updateURLState
+        } from './src/urlhash.js';
         import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260722-taxonomy-forest-1';
         import { initViewSwitch, resetViewState, activateFocusView, setFocusViewRenderOptions } from './src/viewSwitch.js';
         import { updateAnomalyBar } from './src/anomaly_bar.js?v=20260723-issues-dropdown-only';
+        import { buildSynonymRelationships, updateSynonymBar } from './src/synonym_bar.js?v=20260724-steward-surfaces-1';
         import { updateSummaryPanel } from './src/summaryPanel.js';
         import { initOnboarding } from './src/onboarding/onboarding.js?v=20260622-2';
         import { resolveGroupAnomalyRows } from './src/groupAnomalyRows.js';
+        import { getSynonymInfo, initSynonyms, isInvalidId } from './src/synonyms.js';
         import { expandCompactTaxonPaths } from './src/data.js';
         import { resolveGroupTreeRows } from './src/groupTreeRows.js';
         import { buildInitialTrees, initialTreeNodesToRows } from './src/initialView.js';
@@ -350,6 +364,20 @@
         const APP_VIEWS = new Set(['explorer', 'about', 'steward']);
         let currentAppView = 'explorer';
 
+        function resetToMajorGroupsOnReload() {
+            const navigationEntry = window.performance
+                ?.getEntriesByType?.('navigation')
+                ?.[0];
+            const isReload = navigationEntry?.type === 'reload'
+                || window.performance?.navigation?.type === 1;
+
+            if (isReload) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
+        resetToMajorGroupsOnReload();
+
         function normalizeAppView(view) {
             return APP_VIEWS.has(view) ? view : 'explorer';
         }
@@ -360,6 +388,7 @@
         }
 
         function setAppView(view, skipUrlUpdate = false) {
+            const previousAppView = currentAppView;
             currentAppView = normalizeAppView(view);
             document.body.dataset.appView = currentAppView;
 
@@ -386,7 +415,14 @@
             if (nav) nav.classList.remove('open');
 
             if (!skipUrlUpdate) {
-                updateURLState({ view: currentAppView === 'explorer' ? null : currentAppView });
+                pushURLState(
+                    { view: currentAppView === 'explorer' ? null : currentAppView },
+                    { treeDepth: currentTreeDepth }
+                );
+            }
+
+            if (previousAppView !== currentAppView) {
+                window.__refreshCurrentTaxonDetail?.();
             }
         }
 
@@ -582,6 +618,8 @@
         let taxonomyIndexes = buildTaxonomyIndexes([]);
         let currentTaxagroupid = null; // Start with null for initial view
         let navigationStack = []; // Stack to track navigation history
+        let currentTreeDepth = 0; // Tree-only depth used by the in-page Back button
+        let historyRestoreQueue = Promise.resolve();
         let isInitialView = true; // Track if we're in the initial 4-level view
         let isSyncingDropdown = false; // Flag to prevent recursive calls when syncing dropdown
         let taxagroupNames = {}; // Store taxagroupid to full name mapping
@@ -694,6 +732,8 @@
                 
                 // Read URL State
                 const urlState = getURLState();
+                const initialTreeDepth = Number(getURLNavigationState()?.treeDepth) || 0;
+                currentTreeDepth = initialTreeDepth;
                 window.__initialUrlState = urlState; // Store globally for post-render hooks
                 
                 // Restore Taxon Type
@@ -728,29 +768,40 @@
                 if (urlState.group) {
                     const select = document.getElementById('taxagroupSelect');
                     if (select) select.value = urlState.group;
-                    pendingViewLoad = loadTreeForGroup(urlState.group).then(() => {
-                        applyPostRenderState();
+                    pendingViewLoad = loadTreeForGroup(urlState.group, false).then(async () => {
+                        await restoreTreeRoot(urlState, initialTreeDepth);
+                        currentTreeDepth = initialTreeDepth;
+                        updateBackButton();
+                        applyPostRenderState(urlState);
+                        initializeURLHistory({ treeDepth: initialTreeDepth });
                     });
                 } else {
                     // Load initial 4-level view
                     pendingViewLoad = loadInitialView().then(() => {
-                        applyPostRenderState();
+                        applyPostRenderState(urlState);
+                        initializeURLHistory({ treeDepth: 0 });
                     });
                 }
 
                 // Helper to apply search, focus, and mode after the tree finishes rendering
-                function applyPostRenderState() {
-                    const state = window.__initialUrlState;
+                function applyPostRenderState(state) {
                     if (!state) return;
                     
                     // Fire search if query exists
                     if (state.q) {
                         const searchBtn = document.getElementById('searchBtn');
-                        if (searchBtn) searchBtn.click();
+                        if (searchBtn) {
+                            window.__suppressSearchHistory = true;
+                            try {
+                                searchBtn.click();
+                            } finally {
+                                window.__suppressSearchHistory = false;
+                            }
+                        }
                     }
                     
                     // Dispatch focus event for the viz module to pick up
-                    if (state.focus) {
+                    if (state.focus && !state.q) {
                         window.dispatchEvent(new CustomEvent('RestoreFocusNode', { detail: { id: state.focus } }));
                     }
                     
@@ -758,7 +809,14 @@
                     if (state.mode === 'focus') {
                         setTimeout(() => {
                             const focusBtn = document.getElementById('focusViewBtn');
-                            if (focusBtn) focusBtn.click();
+                            if (focusBtn) {
+                                window.__suppressViewHistory = true;
+                                try {
+                                    focusBtn.click();
+                                } finally {
+                                    window.__suppressViewHistory = false;
+                                }
+                            }
                         }, 600); // Wait for animations to settle
                     }
                     
@@ -776,12 +834,16 @@
                     nonBioBtn.classList.toggle('active', type === 'nonbio');
 
                     // Update URL hash
-                    updateURLState({ type: type, group: null, focus: null, q: null });
+                    pushURLState(
+                        { type: type, group: null, root: null, focus: null, q: null },
+                        { treeDepth: 0 }
+                    );
 
                     // Re-populate dropdown and reset view state
                     currentTaxagroupid = null;
                     isInitialView = true;
                     navigationStack = [];
+                    currentTreeDepth = 0;
                     currentTreeType = 'main';
                     mainTreeNodes = [];
                     orphanTreeNodes = [];
@@ -808,13 +870,17 @@
                     clearSearchForContextChange();
                     
                     // Update URL hash state
-                    updateURLState({ group: selectedValue, focus: null, q: null });
+                    pushURLState(
+                        { group: selectedValue, root: null, focus: null, q: null },
+                        { treeDepth: 0 }
+                    );
 
                     if (selectedValue === '') {
                         // "Major Groups" selected - show initial view
                         currentTaxagroupid = null;
                         isInitialView = true;
                         navigationStack = [];
+                        currentTreeDepth = 0;
                         currentTreeType = 'main';
 
                         // Show tree toggle for Major Groups view
@@ -831,6 +897,7 @@
                         currentTaxagroupid = selectedValue;
                         isInitialView = false;
                         navigationStack = [];
+                        currentTreeDepth = 0;
                         currentTreeType = 'main';
 
                         // Hide tree toggle when selecting a specific group
@@ -843,6 +910,9 @@
                         pendingViewLoad = loadTreeForGroup(currentTaxagroupid, false);
                     }
                 });
+
+                historyRestoreQueue = pendingViewLoad;
+                setupNativeHistoryNavigation();
             })
             .catch(err => console.error('Failed to load data files', err));
 
@@ -856,6 +926,9 @@
             isInitialView = true;
             currentTaxagroupid = null;
             navigationStack = [];
+            currentTreeDepth = 0;
+            currentRootId = null;
+            currentRootName = null;
             updateBackButton();
             syncDropdownValue();
             currentTreeType = treeType;
@@ -864,8 +937,12 @@
             // Anomaly bar is per-group; hide it in the all-groups overview
             const _anomBar = document.getElementById('anomaly-bar');
             const _anomDetail = document.getElementById('anomaly-detail-panel');
+            const _synonymBar = document.getElementById('synonym-bar');
+            const _synonymDetail = document.getElementById('synonym-detail-panel');
             if (_anomBar) _anomBar.style.display = 'none';
             if (_anomDetail) _anomDetail.style.display = 'none';
+            if (_synonymBar) _synonymBar.style.display = 'none';
+            if (_synonymDetail) _synonymDetail.style.display = 'none';
 
             // Special initial view for non-biological taxon
             if (currentTaxonType === 'nonbio') {
@@ -957,15 +1034,29 @@
         }
 
         // Navigate to a specific node (drill down)
-        async function navigateToNode(nodeId, nodeName, taxagroupid) {
-            // Push current state to navigation stack
-            navigationStack.push({
-                taxagroupid: currentTaxagroupid,
-                isInitialView: isInitialView,
-                rootId: currentRootId,
-                rootName: currentRootName,
-                treeType: currentTreeType
-            });
+        async function navigateToNode(
+            nodeId,
+            nodeName,
+            taxagroupid,
+            { recordHistory = true, restoredTreeDepth = null } = {}
+        ) {
+            if (recordHistory) {
+                // Keep the legacy stack as a fallback for non-browser hosts.
+                navigationStack.push({
+                    taxagroupid: currentTaxagroupid,
+                    isInitialView: isInitialView,
+                    rootId: currentRootId,
+                    rootName: currentRootName,
+                    treeType: currentTreeType
+                });
+                currentTreeDepth += 1;
+                pushURLState(
+                    { group: taxagroupid, root: nodeId, focus: null },
+                    { treeDepth: currentTreeDepth }
+                );
+            } else if (restoredTreeDepth !== null) {
+                currentTreeDepth = restoredTreeDepth;
+            }
 
             isInitialView = false;
             currentTaxagroupid = taxagroupid;
@@ -1035,6 +1126,11 @@
 
         // Go back in navigation
         async function goBack() {
+            if (currentTreeDepth > 0 && getURLNavigationState()) {
+                window.history.back();
+                return;
+            }
+
             if (navigationStack.length === 0) {
                 // Go back to initial view
                 await loadInitialView(currentTreeType);
@@ -1042,6 +1138,7 @@
             }
 
             const previousState = navigationStack.pop();
+            currentTreeDepth = Math.max(0, currentTreeDepth - 1);
             currentTaxagroupid = previousState.taxagroupid;
             isInitialView = previousState.isInitialView;
             currentRootId = previousState.rootId;
@@ -1145,7 +1242,7 @@
 
             if (navDiv && backBtn) {
                 // Only show Back button if there's a real previous state to go back to
-                if (navigationStack.length > 0) {
+                if (currentTreeDepth > 0 || navigationStack.length > 0) {
                     navDiv.style.display = 'block';
                 } else {
                     navDiv.style.display = 'none';
@@ -1174,6 +1271,7 @@
             currentTaxonType = 'bio';
             currentTaxagroupid = null;
             navigationStack = [];
+            currentTreeDepth = 0;
             isInitialView = true;
             currentTreeType = 'main';
             currentRootId = null;
@@ -1211,7 +1309,8 @@
 
             pendingViewLoad = loadInitialView('main');
             await pendingViewLoad;
-            updateURLState({ type: null, group: null, mode: null, focus: null, q: null, rot: null });
+            updateURLState({ type: null, group: null, root: null, mode: null, focus: null, q: null, rot: null });
+            initializeURLHistory({ treeDepth: 0 });
             showFindTaxonPrompt();
 
             if (focusSearch && searchInput) {
@@ -1242,6 +1341,120 @@
         let currentRootId = null;
         let currentRootName = null;
 
+        function resolveNodeName(nodeId, taxagroupid) {
+            const rows = getRowsContainingNode(nodeId);
+            for (const row of rows) {
+                const index = row.ids_root_to_leaf.findIndex(id => String(id) === String(nodeId));
+                if (index >= 0 && row.names_root_to_leaf[index]) {
+                    return row.names_root_to_leaf[index];
+                }
+            }
+
+            const syntheticRoot = SYNTHETIC_GROUP_ROOTS[taxagroupid];
+            if (syntheticRoot && String(syntheticRoot.rootId) === String(nodeId)) {
+                return syntheticRoot.rootName;
+            }
+
+            return taxagroupNames[taxagroupid] || String(nodeId);
+        }
+
+        function normalizeNodeId(nodeId) {
+            if (nodeId === null || nodeId === undefined || nodeId === '') return null;
+            const numericId = Number(nodeId);
+            return Number.isNaN(numericId) ? nodeId : numericId;
+        }
+
+        async function restoreTreeRoot(urlState, restoredTreeDepth) {
+            if (!urlState.group || !urlState.root) return;
+            if (String(currentRootId) === String(urlState.root)) return;
+
+            const nodeId = normalizeNodeId(urlState.root);
+            await navigateToNode(
+                nodeId,
+                resolveNodeName(nodeId, urlState.group),
+                urlState.group,
+                { recordHistory: false, restoredTreeDepth }
+            );
+        }
+
+        function applyRestoredInteractionState(state) {
+            if (state.q) {
+                window.__suppressSearchHistory = true;
+                try {
+                    document.getElementById('searchBtn')?.click();
+                } finally {
+                    window.__suppressSearchHistory = false;
+                }
+            }
+
+            if (state.focus && !state.q) {
+                window.dispatchEvent(new CustomEvent('RestoreFocusNode', {
+                    detail: { id: state.focus }
+                }));
+            }
+
+            if (state.mode === 'focus') {
+                setTimeout(() => {
+                    window.__suppressViewHistory = true;
+                    try {
+                        document.getElementById('focusViewBtn')?.click();
+                    } finally {
+                        window.__suppressViewHistory = false;
+                    }
+                }, 600);
+            }
+        }
+
+        async function restoreHistoryEntry(urlState, navigationState) {
+            const restoredTreeDepth = Number(navigationState?.treeDepth) || 0;
+
+            navigationStack = [];
+            currentTreeDepth = restoredTreeDepth;
+            setAppView(urlState.view, true);
+
+            currentTaxonType = urlState.type === 'nonbio' ? 'nonbio' : 'bio';
+            document.getElementById('bioTaxonBtn')?.classList.toggle('active', currentTaxonType === 'bio');
+            document.getElementById('nonBioTaxonBtn')?.classList.toggle('active', currentTaxonType === 'nonbio');
+            populateTaxonGroupDropdown(allTaxaGroupsList);
+
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = urlState.q || '';
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            const rotationInput = document.getElementById('rotate');
+            if (rotationInput) {
+                rotationInput.value = urlState.rot || '0';
+            }
+
+            if (urlState.group) {
+                await loadTreeForGroup(urlState.group, false);
+                await restoreTreeRoot(urlState, restoredTreeDepth);
+            } else {
+                await loadInitialView();
+            }
+
+            currentTreeDepth = restoredTreeDepth;
+            updateBackButton();
+            applyRestoredInteractionState(urlState);
+        }
+
+        let nativeHistoryNavigationIsSetup = false;
+        function setupNativeHistoryNavigation() {
+            if (nativeHistoryNavigationIsSetup) return;
+            nativeHistoryNavigationIsSetup = true;
+
+            window.addEventListener('popstate', event => {
+                const urlState = getURLState();
+                const navigationState = getURLNavigationState(event.state);
+                historyRestoreQueue = historyRestoreQueue
+                    .catch(() => {})
+                    .then(() => restoreHistoryEntry(urlState, navigationState))
+                    .catch(error => console.error('Failed to restore browser history state', error));
+            });
+        }
+
         // ── Anomaly UI ────────────────────────────────────────────────────────────
         // Anomaly UI logic has been moved to src/anomaly_bar.js
         // ── End Anomaly UI ────────────────────────────────────────────────────────
@@ -1263,6 +1476,11 @@
                     rootName: currentRootName,
                     treeType: currentTreeType
                 });
+                currentTreeDepth += 1;
+                pushURLState(
+                    { group: taxagroupid, root: null, focus: null },
+                    { treeDepth: currentTreeDepth }
+                );
                 updateBackButton();
             }
 
@@ -1306,6 +1524,10 @@
             // absent from filteredRows (they lack the anchor name), so this is purely
             // for counting + UI display — it does not change what the tree renders.
             if (!NON_BIO_GROUPS.has(taxagroupid)) {
+                // Load the canonical-name map before classifying review items.
+                // A synonym record is a valid taxonomy relationship, not a
+                // potential placement issue for a Data Steward to resolve.
+                await initSynonyms();
                 // Classify placement depth against the taxonomic anchor rather
                 // than a display-only overview root.
                 const classificationRows = filterRowsByGroup(allRows, taxagroupid);
@@ -1313,11 +1535,19 @@
                     allRowsForGroup,
                     filteredRows,
                     taxagroupid,
-                    { classificationRows }
+                    {
+                        classificationRows,
+                        isInvalidSynonym: isInvalidId,
+                    }
                 );
                 filteredRows = anomalyRows.filteredRows;
 
                 const groupName = taxagroupNames ? (taxagroupNames[taxagroupid] || taxagroupid) : taxagroupid;
+                updateSynonymBar(
+                    taxagroupid,
+                    groupName,
+                    buildSynonymRelationships(anomalyRows.synonymRows, getSynonymInfo)
+                );
                 updateAnomalyBar(
                     taxagroupid,
                     groupName,
@@ -1327,8 +1557,12 @@
                 // Non-bio group — hide bar if previously shown
                 const bar = document.getElementById('anomaly-bar');
                 const detailPanel = document.getElementById('anomaly-detail-panel');
+                const synonymBar = document.getElementById('synonym-bar');
+                const synonymDetailPanel = document.getElementById('synonym-detail-panel');
                 if (bar) bar.style.display = 'none';
                 if (detailPanel) detailPanel.style.display = 'none';
+                if (synonymBar) synonymBar.style.display = 'none';
+                if (synonymDetailPanel) synonymDetailPanel.style.display = 'none';
             }
             // ── End anomaly detection ─────────────────────────────────────────────
 

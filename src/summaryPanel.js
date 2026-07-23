@@ -69,11 +69,16 @@ async function navigateToSummaryItem(item) {
   if (!searchInput || !searchBtn) return;
 
   if (item.taxagroupid && typeof window.loadTreeForGroup === 'function') {
-    await window.loadTreeForGroup(item.taxagroupid, false);
+    await window.loadTreeForGroup(item.taxagroupid);
   }
 
   searchInput.value = item.taxonname || String(item.taxonid);
-  searchBtn.click();
+  window.__suppressSearchHistory = true;
+  try {
+    searchBtn.click();
+  } finally {
+    window.__suppressSearchHistory = false;
+  }
 }
 
 const MAX_RANGE_DAYS = 30;

@@ -23,6 +23,88 @@ function buildBreadcrumbHtml(names) {
   }).join('');
 }
 
+function formatDate(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function normalizeSynonyms(synonymInfo) {
+  return Array.isArray(synonymInfo?.synonyms)
+    ? synonymInfo.synonyms.filter((synonym) => synonym?.invalid_name)
+    : [];
+}
+
+function buildSynonymEntryHtml(record, index, total) {
+  const invalidName = record?.invalidName || record?.invalid_name;
+  const invalidId = record?.invalidId ?? record?.invalid_id;
+  if (!invalidName) return '';
+  const invalidIdSuffix = invalidId == null ? '' : ` (ID ${escapeHtml(invalidId)})`;
+  const synonymLabel = total > 1 ? `Synonym ${index + 1}` : 'Synonym';
+  const type = record?.synonymtype || '';
+  const updated = formatDate(record?.recdatemodified);
+  const metadataHtml = type || updated
+    ? `
+      <div class="steward-synonym-line steward-synonym-line--meta">
+        ${type ? `<strong>Type:</strong> ${escapeHtml(type)}` : ''}
+        ${type && updated ? '<span aria-hidden="true"> · </span>' : ''}
+        ${updated ? `<strong>Updated:</strong> ${escapeHtml(updated)}` : ''}
+      </div>
+    `
+    : '';
+
+  return `
+    <div class="steward-synonym-entry">
+      <div class="steward-synonym-line steward-synonym-line--name">
+        <strong>${synonymLabel}:</strong> <em>${escapeHtml(invalidName)}${invalidIdSuffix}</em>
+      </div>
+      ${metadataHtml}
+    </div>
+  `;
+}
+
+export function buildStewardSynonymPanelHtml({
+  taxonId = null,
+  selectedName = '',
+  synonymInfo = null,
+  synonymResolutions = [],
+  matchedDirectly = true,
+} = {}) {
+  const resolutions = Array.isArray(synonymResolutions)
+    ? synonymResolutions.filter((resolution) => resolution?.invalidName)
+    : [];
+  const synonyms = normalizeSynonyms(synonymInfo);
+  const displayedSynonyms = !matchedDirectly && resolutions.length > 0
+    ? resolutions
+    : synonyms;
+  if (displayedSynonyms.length === 0) return '';
+  const isResolution = !matchedDirectly && resolutions.length > 0;
+  const acceptedIdSuffix = taxonId == null ? '' : ` (ID ${escapeHtml(taxonId)})`;
+  const acceptedNameHtml = selectedName
+    ? `
+      <div class="steward-synonym-line steward-synonym-line--accepted">
+        <strong>Accepted name in Neotoma:</strong> <span>${escapeHtml(selectedName)}${acceptedIdSuffix}</span>
+      </div>
+    `
+    : '';
+
+  return `
+    <section class="steward-synonym-panel${isResolution ? ' steward-synonym-panel--resolution' : ''}" aria-label="Synonyms recorded in Neotoma">
+      ${acceptedNameHtml}
+      ${displayedSynonyms.map((record, index) => buildSynonymEntryHtml(
+        record,
+        index,
+        displayedSynonyms.length,
+      )).join('')}
+    </section>
+  `;
+}
+
 /**
  * In Data Steward view, keep the selection and its supporting information in
  * the right panel. Returns false outside that view so Explorer is unchanged.
@@ -33,8 +115,14 @@ export function renderStewardTaxonDetail({
   taxagroupid,
   currentClickIdRef,
   isTerminalTaxon = false,
+  synonymInfo = null,
+  synonymResolutions = [],
+  matchedDirectly = true,
 }) {
-  if (!isStewardView()) return false;
+  if (!isStewardView()) {
+    clearStewardTaxonDetail();
+    return false;
+  }
 
   const selectionPanel = document.getElementById('info');
   const dataPanel = document.getElementById('steward-taxon-detail');
@@ -42,6 +130,13 @@ export function renderStewardTaxonDetail({
 
   const pathNames = Array.isArray(names) ? names.filter(Boolean) : [];
   const selectedName = pathNames.at(-1) || `Taxon ${taxonId}`;
+  const synonymPanelHtml = buildStewardSynonymPanelHtml({
+    taxonId,
+    selectedName,
+    synonymInfo,
+    synonymResolutions,
+    matchedDirectly,
+  });
 
   selectionPanel.innerHTML = `
     <div class="steward-detail-heading">
@@ -76,6 +171,7 @@ export function renderStewardTaxonDetail({
         <section class="steward-detail-card" aria-label="Taxon metadata">
           <div id="steward-taxon-metadata"></div>
         </section>
+        ${synonymPanelHtml}
         <section class="steward-detail-card" aria-label="Neotoma occurrence records">
           <div id="steward-taxon-summary"></div>
         </section>

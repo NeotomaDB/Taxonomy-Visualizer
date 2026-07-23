@@ -8,13 +8,14 @@ import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
 import { isMajorGroupDisplayName } from './taxaViewConfig.js';
-import { updateURLState } from './urlhash.js';
+import { pushURLState, updateURLState } from './urlhash.js';
 import { clearStewardTaxonDetail, renderStewardTaxonDetail } from './stewardTaxonDetail.js';
 import { taxonomicAncestors } from './taxonomicPath.js';
 
 export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highlightOnlyTargetNode = false) {
   const panel = document.getElementById('info');
   let currentNode = null; // Store current node for button handler
+  let refreshSelectedDetail = null;
   const currentClickIdRef = { value: null }; // Track current click for async fetch
 
   // Focus View expands/rebuilds parts of the SVG after this helper is created.
@@ -23,15 +24,22 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
     return typeof nodeSelection === 'function' ? nodeSelection() : nodeSelection;
   }
 
-  function show(d) {
+  function show(d, { history = 'replace' } = {}) {
     if (!panel || !d) return;
 
     currentNode = d; // Store current node
+    refreshSelectedDetail = () => show(d, { history: 'none' });
+    window.__refreshCurrentTaxonDetail = refreshSelectedDetail;
     const nodeId = d.data.taxonid || d.data.id;
     currentClickIdRef.value = nodeId; // Record current ID
     
-    // Update URL hash state
-    updateURLState({ focus: nodeId });
+    // User selections are navigation checkpoints. URL restoration uses
+    // history: 'none' so Back/Forward never creates a duplicate entry.
+    if (history === 'push') {
+      pushURLState({ focus: nodeId });
+    } else if (history === 'replace') {
+      updateURLState({ focus: nodeId });
+    }
 
     // Update info panel
     const names = taxonomicAncestors(d, { rootToLeaf: true }).map(n => n.data.name);
@@ -88,6 +96,7 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
       taxagroupid,
       currentClickIdRef,
       isTerminalTaxon: !hasSubtree,
+      synonymInfo: d.data.synonymMetadata,
     });
     const goToGroupButton = ((isAnchor || isSyntheticEntry) && taxagroupid && window.loadTreeForGroup) ? `
       <button id="goToGroupBtn" style="
@@ -199,6 +208,11 @@ export function setupFocusInfo(nodeSelection, getCurrentRotate = () => 0, highli
   }
 
   function clear() {
+    if (window.__refreshCurrentTaxonDetail === refreshSelectedDetail) {
+      window.__refreshCurrentTaxonDetail = null;
+    }
+    refreshSelectedDetail = null;
+
     // Hide panel
     if (panel) panel.style.display = 'none';
     clearStewardTaxonDetail();

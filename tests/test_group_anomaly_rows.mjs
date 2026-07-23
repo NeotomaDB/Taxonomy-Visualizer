@@ -110,6 +110,26 @@ test('resolves the four-type issue model and renderable rows together', () => {
   assert.deepEqual(result.filteredRows.map((row) => row.taxonid), [100, 1, 2]);
 });
 
+test('excludes invalid synonym records from the steward issue queue', () => {
+  const synonymOnlyRow = {
+    taxonid: 7,
+    taxonname: 'Historical synonym',
+    taxagroupid: 'MAM',
+    ids_root_to_leaf: [7],
+    names_root_to_leaf: ['Historical synonym'],
+  };
+  const rows = [...allGroupRows, synonymOnlyRow];
+
+  const result = resolveGroupAnomalyRows(rows, rows, 'MAM', {
+    isInvalidSynonym: (taxonId) => taxonId === 7,
+  });
+
+  assert.equal(result.issues.some((issue) => issue.taxonid === 7), false);
+  assert.equal(result.unplacedTaxa.some((row) => row.taxonid === 7), false);
+  assert.deepEqual(result.synonymRows.map((row) => row.taxonid), [7]);
+  assert.equal(result.filteredRows.some((row) => row.taxonid === 7), false);
+});
+
 test('does not classify an Acritarchs Chromista path as unplaced', () => {
   const acrRows = [
     {

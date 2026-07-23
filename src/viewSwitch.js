@@ -1,7 +1,7 @@
 // View Switch functionality: Switch between Whole View and Focus View
 // Focus View shows only the highlighted path, Whole View shows the full tree
 
-import { updateURLState } from './urlhash.js';
+import { pushURLState, updateURLState } from './urlhash.js';
 import { taxonomicAncestors } from './taxonomicPath.js';
 
 let currentHighlightedPath = null; // The currently highlighted node path
@@ -46,12 +46,12 @@ export function initViewSwitch(renderFn, rows, rootInfo, taxagroupid, allRows) {
   // Create new handlers
   wholeViewHandler = () => {
     if (!isFocusView) return; // Already in whole view
-    switchToWholeView();
+    switchToWholeView({ history: window.__suppressViewHistory ? 'replace' : 'push' });
   };
   
   focusViewHandler = () => {
     if (isFocusView) return; // Already in focus view
-    switchToFocusView();
+    switchToFocusView({ history: window.__suppressViewHistory ? 'replace' : 'push' });
   };
   
   // Add event listeners
@@ -159,7 +159,7 @@ function restoreFocusedNodeAfterRender() {
 /**
  * Switch to Focus View - show only the highlighted path
  */
-async function switchToFocusView() {
+async function switchToFocusView({ history = 'replace' } = {}) {
   console.log('switchToFocusView called', {
     hasPath: !!currentHighlightedPath,
     hasMatchIds: currentMatchIds.size > 0,
@@ -196,7 +196,11 @@ async function switchToFocusView() {
   isShowingFocusViewWarning = false;
   hideFocusViewWarning();
   updateButtonState();
-  updateURLState({ mode: 'focus' });
+  if (history === 'push') {
+    pushURLState({ mode: 'focus' });
+  } else {
+    updateURLState({ mode: 'focus' });
+  }
   
   let filteredRows = [];
   
@@ -265,7 +269,7 @@ async function switchToFocusView() {
 /**
  * Switch to Whole View - show the full tree
  */
-async function switchToWholeView() {
+async function switchToWholeView({ history = 'replace' } = {}) {
   if (!originalRows || !renderFunction) {
     console.warn('Cannot switch to Whole View: missing original data');
     return;
@@ -273,7 +277,11 @@ async function switchToWholeView() {
   
   isFocusView = false;
   updateButtonState();
-  updateURLState({ mode: 'whole' });
+  if (history === 'push') {
+    pushURLState({ mode: 'whole' });
+  } else {
+    updateURLState({ mode: 'whole' });
+  }
   
   // Re-render with original data
   await renderFunction(

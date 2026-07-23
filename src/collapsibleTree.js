@@ -5,6 +5,7 @@ import { setHighlightedPath } from './viewSwitch.js';
 import { attachSynonymMetadata } from './data.js';
 import { initSynonyms, getSynonymInfo, isSynonymsReady } from './synonyms.js';
 import { setupHover } from './hover.js';
+import { getURLState } from './urlhash.js';
 
 /**
  * Render a collapsible tree layout.
@@ -264,7 +265,7 @@ export async function renderCollapsibleTree({
 
                 // Show side panel / info popup if the 'info' variable is initialized
                 if (typeof info !== 'undefined' && info) {
-                    info.show(d);
+                    info.show(d, { history: 'push' });
                 }
 
                 // Standard expansion/collapse logic
@@ -413,7 +414,9 @@ export async function renderCollapsibleTree({
             setTimeout(() => {
                 highlightPath(gLink.selectAll('path'), gNode.selectAll('g.node'), targetNode);
                 setHighlightedPath(targetNode);
-                if (info) info.show(targetNode);
+                if (!getURLState().q && info) {
+                    info.show(targetNode, { history: 'none' });
+                }
             }, 300);
         }
     }, { once: true });

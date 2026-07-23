@@ -38,6 +38,8 @@ jobs:
           node --experimental-default-type=module --test tests/test_hover.mjs
           node --experimental-default-type=module --test tests/test_search_query.mjs
           node --experimental-default-type=module --test tests/test_group_anomaly_rows.mjs
+          node --experimental-default-type=module --test tests/test_steward_taxon_detail.mjs
+          node --experimental-default-type=module --test tests/test_synonym_bar.mjs
           node --experimental-default-type=module --test tests/test_group_tree_rows.mjs
           node --experimental-default-type=module --test tests/test_initial_view.mjs
           node --experimental-default-type=module --test tests/test_navigation_rows.mjs

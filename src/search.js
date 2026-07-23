@@ -23,7 +23,7 @@ import { fetchAndRenderExternalLinks } from './externaltaxa.js';
 import { fetchAndRenderTaxonMetadata } from './taxonMetadata.js';
 import { fetchAndRenderTaxonSummary } from './taxonSummary.js';
 import { renderStewardTaxonDetail } from './stewardTaxonDetail.js';
-import { updateURLState } from './urlhash.js';
+import { getURLState, pushURLState, updateURLState } from './urlhash.js';
 import { taxonomicAncestors } from './taxonomicPath.js';
 import { splitSearchQuery, unwrapQuotedSearchTerm } from './searchQuery.js';
 import {
@@ -68,12 +68,14 @@ export function setupSearch({
   getAllNodes(root).forEach(n => idToNode.set(n.data.id, n));
   let currentMatches = [];
   let currentMatchIndex = -1;
+  let currentResultsQuery = '';
   let isShowingDetails = false; // Track if we're showing details of a single result
   let primaryMatchIds = new Set(); // IDs that directly matched the search query
   let synonymMatchIds = new Set(); // IDs that matched through synonym relationships
   // Maps canonical node ID → array of resolved synonym info objects
   // e.g. { searchedTerm, invalidId, invalidName, synonymtype, recdatemodified }
   let synonymResolutions = new Map();
+  let refreshSelectedDetail = null;
 
   // ── Comparison-mode state ────────────────────────────────────────────────
   let isCompareMode = false;
@@ -192,20 +194,25 @@ export function setupSearch({
     return null;
   }
 
-  function resetSearchState() {
+  function resetSearchState({ history = 'replace' } = {}) {
     const searchInputEl = document.getElementById('searchInput');
     if (searchInputEl) searchInputEl.value = '';
     syncClearSearchControl();
     
-    // Update URL hash state
-    updateURLState({ q: null });
+    if (history === 'push') {
+      pushURLState({ q: null, focus: null });
+    } else if (history === 'replace') {
+      updateURLState({ q: null, focus: null });
+    }
 
     currentMatches = [];
     currentMatchIndex = -1;
+    currentResultsQuery = '';
     isShowingDetails = false;
     primaryMatchIds = new Set();
     synonymMatchIds = new Set();
     synonymResolutions = new Map();
+    clearSelectedDetailRefresh();
 
     const ll = liveLinks();
     const ln = liveNodes();
@@ -237,7 +244,7 @@ export function setupSearch({
     if (onSearchClear) onSearchClear();
   }
 
-  function focusNode(d) {
+  function focusNode(d, { history = 'replace' } = {}) {
     if (expandToNode) expandToNode(d);
 
     setCurrentRotate(90 - (d.x * 180 / Math.PI));
@@ -259,7 +266,7 @@ export function setupSearch({
     clearSelectedPathAncestorLabelState();
     setSearchActive(true);
     setHighlightedPath(d);
-    if (info) info.show(d);
+    if (info) info.show(d, { history });
   }
 
   function highlightAllMatches(matches) {
@@ -375,7 +382,7 @@ export function setupSearch({
     setSearchActive(true);
   }
 
-  function selectNodeWithinMatches(d) {
+  function selectNodeWithinMatches(d, { history = 'replace' } = {}) {
     highlightAllMatches(currentMatches);
 
     const A = new Set(d.ancestors());
@@ -420,12 +427,13 @@ export function setupSearch({
 
     setSearchActive(true);
     setHighlightedPath(d);
-    if (info) info.show(d);
+    if (info) info.show(d, { history });
   }
 
   function showSearchResultsList() {
     // Show the list of all search results
     isShowingDetails = false;
+    clearSelectedDetailRefresh();
     const panel = document.getElementById('info');
     if (!panel || currentMatches.length === 0) return;
 
@@ -495,18 +503,19 @@ export function setupSearch({
         }
         currentMatchIndex = idx;
         const selectedNode = currentMatches[idx];
+        syncSearchInputToTerminalTaxon(selectedNode);
         if (keepResultsListOnSelect) {
           if (currentMatches.length > 1) {
-            selectNodeWithinMatches(selectedNode);
+            selectNodeWithinMatches(selectedNode, { history: 'none' });
           } else {
-            focusNode(selectedNode);
+            focusNode(selectedNode, { history: 'none' });
           }
           showSearchResultsList();
         } else {
           if (currentMatches.length > 1) {
-            selectNodeWithinMatches(selectedNode);
+            selectNodeWithinMatches(selectedNode, { history: 'none' });
           } else {
-            focusNode(selectedNode);
+            focusNode(selectedNode, { history: 'none' });
           }
           isShowingDetails = true;
           showNodeDetails(selectedNode);
@@ -530,9 +539,9 @@ export function setupSearch({
           item.style.backgroundColor = '#e8f5e9';
           if (currentMatches[currentMatchIndex]) {
             if (currentMatches.length > 1) {
-              selectNodeWithinMatches(currentMatches[currentMatchIndex]);
+              selectNodeWithinMatches(currentMatches[currentMatchIndex], { history: 'none' });
             } else {
-              focusNode(currentMatches[currentMatchIndex]);
+              focusNode(currentMatches[currentMatchIndex], { history: 'none' });
             }
           }
         } else {
@@ -560,12 +569,39 @@ export function setupSearch({
     });
   }
 
+  function restoreSearchDetailFromURL() {
+    const focusId = getURLState().focus;
+    if (!focusId || currentMatches.length === 0) return false;
+
+    const restoredIndex = currentMatches.findIndex(
+      match => String(match.data.id) === String(focusId)
+    );
+    if (restoredIndex < 0) return false;
+
+    currentMatchIndex = restoredIndex;
+    const selectedNode = currentMatches[restoredIndex];
+    if (currentMatches.length > 1) {
+      selectNodeWithinMatches(selectedNode, { history: 'none' });
+    } else {
+      focusNode(selectedNode, { history: 'none' });
+    }
+    isShowingDetails = true;
+    showNodeDetails(selectedNode);
+    return true;
+  }
+
   function showNodeDetails(selectedNode) {
     const panel = document.getElementById('info');
     if (!panel) return;
 
+    refreshSelectedDetail = () => showNodeDetails(selectedNode);
+    window.__refreshCurrentTaxonDetail = refreshSelectedDetail;
+
     const names = taxonomicAncestors(selectedNode, { rootToLeaf: true }).map(n => n.data.name);
     const nodeId = selectedNode.data.id;
+    const currentURLState = getURLState();
+    const isRestoredSearchDetail = !!currentURLState.q
+      && String(currentURLState.focus) === String(nodeId);
     currentSearchDetailIdRef.value = nodeId; // Set for async fetch race-condition check
     const selectionHasSubtree = (selectedNode.children && selectedNode.children.length > 0) ||
       (selectedNode._children && selectedNode._children.length > 0) ||
@@ -577,6 +613,9 @@ export function setupSearch({
       taxagroupid,
       currentClickIdRef: currentSearchDetailIdRef,
       isTerminalTaxon: !selectionHasSubtree,
+      synonymInfo: selectedNode.data.synonymMetadata,
+      synonymResolutions: synonymResolutions.get(nodeId) || [],
+      matchedDirectly: primaryMatchIds.has(nodeId),
     })) {
       return;
     }
@@ -664,7 +703,7 @@ export function setupSearch({
     }
 
     // Only show back button if there are multiple matches to go back to
-    const backButton = currentMatches.length > 1 ? `
+    const backButton = (currentMatches.length > 1 || isRestoredSearchDetail) ? `
       <button id="backToResults" style="
         margin-top: 12px;
         padding: 8px 16px;
@@ -792,8 +831,15 @@ export function setupSearch({
     const backBtn = document.getElementById('backToResults');
     if (backBtn) {
       backBtn.addEventListener('click', () => {
-        if (info) info.clear();
-        showSearchResultsList();
+        if (currentMatches.length > 1 && currentResultsQuery) {
+          searchInput.value = currentResultsQuery;
+          syncClearSearchControl();
+          pushURLState({ q: currentResultsQuery, focus: null });
+          if (info) info.clear();
+          showSearchResultsList();
+          return;
+        }
+        window.history.back();
       });
     }
 
@@ -954,7 +1000,7 @@ export function setupSearch({
         if (searchInput) {
           searchInput.value = `${nextQ1}, ${nextQ2}`;
         }
-        runSearch();
+        runSearch({ recordHistory: true });
       });
     });
   }
@@ -971,6 +1017,27 @@ export function setupSearch({
   function syncClearSearchControl() {
     if (!clearSearchBtn || !searchInput) return;
     clearSearchBtn.hidden = !searchInput.value.trim();
+  }
+
+  function clearSelectedDetailRefresh() {
+    if (window.__refreshCurrentTaxonDetail === refreshSelectedDetail) {
+      window.__refreshCurrentTaxonDetail = null;
+    }
+    refreshSelectedDetail = null;
+  }
+
+  function syncSearchInputToTerminalTaxon(selectedNode) {
+    if (!selectedNode || !searchInput) return;
+    const terminalName = String(selectedNode.data?.name || '').trim();
+    if (!terminalName) return;
+
+    searchInput.value = terminalName;
+    syncClearSearchControl();
+    closeAutocomplete();
+    pushURLState({
+      q: terminalName,
+      focus: selectedNode.data.id,
+    });
   }
 
   function closeAutocomplete() {
@@ -1016,7 +1083,7 @@ export function setupSearch({
       ? `"${suggestion.canonicalName}"`
       : suggestion.canonicalName;
     closeAutocomplete();
-    runSearch();
+    runSearch({ recordHistory: true });
   }
 
   function scheduleAutocomplete() {
@@ -1036,14 +1103,20 @@ export function setupSearch({
     }, 120);
   }
 
-  async function runSearch() {
+  async function runSearch({ recordHistory = false } = {}) {
     if (!searchInput) return;
     const q = searchInput.value.trim();
+    currentResultsQuery = q;
     syncClearSearchControl();
     if (setSearchRenderPreference) setSearchRenderPreference(false);
     
-    // Update URL hash state
-    updateURLState({ q: q || null });
+    // A user-confirmed search is a navigation checkpoint. Automatic searches
+    // used by URL restoration keep replacing the current entry.
+    if (recordHistory) {
+      pushURLState({ q: q || null, focus: null });
+    } else {
+      updateURLState({ q: q || null });
+    }
     
     if (info) info.clear();
     if (!q) { resetSearchState(); return; }
@@ -1303,6 +1376,9 @@ export function setupSearch({
         focusNode(matches[0]);
       }
       showSearchResultsList();
+      if (!recordHistory) {
+        restoreSearchDetailFromURL();
+      }
       if (autoFocusMatchThreshold != null &&
           matches.length > autoFocusMatchThreshold &&
           onAutoFocusManyMatches) {
@@ -1315,13 +1391,17 @@ export function setupSearch({
     }
   }
 
-  if (searchBtn) searchBtn.addEventListener('click', runSearch);
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      runSearch({ recordHistory: !window.__suppressSearchHistory });
+    });
+  }
   if (clearSearchBtn) {
     clearSearchBtn.addEventListener('click', () => {
       if (!searchInput) return;
       searchInput.value = '';
       closeAutocomplete();
-      resetSearchState();
+      resetSearchState({ history: 'push' });
       searchInput.focus({ preventScroll: true });
     });
   }
@@ -1381,24 +1461,26 @@ export function setupSearch({
     syncClearSearchControl();
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        runSearch();
+        runSearch({ recordHistory: true });
       } else if (e.key === 'ArrowDown' && currentMatches.length > 0) {
         e.preventDefault();
         currentMatchIndex = currentMatchIndex < 0 ? 0 : Math.min(currentMatchIndex + 1, currentMatches.length - 1);
         const selectedNode = currentMatches[currentMatchIndex];
+        syncSearchInputToTerminalTaxon(selectedNode);
         if (currentMatches.length > 1) {
-          selectNodeWithinMatches(selectedNode);
+          selectNodeWithinMatches(selectedNode, { history: 'none' });
         } else {
-          focusNode(selectedNode);
+          focusNode(selectedNode, { history: 'none' });
         }
       } else if (e.key === 'ArrowUp' && currentMatches.length > 0) {
         e.preventDefault();
         currentMatchIndex = currentMatchIndex < 0 ? currentMatches.length - 1 : Math.max(currentMatchIndex - 1, 0);
         const selectedNode = currentMatches[currentMatchIndex];
+        syncSearchInputToTerminalTaxon(selectedNode);
         if (currentMatches.length > 1) {
-          selectNodeWithinMatches(selectedNode);
+          selectNodeWithinMatches(selectedNode, { history: 'none' });
         } else {
-          focusNode(selectedNode);
+          focusNode(selectedNode, { history: 'none' });
         }
       }
     });

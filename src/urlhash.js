@@ -123,6 +123,28 @@ export function initializeURLHistory(navigationState = {}) {
   );
 }
 
+/**
+ * Replaces the current browser entry with the app's clean initial URL and
+ * navigation state. This intentionally removes every shareable view setting
+ * from the current entry (group, search, focus, rotation, and so on).
+ */
+export function resetURLHistory(navigationState = {}) {
+  replacePendingState();
+  const rawHistoryState = window.history.state;
+  const currentHistoryState = rawHistoryState && typeof rawHistoryState === 'object'
+    ? rawHistoryState
+    : {};
+
+  window.history.replaceState(
+    {
+      ...currentHistoryState,
+      [HISTORY_STATE_KEY]: navigationState,
+    },
+    '',
+    window.location.pathname,
+  );
+}
+
 export function getURLNavigationState(historyState = window.history.state) {
   return historyState?.[HISTORY_STATE_KEY] || null;
 }

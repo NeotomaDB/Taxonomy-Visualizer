@@ -38,6 +38,10 @@
                     </div>
                 </div>
             </div>
+            <button class="submit-ticket-button" type="button" disabled
+                aria-label="Submit a ticket, coming soon" title="Ticket submission coming soon">
+                Submit a ticket
+            </button>
             <div id="chart"></div>
             <div id="color-legend" class="visualizer-legend" aria-label="Visualizer legend">
                 <button id="legendToggle" class="legend-toggle" type="button" aria-label="Collapse legend"
@@ -338,6 +342,7 @@
             getURLState,
             initializeURLHistory,
             pushURLState,
+            resetURLHistory,
             updateURLState
         } from './src/urlhash.js';
         import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260722-taxonomy-forest-1';
@@ -371,12 +376,17 @@
             const isReload = navigationEntry?.type === 'reload'
                 || window.performance?.navigation?.type === 1;
 
-            if (isReload) {
-                window.history.replaceState(null, '', window.location.pathname);
-            }
+            if (!isReload) return null;
+
+            // A browser reload starts a new app navigation session. Browser
+            // history entries cannot be deleted by a web page, so tag this
+            // session and refuse to restore entries from the previous one.
+            const resetEpoch = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            resetURLHistory({ treeDepth: 0, resetEpoch });
+            return resetEpoch;
         }
 
-        resetToMajorGroupsOnReload();
+        const resetHistoryEpoch = resetToMajorGroupsOnReload();
 
         function normalizeAppView(view) {
             return APP_VIEWS.has(view) ? view : 'explorer';
@@ -1448,6 +1458,20 @@
             window.addEventListener('popstate', event => {
                 const urlState = getURLState();
                 const navigationState = getURLNavigationState(event.state);
+
+                // Refresh has intentionally reset the application to Major
+                // Groups. If Back reaches an entry created before that
+                // refresh, replace that entry with the clean initial state
+                // instead of restoring its old tree/search/detail state.
+                if (resetHistoryEpoch && navigationState?.resetEpoch !== resetHistoryEpoch) {
+                    resetURLHistory({ treeDepth: 0, resetEpoch: resetHistoryEpoch });
+                    historyRestoreQueue = historyRestoreQueue
+                        .catch(() => {})
+                        .then(() => restoreHistoryEntry(getURLState(), { treeDepth: 0 }))
+                        .catch(error => console.error('Failed to reset stale browser history entry', error));
+                    return;
+                }
+
                 historyRestoreQueue = historyRestoreQueue
                     .catch(() => {})
                     .then(() => restoreHistoryEntry(urlState, navigationState))

@@ -39,6 +39,7 @@ const {
   getURLState,
   initializeURLHistory,
   pushURLState,
+  resetURLHistory,
   updateURLState,
 } = await import(`../src/urlhash.js?test=${Date.now()}`);
 
@@ -84,4 +85,21 @@ test('fine-grained updates replace instead of pushing', async () => {
   assert.equal(fakeWindow.calls.length, 1);
   assert.equal(fakeWindow.calls[0].method, 'replace');
   assert.equal(fakeWindow.calls[0].url, '#group=VPL&root=9534&rot=42');
+});
+
+test('resets the current entry to the initial URL and supplied navigation state', () => {
+  fakeWindow.calls.length = 0;
+  fakeWindow.location.pathname = '/index.html';
+  fakeWindow.location.hash = '#group=VPL&root=9534&q=Pinus';
+  fakeWindow.history.state = { unrelatedState: true, taxonomyVisualizer: { treeDepth: 2 } };
+
+  resetURLHistory({ treeDepth: 0, resetEpoch: 'reload-1' });
+
+  assert.equal(fakeWindow.calls.length, 1);
+  assert.equal(fakeWindow.calls[0].method, 'replace');
+  assert.equal(fakeWindow.calls[0].url, '/index.html');
+  assert.deepEqual(fakeWindow.history.state, {
+    unrelatedState: true,
+    taxonomyVisualizer: { treeDepth: 0, resetEpoch: 'reload-1' },
+  });
 });

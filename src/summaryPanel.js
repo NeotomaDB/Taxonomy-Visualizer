@@ -101,6 +101,8 @@ let currentSummaryTaxagroupid = null;
 let currentTaxagroupNames = {};
 let currentRangeDays = 14;
 let currentSummaryPage = 1;
+let currentSummaryKindFilter = 'all';
+let isSummaryExpanded = false;
 
 const SUMMARY_PAGE_SIZE = 20;
 
@@ -108,10 +110,12 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
   if (summaryData !== undefined && summaryData !== currentSummaryData) {
     currentSummaryData = summaryData;
     currentSummaryPage = 1;
+    currentSummaryKindFilter = 'all';
   }
   if (currentTaxagroupid !== undefined && currentTaxagroupid !== currentSummaryTaxagroupid) {
     currentSummaryTaxagroupid = currentTaxagroupid;
     currentSummaryPage = 1;
+    currentSummaryKindFilter = 'all';
   }
   if (taxagroupNames !== undefined) currentTaxagroupNames = taxagroupNames;
 
@@ -141,9 +145,17 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
     return itemTime >= cutoffTime;
   });
 
-  const filteredEntries = currentSummaryTaxagroupid
+  const scopedEntries = currentSummaryTaxagroupid
     ? timeFilteredEntries.filter(item => item.taxagroupid === currentSummaryTaxagroupid)
     : timeFilteredEntries;
+  const newCount = scopedEntries.filter(item => item._kind === 'new').length;
+  const modifiedCount = scopedEntries.filter(item => item._kind === 'modified').length;
+  const newBadge = badgeStyles('new');
+  const modifiedBadge = badgeStyles('modified');
+  const hasActiveFilter = currentSummaryKindFilter !== 'all';
+  const filteredEntries = hasActiveFilter
+    ? scopedEntries.filter(item => item._kind === currentSummaryKindFilter)
+    : scopedEntries;
   const totalPages = Math.max(1, Math.ceil(filteredEntries.length / SUMMARY_PAGE_SIZE));
   if (currentSummaryPage > totalPages) {
     currentSummaryPage = totalPages;
@@ -156,8 +168,7 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
     ? (currentTaxagroupNames[currentSummaryTaxagroupid] || currentSummaryTaxagroupid)
     : 'All Groups';
 
-  const newCount = filteredEntries.filter(item => item._kind === 'new').length;
-  const modifiedCount = filteredEntries.filter(item => item._kind === 'modified').length;
+  const isEmpty = scopedEntries.length === 0;
   const dataCoverageDays = getDataCoverageDays(dataToRender);
   const coverageNote = dataCoverageDays != null && currentRangeDays > dataCoverageDays
     ? ` · Data covers ~${dataCoverageDays} days (refresh to load more)`
@@ -175,16 +186,15 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
               ${item.changed_fields.length} field${item.changed_fields.length === 1 ? '' : 's'}
             </span>`
           : '';
+        const groupDetails = currentSummaryTaxagroupid ? '' : `
+                <span class="summary-group" title="${escapeHtml(groupLabel)}">${escapeHtml(groupLabel)}</span>
+                <span aria-hidden="true">·</span>`;
         return `
-          <div class="summary-item" role="listitem">
-            <span class="summary-kind summary-kind--${item._kind}" style="--summary-badge-bg:${badge.bg};--summary-badge-fg:${badge.fg};--summary-badge-border:${badge.border};">
-              ${badge.text}
-            </span>
+          <div class="summary-item" role="listitem" aria-label="${badge.text}: ${escapeHtml(item.taxonname)}">
             <div class="summary-item-main">
               <span class="summary-taxon-name" title="${escapeHtml(item.taxonname)}">${escapeHtml(item.taxonname)}</span>
               <span class="summary-item-details">
-                <span class="summary-group" title="${escapeHtml(groupLabel)}">${escapeHtml(groupLabel)}</span>
-                <span aria-hidden="true">·</span>
+                ${groupDetails}
                 <span>#${escapeHtml(item.taxonid)}</span>
                 <span aria-hidden="true">·</span>
                 <time datetime="${escapeHtml(itemDate)}" title="${escapeHtml(getSummaryDateLabel(item))}">${formatCompactDateLabel(itemDate)}</time>
@@ -206,58 +216,113 @@ export function updateSummaryPanel(summaryData, currentTaxagroupid, taxagroupNam
       </div>
     `;
 
+  const expandedBodyHtml = isEmpty ? `
+      <div class="summary-empty-state summary-empty-state--compact">
+        No changes in ${escapeHtml(currentGroupName)} during this period.
+      </div>
+    ` : `
+      <div class="summary-stats" aria-label="Filter changes by type">
+        ${newCount > 0 ? `
+          <button
+            class="summary-kind summary-filter-btn summary-filter-btn--count"
+            type="button"
+            data-summary-kind="new"
+            style="--summary-badge-bg:${newBadge.bg};--summary-badge-fg:${newBadge.fg};--summary-badge-border:${newBadge.border};"
+            aria-pressed="${currentSummaryKindFilter === 'new'}"
+            aria-label="${currentSummaryKindFilter === 'new' ? 'Show all changes' : 'Show only new changes'}"
+            title="${currentSummaryKindFilter === 'new' ? 'Show all changes' : 'Show only new changes'}"
+          >New <span class="summary-filter-count" aria-hidden="true">${newCount}</span></button>
+        ` : ''}
+        ${modifiedCount > 0 ? `
+          <button
+            class="summary-kind summary-filter-btn summary-filter-btn--count"
+            type="button"
+            data-summary-kind="modified"
+            style="--summary-badge-bg:${modifiedBadge.bg};--summary-badge-fg:${modifiedBadge.fg};--summary-badge-border:${modifiedBadge.border};"
+            aria-pressed="${currentSummaryKindFilter === 'modified'}"
+            aria-label="${currentSummaryKindFilter === 'modified' ? 'Show all changes' : 'Show only modified changes'}"
+            title="${currentSummaryKindFilter === 'modified' ? 'Show all changes' : 'Show only modified changes'}"
+          >Modified <span class="summary-filter-count" aria-hidden="true">${modifiedCount}</span></button>
+        ` : ''}
+      </div>
+      ${totalPages > 1 ? `
+        <div class="summary-pagination">
+          <div class="summary-pagination-copy">
+            Page ${currentSummaryPage} of ${totalPages} · ${filteredEntries.length} ${hasActiveFilter ? `${currentSummaryKindFilter} ` : ''}items
+          </div>
+          <div class="summary-pagination-actions">
+            <button
+              id="summary-prev-page"
+              ${currentSummaryPage <= 1 ? 'disabled' : ''}
+            >Previous</button>
+            <button
+              id="summary-next-page"
+              ${currentSummaryPage >= totalPages ? 'disabled' : ''}
+            >Next</button>
+          </div>
+        </div>
+      ` : ''}
+      <div class="summary-items" role="list">${rowsHtml}</div>
+    `;
+
+  const expandedPanelHtml = isSummaryExpanded ? `
+    <div id="summary-panel-content" class="summary-panel-content">
+      <div class="summary-panel-header">
+        <div class="summary-panel-subtitle">${isEmpty
+          ? `Updated ${formatDateLabel(dataToRender.generated_at)} · ${escapeHtml(currentGroupName)}`
+          : `${escapeHtml(currentGroupName)} · Updated ${formatDateLabel(dataToRender.generated_at)}${coverageNote}`
+        }</div>
+        <select id="summary-range-select" class="summary-range-select" aria-label="Change time range">
+          ${RANGE_OPTIONS.map(option => `
+            <option value="${option.days}" ${currentRangeDays === option.days ? 'selected' : ''}>${option.label}</option>
+          `).join('')}
+        </select>
+      </div>
+      ${expandedBodyHtml}
+    </div>
+  ` : '';
+
   panel.innerHTML = `
-    <div class="summary-panel-header">
-      <div>
-        <div class="summary-panel-title">Recent changes</div>
-        <div class="summary-panel-subtitle">Refreshed ${formatDateLabel(dataToRender.generated_at)} · Scope: ${escapeHtml(currentGroupName)}${coverageNote}</div>
-      </div>
-      <select id="summary-range-select" class="summary-range-select" aria-label="Change time range">
-        ${RANGE_OPTIONS.map(option => `
-          <option value="${option.days}" ${currentRangeDays === option.days ? 'selected' : ''}>${option.label}</option>
-        `).join('')}
-      </select>
+    <div class="summary-collapse-header">
+      <button
+        id="summary-toggle"
+        class="summary-toggle"
+        type="button"
+        aria-expanded="${isSummaryExpanded}"
+        aria-controls="summary-panel-content"
+      ><span class="summary-toggle-icon" aria-hidden="true">▾</span><span>Recent changes${isEmpty ? '' : ` (${scopedEntries.length})`}</span></button>
+      <span class="summary-collapse-meta">${isEmpty ? 'No updates' : getRangeLabel(currentRangeDays)}</span>
     </div>
-    <div class="summary-stats" aria-label="Change counts for ${getRangeLabel(currentRangeDays)}">
-      <span class="summary-stat summary-stat--total">
-        ${filteredEntries.length} total
-      </span>
-      <span class="summary-stat summary-stat--new">
-        ${newCount} new
-      </span>
-      <span class="summary-stat summary-stat--modified">
-        ${modifiedCount} modified
-      </span>
-    </div>
-    <div class="summary-pagination">
-      <div class="summary-pagination-copy">
-        ${filteredEntries.length === 0
-          ? `No items in ${getRangeLabel(currentRangeDays)}`
-          : `Page ${currentSummaryPage} of ${totalPages} · ${filteredEntries.length} items in ${getRangeLabel(currentRangeDays)}`}
-      </div>
-      <div class="summary-pagination-actions">
-        <button
-          id="summary-prev-page"
-          ${currentSummaryPage <= 1 ? 'disabled' : ''}
-        >Previous</button>
-        <button
-          id="summary-next-page"
-          ${currentSummaryPage >= totalPages ? 'disabled' : ''}
-        >Next</button>
-      </div>
-    </div>
-    <div class="summary-items" role="list">${rowsHtml}</div>
+    ${expandedPanelHtml}
   `;
   panel.style.display = 'block';
+
+  const toggle = panel.querySelector('#summary-toggle');
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      isSummaryExpanded = !isSummaryExpanded;
+      updateSummaryPanel();
+    });
+  }
 
   const selectEl = panel.querySelector('#summary-range-select');
   if (selectEl) {
     selectEl.addEventListener('change', (e) => {
       currentRangeDays = parseInt(e.target.value, 10);
       currentSummaryPage = 1;
+      currentSummaryKindFilter = 'all';
       updateSummaryPanel();
     });
   }
+
+  panel.querySelectorAll('.summary-filter-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const kind = button.dataset.summaryKind;
+      currentSummaryKindFilter = currentSummaryKindFilter === kind ? 'all' : kind;
+      currentSummaryPage = 1;
+      updateSummaryPanel();
+    });
+  });
 
   const prevBtn = panel.querySelector('#summary-prev-page');
   if (prevBtn) {

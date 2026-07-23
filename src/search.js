@@ -195,6 +195,7 @@ export function setupSearch({
   function resetSearchState() {
     const searchInputEl = document.getElementById('searchInput');
     if (searchInputEl) searchInputEl.value = '';
+    syncClearSearchControl();
     
     // Update URL hash state
     updateURLState({ q: null });
@@ -960,11 +961,17 @@ export function setupSearch({
 
   const searchInput = document.getElementById('searchInput');
   const searchBtn = document.getElementById('searchBtn');
+  const clearSearchBtn = document.getElementById('clearSearchBtn');
   const autocompleteCandidates = buildTaxonAutocompleteCandidates(root);
   let autocompleteSuggestions = [];
   let autocompleteIndex = -1;
   let autocompleteTimer = null;
   let autocompleteList = null;
+
+  function syncClearSearchControl() {
+    if (!clearSearchBtn || !searchInput) return;
+    clearSearchBtn.hidden = !searchInput.value.trim();
+  }
 
   function closeAutocomplete() {
     if (autocompleteTimer) {
@@ -1032,6 +1039,7 @@ export function setupSearch({
   async function runSearch() {
     if (!searchInput) return;
     const q = searchInput.value.trim();
+    syncClearSearchControl();
     if (setSearchRenderPreference) setSearchRenderPreference(false);
     
     // Update URL hash state
@@ -1308,6 +1316,15 @@ export function setupSearch({
   }
 
   if (searchBtn) searchBtn.addEventListener('click', runSearch);
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (!searchInput) return;
+      searchInput.value = '';
+      closeAutocomplete();
+      resetSearchState();
+      searchInput.focus({ preventScroll: true });
+    });
+  }
   if (searchInput) {
     searchInput.__taxonAutocompleteCleanup?.();
     const searchSection = searchInput.closest('.search-section');
@@ -1342,7 +1359,10 @@ export function setupSearch({
         closeAutocomplete();
       }
     };
-    const onAutocompleteInput = () => scheduleAutocomplete();
+    const onAutocompleteInput = () => {
+      syncClearSearchControl();
+      scheduleAutocomplete();
+    };
     const onAutocompleteBlur = () => window.setTimeout(closeAutocomplete, 150);
     searchInput.addEventListener('keydown', onAutocompleteKeyDown, true);
     searchInput.addEventListener('input', onAutocompleteInput);
@@ -1358,6 +1378,7 @@ export function setupSearch({
     if (initialQuery && !searchInput.value.trim()) {
       searchInput.value = initialQuery;
     }
+    syncClearSearchControl();
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         runSearch();

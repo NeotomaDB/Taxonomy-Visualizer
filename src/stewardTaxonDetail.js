@@ -24,9 +24,8 @@ function buildBreadcrumbHtml(names) {
 }
 
 /**
- * In Data Steward view, keep selection identity and placement in the right
- * panel, while placing data-heavy metadata and occurrence cards below the
- * primary canvas. Returns false outside that view so Explorer is unchanged.
+ * In Data Steward view, keep the selection and its supporting information in
+ * the right panel. Returns false outside that view so Explorer is unchanged.
  */
 export function renderStewardTaxonDetail({
   taxonId,
@@ -60,29 +59,49 @@ export function renderStewardTaxonDetail({
   selectionPanel.style.display = 'block';
 
   dataPanel.innerHTML = `
-    <div class="steward-detail-cards">
-      <section class="steward-detail-card" aria-labelledby="steward-metadata-heading">
-        <h2 id="steward-metadata-heading">Metadata</h2>
-        <div id="steward-taxon-metadata"></div>
-      </section>
-      <section class="steward-detail-card" aria-labelledby="steward-occurrence-heading">
-        <h2 id="steward-occurrence-heading">Neotoma Occurrence Records</h2>
-        <div id="steward-taxon-summary"></div>
-      </section>
-    </div>
+    <section class="steward-detail-group" aria-label="Taxon Details">
+      <div class="steward-detail-header">
+        <button
+          id="steward-detail-toggle"
+          class="steward-detail-toggle"
+          type="button"
+          aria-expanded="true"
+          aria-controls="steward-detail-content"
+          aria-label="Collapse Taxon Details"
+          title="Collapse Taxon Details"
+        ><span class="steward-detail-toggle-icon" aria-hidden="true">▾</span></button>
+        <span class="steward-detail-title">Taxon Details</span>
+      </div>
+      <div class="steward-detail-content">
+        <section class="steward-detail-card" aria-label="Taxon metadata">
+          <div id="steward-taxon-metadata"></div>
+        </section>
+        <section class="steward-detail-card" aria-label="Neotoma occurrence records">
+          <div id="steward-taxon-summary"></div>
+        </section>
+      </div>
+    </section>
   `;
   dataPanel.hidden = false;
 
+  const detailToggle = dataPanel.querySelector('#steward-detail-toggle');
+  const detailContent = dataPanel.querySelector('.steward-detail-content');
+  detailToggle?.addEventListener('click', () => {
+    const nextExpanded = detailToggle.getAttribute('aria-expanded') !== 'true';
+    detailToggle.setAttribute('aria-expanded', String(nextExpanded));
+    detailToggle.setAttribute('aria-label', `${nextExpanded ? 'Collapse' : 'Expand'} Taxon Details`);
+    detailToggle.title = `${nextExpanded ? 'Collapse' : 'Expand'} Taxon Details`;
+    if (detailContent) detailContent.hidden = !nextExpanded;
+  });
+
   const metadataContainer = dataPanel.querySelector('#steward-taxon-metadata');
   if (metadataContainer) {
-    fetchAndRenderTaxonMetadata(taxonId, metadataContainer, currentClickIdRef, { framed: false });
+    fetchAndRenderTaxonMetadata(taxonId, metadataContainer, currentClickIdRef);
   }
 
   const summaryContainer = dataPanel.querySelector('#steward-taxon-summary');
   if (summaryContainer) {
     fetchAndRenderTaxonSummary(taxonId, taxagroupid, summaryContainer, currentClickIdRef, {
-      showHeading: false,
-      framed: false,
       emptyMessage: isTerminalTaxon
         ? 'No occurrence records available for this taxon.'
         : 'Occurrence records are available for terminal taxon.',

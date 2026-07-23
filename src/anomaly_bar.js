@@ -85,21 +85,16 @@ function showPotentialIssues(groupName, issues) {
 
   panel.innerHTML = `
     <div class="taxonomic-issues-panel-header">
-      <div>
-        <h3>Potential Taxonomic Issues</h3>
-        <p>${escapeHtml(groupName)} · <span id="taxonomicIssueVisibleCount">${issues.length.toLocaleString()}</span> shown</p>
+      <h3>${escapeHtml(groupName)} (<span id="taxonomicIssueVisibleCount">${issues.length.toLocaleString()}</span>)</h3>
+      <div class="taxonomic-issues-toolbar">
+        <select id="taxonomicIssueTypeFilter" aria-label="Filter issue type">
+          <option value="all">All issue types</option>
+          ${issueTypeOptions()}
+        </select>
       </div>
       <button id="closeTaxonomicIssues" class="taxonomic-issues-close" type="button" aria-label="Close potential taxonomic issues">
         ×
       </button>
-    </div>
-
-    <div class="taxonomic-issues-toolbar">
-      <label for="taxonomicIssueTypeFilter">Filter</label>
-      <select id="taxonomicIssueTypeFilter">
-        <option value="all">All issue types</option>
-        ${issueTypeOptions()}
-      </select>
     </div>
 
     <div class="taxonomic-issues-table-wrap">
@@ -159,10 +154,10 @@ export function updateAnomalyBar(taxagroupid, groupName, issues) {
   }
 
   bar.innerHTML = `
-    <button id="viewPotentialTaxonomicIssues" class="taxonomic-issues-summary" type="button">
+    <button id="viewPotentialTaxonomicIssues" class="taxonomic-issues-summary" type="button" aria-label="Review potential taxonomic issues for ${escapeHtml(groupName)}">
       <span class="taxonomic-issues-summary-copy">
+        <span class="summary-toggle-icon taxonomic-issues-summary-spacer" aria-hidden="true">▾</span>
         <strong>Potential Taxonomic Issues</strong>
-        <span>${escapeHtml(groupName)}</span>
       </span>
       <span class="taxonomic-issues-summary-count" aria-label="${issues.length.toLocaleString()} issues">
         ${issues.length.toLocaleString()}

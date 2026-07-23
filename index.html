@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Neotoma Taxonomy Visualizer</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.5/dist/driver.css">
-    <link rel="stylesheet" href="index.css?v=20260713-figtree">
+    <link rel="stylesheet" href="index.css?v=20260723-issues-dropdown-only">
     <link rel="stylesheet" href="src/onboarding/onboarding.css?v=20260713-figtree">
 </head>
 
@@ -73,7 +73,6 @@
                 style="position:absolute; left:-9999px; top:-9999px; background:#fff; border:1px solid #ddd; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:6px; padding:10px 12px; max-width:320px; z-index:1000;">
             </div>
             </div>
-            <section id="steward-taxon-detail" hidden aria-live="polite"></section>
         </div>
         <div id="right-panel" style="min-width:360px; display:flex; flex-direction:column; gap:8px;">
             <div id="title-section">
@@ -84,16 +83,16 @@
                     </button>
                     <div id="viewNavMenu" class="view-nav-menu" role="menu" aria-label="View modes">
                         <button class="view-nav-option active" type="button" role="menuitem" data-app-view="explorer">
-                            Explorer
-                        </button>
-                        <button class="view-nav-option" type="button" role="menuitem" data-app-view="about">
-                            About
+                            Explorer View
                         </button>
                         <button class="view-nav-option" type="button" role="menuitem" data-app-view="steward">
-                            Data Steward
+                            Data Steward View
                         </button>
                         <button id="takeTourBtn" class="view-nav-option" type="button" role="menuitem">
                             Take Tour
+                        </button>
+                        <button class="view-nav-option" type="button" role="menuitem" data-app-view="about">
+                            About
                         </button>
                     </div>
                 </div>
@@ -125,13 +124,24 @@
                             </div>
                         </div>
                         <div class="search-section">
-                            <input id="searchInput" type="text"
-                                placeholder="Search name; use ',' for comparing taxa">
-                            <button id="searchBtn">Search</button>
+                            <div class="search-field">
+                                <input id="searchInput" type="text"
+                                    placeholder="Use ',' for comparing taxa">
+                                <div class="search-field-actions">
+                                    <button id="clearSearchBtn" class="search-icon-btn search-clear-btn" type="button"
+                                        aria-label="Clear search" title="Clear search" hidden>×</button>
+                                    <span class="search-action-divider" aria-hidden="true"></span>
+                                    <button id="searchBtn" class="search-icon-btn" type="button"
+                                        aria-label="Search" title="Search">
+                                        <img src="assets/search.svg" alt="" aria-hidden="true">
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div id="info"></div>
+                <section id="steward-taxon-detail" hidden aria-live="polite"></section>
                 <div id="navigation" style="margin-top: 12px; display: none;">
                     <button id="backButton" style="
                         padding: 8px 16px;
@@ -154,7 +164,7 @@
 
                 <div id="anomaly-detail-panel" class="taxonomic-issues-panel" style="display:none;"></div>
                 <div id="summary-panel"
-                    style="display:none; margin-top:12px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;">
+                    style="display:none; margin-top:8px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:8px;">
                 </div>
             </div>
             <main id="about-panel" class="about-panel" aria-labelledby="about-title" hidden>
@@ -320,7 +330,7 @@
         import { updateURLState, getURLState } from './src/urlhash.js';
         import { FORCE_LIST_TREE_GROUPS, EXPAND_ALL_COLLAPSIBLE, FOCUS_VIEW_GROUPS, getTreeViewSpacing, NON_BIO_GROUPS } from './src/taxaViewConfig.js?v=20260722-taxonomy-forest-1';
         import { initViewSwitch, resetViewState, activateFocusView, setFocusViewRenderOptions } from './src/viewSwitch.js';
-        import { updateAnomalyBar } from './src/anomaly_bar.js';
+        import { updateAnomalyBar } from './src/anomaly_bar.js?v=20260723-issues-dropdown-only';
         import { updateSummaryPanel } from './src/summaryPanel.js';
         import { initOnboarding } from './src/onboarding/onboarding.js?v=20260622-2';
         import { resolveGroupAnomalyRows } from './src/groupAnomalyRows.js';
@@ -367,7 +377,7 @@
             });
 
             if (trigger) {
-                const labels = { explorer: 'Explorer', about: 'About', steward: 'Data Steward' };
+                const labels = { explorer: 'Explorer View', about: 'About', steward: 'Data Steward View' };
                 const label = labels[currentAppView];
                 trigger.setAttribute('aria-label', `Current view: ${label}`);
                 trigger.setAttribute('aria-expanded', 'false');
